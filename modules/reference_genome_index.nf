@@ -1,0 +1,107 @@
+#!/usr/bin/env nextflow
+
+/* Outlining the STAR process of creating a reference genome index */
+process STAR_REFERENCE_INDEX {
+    label 'star_reference_index'
+    publishDir "${outputDir}/star/reference_index", mode: "copy"
+
+    container 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
+
+	input:
+        val outputDir
+		path genome_fasta_files
+        path gtf_file
+        val overhang
+        val genomeSAindexNbases
+
+	output:
+        path "*"
+	
+    script:
+    """
+    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir . --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file --sjdbOverhang $overhang --genomeSAindexNbases $genomeSAindexNbases
+    """
+}
+
+/* Outlining the HISAT2 process of creating a reference genome index */
+process HISAT2_REFERENCE_INDEX {
+    label 'hisat2_reference_index'
+    publishDir "${outputDir}/hisat2/reference_index", mode: "copy"
+
+    container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
+
+	input:
+        val outputDir
+		path genome_fasta_files
+
+	output:
+        path "genome*", emit: hisat2_index_files
+	
+    script:
+    """
+    hisat2_build genome_fasta_files genome
+    """
+}
+
+/* Outlining the HISAT2 process for improving the splicing alignment later */
+process HISAT2_IMPROVE_SPLICE_ALIGNMENT {
+    label 'hisat2_improve_splice_alignment'
+    publishDir "${outputDir}/hisat2/improve_splice_alignment", mode: "copy"
+
+    container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
+
+	input:
+        val outputDir
+		path gtf_file
+
+	output:
+        path "genome.ss", emit: splice_sites
+        path "genome.exon", emit: exons
+	
+    script:
+    """
+    hisat2_extract_splice_sites.py $gtf_file > genome.ss
+    hisat2_extract_exons.py $gtf_file > genome.exon
+    """
+}
+
+/* Outlining the SALMON_QUASI_MAPPING process of creating a reference genome index */
+process SALMON_REFERENCE_INDEX {
+    label 'salmon_reference_index'
+    publishDir "${outputDir}/salmon/reference_index", mode: "copy"
+
+    container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
+
+	input:
+        val outputDir
+        path transcripts_file
+        val kmer_size
+
+	output:
+        path "*"
+	
+    script:
+    """
+    salmon index -t $transcripts_file -k $kmer_size -i .
+    """
+}
+
+/* Outlining the KALLISTO process of creating a reference genome index */
+process KALLISTO_REFERENCE_INDEX {
+    label 'kallisto_reference_index'
+    publishDir "${outputDir}/kallisto/reference_index", mode: "copy"
+
+    container 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'
+
+	input:
+        val outputDir
+        path transcripts_file
+
+	output:
+        path "kallisto_index.idx", emit: kallisto_reference_index
+	
+    script:
+    """
+    kallisto index -i kallisto_index.idx $transcripts_file
+    """
+}
