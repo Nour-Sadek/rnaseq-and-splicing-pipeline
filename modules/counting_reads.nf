@@ -111,3 +111,25 @@ process KALLISTO {
     kallisto quant -i $reference_index -o . -t $task.cpus -b $num_bootstrap_samples $read_1 $read_2
     """
 }
+
+/* Outlining the RSEM alignment and reads quantification process */
+process RSEM {
+    label 'rsem'
+    tag "$sample_id"
+    publishDir "${outputDir}/rsem/counts/${sample_id}", mode: "copy"
+
+    container 'community.wave.seqera.io/library/rsem:1.3.3--0431247ea78b43c0'
+
+	input:
+        tuple val(sample_id), path(read_1), path(read_2)
+        val outputDir
+        path reference_index
+
+	output:
+		path "*"
+	
+    script:
+    """
+    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 $reference_index $sample_id
+    """
+}

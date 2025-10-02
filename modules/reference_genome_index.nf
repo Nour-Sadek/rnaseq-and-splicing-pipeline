@@ -15,6 +15,7 @@ process STAR_REFERENCE_INDEX {
         val genomeSAindexNbases
 
 	output:
+        val outputDir, emit: outputDir
         path "*"
 	
     script:
@@ -32,14 +33,16 @@ process HISAT2_REFERENCE_INDEX {
 
 	input:
         val outputDir
+        val hisat2_index_prefix
 		path genome_fasta_files
 
 	output:
         path "genome*", emit: hisat2_index_files
+        val "$hisat2_index_prefix", emit: hisat2_prefix_index
 	
     script:
     """
-    hisat2_build genome_fasta_files genome
+    hisat2_build genome_fasta_files $hisat2_index_prefix
     """
 }
 
@@ -78,6 +81,7 @@ process SALMON_REFERENCE_INDEX {
         val kmer_size
 
 	output:
+        val outputDir, emit: outputDir
         path "*"
 	
     script:
@@ -103,5 +107,29 @@ process KALLISTO_REFERENCE_INDEX {
     script:
     """
     kallisto index -i kallisto_index.idx $transcripts_file
+    """
+}
+
+/* Outlining the RSEM process of creating a reference genome index */
+process RSEM_REFERENCE_INDEX {
+    label 'rsem_reference_index'
+    publishDir "${outputDir}/rsem/reference_index", mode: "copy"
+
+    container 'community.wave.seqera.io/library/rsem:1.3.3--0431247ea78b43c0'
+
+	input:
+        val outputDir
+        val rsem_index_prefix
+        path genome_fasta_files
+        path gtf_file
+
+	output:
+        val outputDir, emit: outputDir
+        path "rsem_reference.*"
+        val "$rsem_index_prefix", emit: rsem_index_prefix
+	
+    script:
+    """
+    rsem-prepare-reference -gtf $gtf_file --star $genome_fasta_files $rsem_index_prefix
     """
 }
