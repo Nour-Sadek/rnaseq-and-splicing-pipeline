@@ -34,9 +34,8 @@ process SORT_AND_INDEX_BAM {
         val outputDir
 
 	output:
-        val sample_id, emit: sample_id
-        path "${sample_id}_sorted.bam", emit: sorted_bam_file
-        path "${sample_id}_sorted.bam.bai", emit: indexed_bam_file
+        tuple val(sample_id), path("${sample_id}_sorted.bam"), emit: sorted_bam_output
+        path "${sample_id}_sorted.bam.bai", emit: indexed_bam_output
 	
     script:
     """
