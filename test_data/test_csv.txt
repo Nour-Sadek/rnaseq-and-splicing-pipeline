@@ -1,3 +1,3 @@
 sample_id,fastq_1,fastq_2
-ECA1493,./test_data/SRR35559076_1.fastq,./test_data/SRR35559076_2.fastq
-ECA1229,./test_data/SRR35559077_1.fastq,./test_data/SRR35559077_2.fastq
+CAM_1,./test_data/SRR35144015_1.fastq,./test_data/SRR35144015_2.fastq
+CAM_2,./test_data/SRR35144016_1.fastq,./test_data/SRR35144016_2.fastq
