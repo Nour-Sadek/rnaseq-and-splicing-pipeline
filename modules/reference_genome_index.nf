@@ -3,7 +3,7 @@
 /* Outlining the STAR process of creating a reference genome index */
 process STAR_REFERENCE_INDEX {
     label 'star_reference_index'
-    publishDir "${outputDir}/star/reference_index", mode: "copy"
+    publishDir "${outputDir}/star", mode: "copy"
 
     container 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
 
@@ -15,12 +15,12 @@ process STAR_REFERENCE_INDEX {
         val genomeSAindexNbases
 
 	output:
-        val outputDir, emit: outputDir
-        path "*"
+        path reference_index, emit: reference_index
 	
     script:
     """
-    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir . --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file --sjdbOverhang $overhang --genomeSAindexNbases $genomeSAindexNbases
+    mkdir reference_index
+    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir reference_index --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file --sjdbOverhang $overhang --genomeSAindexNbases $genomeSAindexNbases
     """
 }
 
