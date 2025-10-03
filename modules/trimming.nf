@@ -15,17 +15,14 @@ process TRIMMOMATIC {
         val trimmomaticArgs
 
 	output:
-    val sample_id, emit: sample_id
-	path "${sample_id}_fwd_trimmed.fastq", emit: fwd_trimmed
+    tuple val(sample_id), path("${sample_id}_fwd_trimmed.fastq"), path("${sample_id}_rev_trimmed.fastq"), emit: trimmed_samples
     path "${sample_id}_fwd_unpaired.fastq", emit: fwd_unpaired
-    path "${sample_id}_rev_trimmed.fastq", emit: rev_trimmed
     path "${sample_id}_rev_unpaired.fastq", emit: rev_unpaired
 	
     script:
     """
     trimmomatic PE $read_1 $read_2 ${sample_id}_fwd_trimmed.fastq ${sample_id}_fwd_unpaired.fastq ${sample_id}_rev_trimmed.fastq ${sample_id}_rev_unpaired.fastq -threads $task.cpus ILLUMINACLIP:${adapters_file}:${trimmomaticArgs}
     """
-
 }
 
 /* Outlining the bbduk trimming process */
@@ -42,16 +39,13 @@ process BBDUK {
         val bbdukArgs
 
 	output:
-    val(sample_id), emit: sample_id
-	path("${sample_id}_fwd_trimmed.fastq"), emit: fwd_trimmed
-    path("${sample_id}_rev_trimmed.fastq"), emit: rev_trimmed
+    tuple val(sample_id), path("${sample_id}_fwd_trimmed.fastq"), path("${sample_id}_rev_trimmed.fastq"), emit: trimmed_samples
     path("${sample_id}_unpaired.fastq"), emit: unpaired
 	
     script:
     """
     bbduk.sh threads=$task.cpus ${bbdukArgs} in1=$read_1 in2=$read_2 out1="${sample_id}_fwd_trimmed.fastq" out2="${sample_id}_rev_trimmed.fastq" outs="${sample_id}_unpaired.fastq"
     """
-
 }
 
 /* Outlining the trim_galore trimming process */
@@ -68,9 +62,7 @@ process TRIM_GALORE {
         val trimGaloreArgs
 
 	output:
-    val(sample_id), emit: sample_id
-	path("${read_1.simpleName}_val_1.fq.gz"), emit: fwd_trimmed
-    path("${read_2.simpleName}_val_2.fq.gz"), emit: rev_trimmed
+    tuple val(sample_id), path("${read_1.simpleName}_val_1.fq.gz"), path("${read_2.simpleName}_val_2.fq.gz"), emit: trimmed_samples
     path("${read_1.simpleName}_unpaired.fq.gz"), emit: fwd_unpaired
     path("${read_2.simpleName}_unpaired.fq.gz"), emit: rev_unpaired
 	
@@ -78,5 +70,4 @@ process TRIM_GALORE {
     """
     trim_galore --paired $read_1 $read_2 --cores $task.cpus --retain_unpaired ${trimGaloreArgs}
     """
-
 }

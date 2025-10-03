@@ -18,8 +18,7 @@ process STAR {
         val filterMatch
 
 	output:
-        val sample_id, emit: sample_id
-		path "${sample_id}_Aligned.out.bam", emit: bam_file
+        tuple val(sample_id), path("${sample_id}_Aligned.out.bam"), emit: alignment_output
         path "${sample_id}_Log.final.out", emit: log_final
         path "${sample_id}_Log.out", emit: log
         path "${sample_id}_Log.progress.out", emit: log_progress
@@ -42,16 +41,16 @@ process HISAT2 {
 	input:
         tuple val(sample_id), path(read_1), path(read_2)
         val outputDir
-        path reference_genome_index
+        val hisat2_prefix_index
+        path hisat2_index_files
         path splice_sites
         path exons
 
 	output:
-        val sample_id, emit: sample_id
-		path "${sample_id}_Aligned.out.sam", emit: sam_file
+        tuple val(sample_id), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
 	
     script:
     """
-    hisat2 -x $reference_genome_index -ss $splice_sites -exon $exons -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
+    hisat2 -x $hisat2_prefix_index -ss $splice_sites -exon $exons -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
     """
 }

@@ -13,8 +13,7 @@ process SAM_TO_BAM {
         tuple val(sample_id), path(sam_file)
 
 	output:
-        val sample_id, emit: sample_id
-        path "${sample_id}_Aligned.out.bam", emit: bam_file
+        tuple val(sample_id), path("${sample_id}_Aligned.out.bam"), emit: bam_output
 	
     script:
     """

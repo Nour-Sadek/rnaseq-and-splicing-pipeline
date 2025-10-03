@@ -36,12 +36,21 @@ params.quality = 20
 params.stringency = 1
 
 /* STAR parameters */
-params.overhang = 151
+params.overhang = 101
 params.genomeSAindexNbases = 12
 params.filterMatch = 0.66
 
+/* HISAT2 parameters */
+params.hisat2_index_prefix = 'genome'
+
 /* SALMON parameters */
 params.kmer_size = 31
+
+/* KALLISTO parameters */
+params.num_bootstrap_samples = 0
+
+/* RSEM parameters */
+params.rsem_index_prefix = 'rsem_reference'
 
 /* Default Parameters */
 // If the user specifies a different parameter, it will be what the user specifies; these defaults only apply 
@@ -49,19 +58,18 @@ params.kmer_size = 31
 params.genomeFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.genomic.fa'
 params.transcriptFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.mRNA_transcripts.fa'
 params.annotationsGTFFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.canonical_geneset.gtf'
-params.type = 'paired-end'  // other option is 'single-end'
 params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
-params.aligner = 'star'  // other options are 'hisat2', 'none'
+params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
 params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-alignment-mode', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-params.splicingAnalyzer = 'majiq'  // other options are 'jum'
+params.splicingAnalyzer = 'majiq'  // other options are 'rMats', 'suppa2', 'whippet'
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
 include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
-include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; HISAT2_IMPROVE_SPLICE_ALIGNMENT; SALMON_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
+include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; HISAT2_IMPROVE_SPLICE_ALIGNMENT; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
 include { STAR; HISAT2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
-include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE } from './modules/counting_reads.nf'
+include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
 
 workflow {
 
@@ -86,9 +94,7 @@ workflow {
         TRIMMOMATIC(reads_channel, file(params.adapters_file), outputDir, trimmomaticArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
-        paired = TRIMMOMATIC.out.sample_id.combine(TRIMMOMATIC.out.fwd_trimmed)
-        paired = paired.combine(TRIMMOMATIC.out.rev_trimmed)
-        trimming_output_channel = paired.map { sample_id, fwd_trimmed, rev_trimmed -> [sample_id, fwd_trimmed, rev_trimmed] }
+        trimming_output_channel = TRIMMOMATIC.out.trimmed_samples
     } else if (params.trimming == 'bbduk') {
         // Add all the bbduk arguments required into the <bbdukArgs> variable
         bbdukArgs = "ktrim=${params.ktrim} k=${params.kmer_length} mink=${params.min_kmer_size} hdist=${params.hdist} "
@@ -98,9 +104,7 @@ workflow {
         BBDUK(reads_channel, outputDir, bbdukArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
-        paired = BBDUK.out.sample_id.combine(BBDUK.out.fwd_trimmed)
-        paired = paired.combine(BBDUK.out.rev_trimmed)
-        trimming_output_channel = paired.map { sample_id, fwd_trimmed, rev_trimmed -> [sample_id, fwd_trimmed, rev_trimmed] }
+        trimming_output_channel = BBDUK.out.trimmed_samples
     } else if (params.trimming == 'trim_galore') {
         // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
         trimGaloreArgs = "--quality ${params.quality} --length ${params.min_len} --stringency ${params.stringency} --${params.base_quality_encoding}"
@@ -109,9 +113,7 @@ workflow {
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
-        paired = TRIM_GALORE.out.sample_id.combine(TRIM_GALORE.out.fwd_trimmed)
-        paired = paired.combine(TRIM_GALORE.out.rev_trimmed)
-        trimming_output_channel = paired.map { sample_id, fwd_trimmed, rev_trimmed -> [sample_id, fwd_trimmed, rev_trimmed] }
+        trimming_output_channel = TRIM_GALORE.out.trimmed_samples
     }
 
     /* Run fastqc after trimming */
@@ -122,39 +124,34 @@ workflow {
     if (params.aligner == "star") {
         // Create the reference genome index
         STAR_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
-        star_index_dir = outputDir + "/star/reference_index"
+        trimming_output_channel.view()
 
         // Run the STAR alignment process
-        STAR(trimming_output_channel, outputDir, file(star_index_dir), params.filterMatch)
+        STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, params.filterMatch)
 
         // Extract the sample_id and bam_file outputs
-        paired = STAR.out.sample_id.combine(STAR.out.bam_file)
-        alignment_output_channel = paired.map { sample_id, bam_file -> [sample_id, bam_file] }
+        alignment_output_channel = STAR.out.alignment_output
     } else if (params.aligner == 'hisat2') {
         // Create the reference genome index
-        HISAT2_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile))
-        hisat2_index_dir = outputDir + "/hisat2/reference_index/genome"
+        HISAT2_REFERENCE_INDEX(outputDir, params.hisat2_index_prefix, file(params.genomeFastaFile))
 
         // Extract splice sites and exons for improved splicing alignment
         HISAT2_IMPROVE_SPLICE_ALIGNMENT(outputDir, file(params.annotationsGTFFile))
 
         // Run the HISAT2 alignment process
-        HISAT2(trimming_output_channel, outputDir, file(hisat2_index_dir), HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.splice_sites, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.exons)
+        HISAT2(trimming_output_channel, outputDir, HISAT2_REFERENCE_INDEX.out.hisat2_prefix_index, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.splice_sites, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.exons)
 
         // Convert the sam_file to bam_file
-        paired = HISAT2.out.sample_id.combine(HISAT2.out.sam_file)
-        paired = paired.map { sample_id, sam_file -> [sample_id, sam_file] }
-        SAM_TO_BAM(outputDir, paired)
+        SAM_TO_BAM(outputDir, HISAT2.out.alignment_output)
 
         // Extract the sample_id and bam_file outputs
-        paired = SAM_TO_BAM.out.sample_id.combine(SAM_TO_BAM.out.bam_file)
-        alignment_output_channel = paired.map { sample_id, bam_file -> [sample_id, bam_file] }
+        alignment_output_channel = SAM_TO_BAM.out.bam_output
     }
 
     /* Quantify the reads of the genes */
     if (params.aligner != 'none') {  // use quantifiers that need prior alignment
         /* Sort then index the bam files */
-         SORT_AND_INDEX_BAM(alignment_output_channel, outputDir)
+        SORT_AND_INDEX_BAM(alignment_output_channel, outputDir)
         paired = SORT_AND_INDEX_BAM.out.sample_id.combine(SORT_AND_INDEX_BAM.out.sorted_bam_file)
         sorted_bam_output_channel = paired.map { sample_id, sorted_bam_file -> [sample_id, sorted_bam_file] }
 
@@ -176,11 +173,18 @@ workflow {
             salmon_index_dir = outputDir + "./salmon/reference_index"
 
             // Run the SALMON_QUASSI_MAPPING_MODE reads quantification process
-            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, file(salmon_index_dir))
+            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, SALMON_REFERENCE_INDEX.out.outputDir, file(salmon_index_dir))
         } else if (params.quantifier == 'kallisto') {
             // Create the reference genome index
+            KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
 
             // Run the KALLISTO reads quantification process
+            KALLISTO(trimming_output_channel, KALLISTO_REFERENCE_INDEX.out.outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, params.num_bootstrap_samples)
+        } else if (params.quantifier == 'rsem') {
+            // Create the reference genome index
+
+            // Run the RSEM alignment and quantification process
+
         }
     }
     
