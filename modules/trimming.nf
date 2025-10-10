@@ -62,9 +62,9 @@ process TRIM_GALORE {
         val trimGaloreArgs
 
 	output:
-    tuple val(sample_id), path("${read_1.simpleName}_val_1.fq.gz"), path("${read_2.simpleName}_val_2.fq.gz"), emit: trimmed_samples
-    path("${read_1.simpleName}_unpaired.fq.gz"), emit: fwd_unpaired
-    path("${read_2.simpleName}_unpaired.fq.gz"), emit: rev_unpaired
+    tuple val(sample_id), path("${read_1.simpleName}_val_1.fq"), path("${read_2.simpleName}_val_2.fq"), emit: trimmed_samples
+    tuple path("${read_1.simpleName}_unpaired_1.fq"), path("${read_2.simpleName}_unpaired_2.fq"), emit: unpaired_reads
+    tuple path("${read_1.simpleName}.fastq_trimming_report.txt"), path("${read_2.simpleName}.fastq_trimming_report.txt"), emit: trimming_reports
 	
     script:
     """
