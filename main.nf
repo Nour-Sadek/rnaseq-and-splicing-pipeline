@@ -36,7 +36,7 @@ params.quality = 20
 params.stringency = 1
 
 /* STAR parameters */
-params.overhang = 101
+params.overhang = 40
 params.genomeSAindexNbases = 12
 params.filterMatch = 0.66
 
@@ -60,7 +60,7 @@ params.transcriptFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.W
 params.annotationsGTFFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.canonical_geneset.gtf'
 params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
 params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
-params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-alignment-mode', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 params.splicingAnalyzer = 'majiq'  // other options are 'rMats', 'suppa2', 'whippet'
 
 /* Included Modules */
@@ -69,6 +69,7 @@ include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
 include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; HISAT2_IMPROVE_SPLICE_ALIGNMENT; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
 include { STAR; HISAT2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
+include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
 
 workflow {
@@ -124,7 +125,6 @@ workflow {
     if (params.aligner == "star") {
         // Create the reference genome index
         STAR_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
-        trimming_output_channel.view()
 
         // Run the STAR alignment process
         STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, params.filterMatch)
@@ -139,7 +139,7 @@ workflow {
         HISAT2_IMPROVE_SPLICE_ALIGNMENT(outputDir, file(params.annotationsGTFFile))
 
         // Run the HISAT2 alignment process
-        HISAT2(trimming_output_channel, outputDir, HISAT2_REFERENCE_INDEX.out.hisat2_prefix_index, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.splice_sites, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.exons)
+        HISAT2(trimming_output_channel, outputDir, params.hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.splice_sites, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.exons)
 
         // Convert the sam_file to bam_file
         SAM_TO_BAM(outputDir, HISAT2.out.alignment_output)
@@ -152,8 +152,7 @@ workflow {
     if (params.aligner != 'none') {  // use quantifiers that need prior alignment
         /* Sort then index the bam files */
         SORT_AND_INDEX_BAM(alignment_output_channel, outputDir)
-        paired = SORT_AND_INDEX_BAM.out.sample_id.combine(SORT_AND_INDEX_BAM.out.sorted_bam_file)
-        sorted_bam_output_channel = paired.map { sample_id, sorted_bam_file -> [sample_id, sorted_bam_file] }
+        sorted_bam_output_channel = SORT_AND_INDEX_BAM.out.sorted_bam_output
 
         /* Count number of reads for features (genes) using the sorted alignment bam files */
         if (params.quantifier == 'htseq-count') {
@@ -162,29 +161,26 @@ workflow {
         } else if (params.quantifier == 'featureCounts') {
             // Run the FEATURE_COUNTS reads quantification process
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))
-        } else if (params.quantifier == 'salmon-alignment-mode') {
-            // Run the SALMON_ALIGNMENT_MODE reads quantification process
-            SALMON_ALIGNMENT_MODE(sorted_bam_output_channel, outputDir, file(params.transcriptFastaFile))
         }
     } else {  // use quantifiers that don't need prior alignment
         if (params.quantifier == 'salmon-quasi-mapping-mode') {
             // Create the reference genome index
             SALMON_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), params.kmer_size)
-            salmon_index_dir = outputDir + "./salmon/reference_index"
 
             // Run the SALMON_QUASSI_MAPPING_MODE reads quantification process
-            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, SALMON_REFERENCE_INDEX.out.outputDir, file(salmon_index_dir))
+            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, SALMON_REFERENCE_INDEX.out.reference_index)
         } else if (params.quantifier == 'kallisto') {
             // Create the reference genome index
             KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
 
             // Run the KALLISTO reads quantification process
-            KALLISTO(trimming_output_channel, KALLISTO_REFERENCE_INDEX.out.outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, params.num_bootstrap_samples)
+            KALLISTO(trimming_output_channel, outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, params.num_bootstrap_samples)
         } else if (params.quantifier == 'rsem') {
             // Create the reference genome index
+            RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile))
 
             // Run the RSEM alignment and quantification process
-
+            RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
         }
     }
     
