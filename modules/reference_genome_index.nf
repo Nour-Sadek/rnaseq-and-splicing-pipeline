@@ -37,12 +37,12 @@ process HISAT2_REFERENCE_INDEX {
 		path genome_fasta_files
 
 	output:
-        path "genome*", emit: hisat2_index_files
+        path "${hisat2_index_prefix}*", emit: hisat2_index_files
         val "$hisat2_index_prefix", emit: hisat2_prefix_index
 	
     script:
     """
-    hisat2_build genome_fasta_files $hisat2_index_prefix
+    hisat2-build $genome_fasta_files $hisat2_index_prefix
     """
 }
 
@@ -71,7 +71,7 @@ process HISAT2_IMPROVE_SPLICE_ALIGNMENT {
 /* Outlining the SALMON_QUASI_MAPPING process of creating a reference genome index */
 process SALMON_REFERENCE_INDEX {
     label 'salmon_reference_index'
-    publishDir "${outputDir}/salmon/reference_index", mode: "copy"
+    publishDir "${outputDir}/salmon", mode: "copy"
 
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
 
@@ -81,12 +81,12 @@ process SALMON_REFERENCE_INDEX {
         val kmer_size
 
 	output:
-        val outputDir, emit: outputDir
-        path "*"
+        path "reference_index", emit: reference_index
 	
     script:
     """
-    salmon index -t $transcripts_file -k $kmer_size -i .
+    mkdir reference_index
+    salmon index -t $transcripts_file -k $kmer_size -i reference_index
     """
 }
 
@@ -115,7 +115,7 @@ process RSEM_REFERENCE_INDEX {
     label 'rsem_reference_index'
     publishDir "${outputDir}/rsem/reference_index", mode: "copy"
 
-    container 'community.wave.seqera.io/library/rsem:1.3.3--0431247ea78b43c0'
+    container 'quay.io/biocontainers/rsem:1.3.3--pl5321hdbdd923_7'
 
 	input:
         val outputDir
@@ -125,7 +125,7 @@ process RSEM_REFERENCE_INDEX {
 
 	output:
         val outputDir, emit: outputDir
-        path "rsem_reference.*"
+        path "${rsem_index_prefix}.*", emit: rsem_index_files
         val "$rsem_index_prefix", emit: rsem_index_prefix
 	
     script:
