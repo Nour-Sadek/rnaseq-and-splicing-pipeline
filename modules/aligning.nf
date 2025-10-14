@@ -46,15 +46,13 @@ process HISAT2 {
         val outputDir
         val hisat2_prefix_index
         path hisat2_index_files
-        path splice_sites
-        path exons
 
 	output:
         tuple val(sample_id), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
 	
     script:
     """
-    hisat2 -q -x $hisat2_prefix_index -ss $splice_sites -exon $exons -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
+    hisat2 -q -x $hisat2_prefix_index -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
     """
 }
 

@@ -46,28 +46,6 @@ process HISAT2_REFERENCE_INDEX {
     """
 }
 
-/* Outlining the HISAT2 process for improving the splicing alignment later */
-process HISAT2_IMPROVE_SPLICE_ALIGNMENT {
-    label 'hisat2_improve_splice_alignment'
-    publishDir "${outputDir}/hisat2/improve_splice_alignment", mode: "copy"
-
-    container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
-
-	input:
-        val outputDir
-		path gtf_file
-
-	output:
-        path "genome.ss", emit: splice_sites
-        path "genome.exon", emit: exons
-	
-    script:
-    """
-    hisat2_extract_splice_sites.py $gtf_file > genome.ss
-    hisat2_extract_exons.py $gtf_file > genome.exon
-    """
-}
-
 /* Outlining the SALMON_QUASI_MAPPING process of creating a reference genome index */
 process SALMON_REFERENCE_INDEX {
     label 'salmon_reference_index'
