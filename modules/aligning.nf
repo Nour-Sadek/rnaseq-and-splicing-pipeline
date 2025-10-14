@@ -32,6 +32,9 @@ process STAR {
 
 /* Outlining the HISAT2 alignment process */
 process HISAT2 {
+    memory '7 GB'
+    cpus 2
+
     label 'hisat2'
     tag "$sample_id"
     publishDir "${outputDir}/hisat2/${sample_id}", mode: "copy"
@@ -51,6 +54,32 @@ process HISAT2 {
 	
     script:
     """
-    hisat2 -x $hisat2_prefix_index -ss $splice_sites -exon $exons -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
+    hisat2 -q -x $hisat2_prefix_index -ss $splice_sites -exon $exons -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
+    """
+}
+
+/* Outlining the MINIMAP2 alignment process */
+process MINIMAP2 {
+    memory '7 GB'
+    cpus 2
+
+    label 'minimap2'
+    tag "$sample_id"
+    publishDir "${outputDir}/minimap2/${sample_id}", mode: "copy"
+
+    container 'community.wave.seqera.io/library/minimap2:2.30--dde6b0c5fbc82ebd'
+
+	input:
+        tuple val(sample_id), path(read_1), path(read_2)
+        path reference_genome_index
+        val outputDir
+        val preset
+
+	output:
+        tuple val(sample_id), path("${sample_id}_Aligned.sam"), emit: alignment_output
+	
+    script:
+    """
+    minimap2 -t $task.cpus -ax $preset $reference_genome_index $read_1 $read_2 > ${sample_id}_Aligned.sam
     """
 }

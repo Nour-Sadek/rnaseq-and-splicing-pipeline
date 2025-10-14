@@ -115,7 +115,7 @@ process RSEM_REFERENCE_INDEX {
     label 'rsem_reference_index'
     publishDir "${outputDir}/rsem/reference_index", mode: "copy"
 
-    container 'quay.io/biocontainers/rsem:1.3.3--pl5321hdbdd923_7'
+    container 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
 
 	input:
         val outputDir
@@ -131,5 +131,25 @@ process RSEM_REFERENCE_INDEX {
     script:
     """
     rsem-prepare-reference -gtf $gtf_file --star $genome_fasta_files $rsem_index_prefix
+    """
+}
+
+/* Outlining the MINIMAP2 process of creating a reference genome index */
+process MINIMAP2_REFERENCE_INDEX {
+    label 'minimap2_reference_index'
+    publishDir "${outputDir}/minimap2", mode: "copy"
+
+    container 'community.wave.seqera.io/library/minimap2:2.30--dde6b0c5fbc82ebd'
+
+	input:
+        val outputDir
+		path genome_fasta_files
+
+	output:
+        path reference_index.mmi, emit: reference_index
+	
+    script:
+    """
+    minimap2 -d reference_index.mmi $genome_fasta_files
     """
 }
