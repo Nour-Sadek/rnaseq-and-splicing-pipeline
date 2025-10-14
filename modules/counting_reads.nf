@@ -45,7 +45,7 @@ process FEATURE_COUNTS {
     """
 }
 
-/* Outlining the SALMON_ALIGNMENT_MODE reads quantification process */
+/* Outlining the SALMON_ALIGNMENT_MODE reads quantification process (requires previous alignment to transcripts rather than genome) */
 process SALMON_ALIGNMENT_MODE {
     label 'salmon_alignment_mode_counts'
     tag "$sample_id"
@@ -104,7 +104,9 @@ process KALLISTO {
         val num_bootstrap_samples
 
 	output:
-		path "*"
+        path "abundance.h5"
+        path "abundance.tsv"
+        path "run_info.json"
 	
     script:
     """
@@ -118,18 +120,23 @@ process RSEM {
     tag "$sample_id"
     publishDir "${outputDir}/rsem/counts/${sample_id}", mode: "copy"
 
-    container 'community.wave.seqera.io/library/rsem:1.3.3--0431247ea78b43c0'
+    container 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
 
 	input:
         tuple val(sample_id), path(read_1), path(read_2)
         val outputDir
-        path reference_index
+        val rsem_index_prefix
+        path rsem_index_files
 
 	output:
-		path "*"
+		path "${sample_id}.stat"
+        path "${sample_id}.genes.results"
+        path "${sample_id}.isoforms.results"
+        path "${sample_id}.log"
+        path "${sample_id}.transcript.bam"
 	
     script:
     """
-    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 $reference_index $sample_id
+    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 $rsem_index_prefix $sample_id
     """
 }

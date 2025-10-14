@@ -125,12 +125,12 @@ process RSEM_REFERENCE_INDEX {
 
 	output:
         val outputDir, emit: outputDir
-        path "${rsem_index_prefix}.*", emit: rsem_index_files
+        path "*", emit: rsem_index_files
         val "$rsem_index_prefix", emit: rsem_index_prefix
 	
     script:
     """
-    rsem-prepare-reference -gtf $gtf_file --star $genome_fasta_files $rsem_index_prefix
+    rsem-prepare-reference -gtf $gtf_file --star --star-sjdboverhang 40 $genome_fasta_files $rsem_index_prefix
     """
 }
 
