@@ -9,7 +9,7 @@ process FASTQC {
 	container 'community.wave.seqera.io/library/fastqc:0.12.1--af7a5314d5015c29'
 
 	input:
-		tuple val(sample_id), path(read_1), path(read_2)
+		tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val(outputDir)
 
 	output:

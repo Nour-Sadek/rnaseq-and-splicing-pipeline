@@ -10,10 +10,10 @@ process SAM_TO_BAM {
 
 	input:
         val outputDir
-        tuple val(sample_id), path(sam_file)
+        tuple val(sample_id), val(sample_group), path(sam_file)
 
 	output:
-        tuple val(sample_id), path("${sample_id}_Aligned.out.bam"), emit: bam_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.bam"), emit: bam_output
 	
     script:
     """
@@ -30,11 +30,11 @@ process SORT_AND_INDEX_BAM {
     container 'community.wave.seqera.io/library/samtools:1.22.1--eccb42ff8fb55509'
 
 	input:
-        tuple val(sample_id), path(bam_file)
+        tuple val(sample_id), val(sample_group), path(bam_file)
         val outputDir
 
 	output:
-        tuple val(sample_id), path("${sample_id}_sorted.bam"), emit: sorted_bam_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_sorted.bam"), emit: sorted_bam_output
         path "${sample_id}_sorted.bam.bai", emit: indexed_bam_output
 	
     script:

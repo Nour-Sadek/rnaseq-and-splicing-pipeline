@@ -9,7 +9,7 @@ process HTSEQ_COUNT {
     container 'community.wave.seqera.io/library/htseq:2.0.9--4a65a9021e1142a5'
 
 	input:
-        tuple val(sample_id), path(sorted_bam_file)
+        tuple val(sample_id), val(sample_group), path(sorted_bam_file)
         val outputDir
         path gtf_file
 
@@ -32,7 +32,7 @@ process FEATURE_COUNTS {
     container 'community.wave.seqera.io/library/subread:2.1.1--0ac4d7e46cd0c5d7'
 
 	input:
-        tuple val(sample_id), path(sorted_bam_file)
+        tuple val(sample_id), val(sample_group), path(sorted_bam_file)
         val outputDir
         path gtf_file
 
@@ -54,7 +54,7 @@ process SALMON_ALIGNMENT_MODE {
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
 
 	input:
-        tuple val(sample_id), path(sorted_bam_file)
+        tuple val(sample_id), val(sample_group), path(sorted_bam_file)
         val outputDir
         path transcripts_file
 
@@ -76,7 +76,7 @@ process SALMON_QUASI_MAPPING_MODE {
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val outputDir
         path reference_index
 
@@ -98,7 +98,7 @@ process KALLISTO {
     container 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val outputDir
         path reference_index
         val num_bootstrap_samples
@@ -123,7 +123,7 @@ process RSEM {
     container 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val outputDir
         val rsem_index_prefix
         path rsem_index_files

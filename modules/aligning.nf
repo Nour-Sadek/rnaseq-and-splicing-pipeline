@@ -12,13 +12,13 @@ process STAR {
     container 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val outputDir
         path reference_genome_index
         val filterMatch
 
 	output:
-        tuple val(sample_id), path("${sample_id}_Aligned.out.bam"), emit: alignment_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.bam"), emit: alignment_output
         path "${sample_id}_Log.final.out", emit: log_final
         path "${sample_id}_Log.out", emit: log
         path "${sample_id}_Log.progress.out", emit: log_progress
@@ -42,13 +42,13 @@ process HISAT2 {
     container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         val outputDir
         val hisat2_prefix_index
         path hisat2_index_files
 
 	output:
-        tuple val(sample_id), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
 	
     script:
     """
@@ -68,13 +68,13 @@ process MINIMAP2 {
     container 'community.wave.seqera.io/library/minimap2:2.30--dde6b0c5fbc82ebd'
 
 	input:
-        tuple val(sample_id), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
         path reference_genome_index
         val outputDir
         val preset
 
 	output:
-        tuple val(sample_id), path("${sample_id}_Aligned.sam"), emit: alignment_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.sam"), emit: alignment_output
 	
     script:
     """

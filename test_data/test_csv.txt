@@ -1,3 +1,7 @@
-sample_id,fastq_1,fastq_2
-CAM_1,./test_data/SRR35144015_1.fastq,./test_data/SRR35144015_2.fastq
-CAM_2,./test_data/SRR35144016_1.fastq,./test_data/SRR35144016_2.fastq
+sample_id,sample_group,fastq_1,fastq_2
+CAM_1,CAM,./test_data/SRR35144015_1.fastq,./test_data/SRR35144015_2.fastq
+CAM_2,CAM,./test_data/SRR35144016_1.fastq,./test_data/SRR35144016_2.fastq
+REM_1,REM,./test_data/SRR35144017_1.fastq,./test_data/SRR35144017_2.fastq
+REM_2,REM,./test_data/SRR35144018_1.fastq,./test_data/SRR35144018_2.fastq
+TIM_1,TIM,./test_data/SRR35144019_1.fastq,./test_data/SRR35144019_2.fastq
+TIM_2,TIM,./test_data/SRR35144020_1.fastq,./test_data/SRR35144020_2.fastq
