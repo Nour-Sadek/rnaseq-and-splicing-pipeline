@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /* Input csv file */
-params.csv_reads = './test_data/test_csv.txt'
+params.csv_reads = './test_data_big/test_csv.txt'
 
 /* Output Directory */
 // If user doesn't specify an output directory, let results be the default output directory
@@ -36,7 +36,7 @@ params.quality = 20
 params.stringency = 1
 
 /* STAR parameters */
-params.overhang = 40
+params.overhang = 101
 params.genomeSAindexNbases = 12
 params.filterMatch = 0.66
 
@@ -52,33 +52,43 @@ params.num_bootstrap_samples = 0
 /* RSEM parameters */
 params.rsem_index_prefix = 'rsem_reference'
 
+/* General Splicing parameters */
+params.individualSplicingAnalysis = true
+params.differentialSplicingAnalysis = true
+
+/* rMats parameters */
+params.read_length = 100
+
+
 /* Default Parameters */
 // If the user specifies a different parameter, it will be what the user specifies; these defaults only apply 
 // if the user doesn't specify a value to the paramaters
 params.genomeFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.genomic.fa'
 params.transcriptFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.mRNA_transcripts.fa'
 params.annotationsGTFFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.canonical_geneset.gtf'
+params.annotationsGFF3File = './genome_files/genomic.gff'
 params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
 params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
 params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-params.splicingAnalyzer = 'majiq'  // other options are 'rMats', 'suppa2', 'whippet'
+params.splicingAnalyzer = 'rMats'  // other options are 'rMats', 'suppa2', 'whippet', 'majiq'
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
 include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
-include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; HISAT2_IMPROVE_SPLICE_ALIGNMENT; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
-include { STAR; HISAT2 } from './modules/aligning.nf'
+include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; MINIMAP2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
+include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
 
 workflow {
 
     /* Read in the csv file */
-    // Get the information in this format [sample_id, read_1, read_2]
+    // Get the information in this format [sample_id, sample_group, read_1, read_2]
     reads_channel = Channel.fromPath(params.csv_reads)
         .splitCsv(header:true)
-        .map { row -> [row.sample_id, file(row.fastq_1), file(row.fastq_2)] }
+        .map { row -> [row.sample_id, row.sample_group, file(row.fastq_1), file(row.fastq_2)] }
     
     /* Run initial FastQC */
     fastqc_before_dir = outputDir + "/fastqc/before_trimming"
@@ -135,11 +145,8 @@ workflow {
         // Create the reference genome index
         HISAT2_REFERENCE_INDEX(outputDir, params.hisat2_index_prefix, file(params.genomeFastaFile))
 
-        // Extract splice sites and exons for improved splicing alignment
-        HISAT2_IMPROVE_SPLICE_ALIGNMENT(outputDir, file(params.annotationsGTFFile))
-
         // Run the HISAT2 alignment process
-        HISAT2(trimming_output_channel, outputDir, params.hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.splice_sites, HISAT2_IMPROVE_SPLICE_ALIGNMENT.out.exons)
+        HISAT2(trimming_output_channel, outputDir, params.hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files)
 
         // Convert the sam_file to bam_file
         SAM_TO_BAM(outputDir, HISAT2.out.alignment_output)
@@ -162,6 +169,78 @@ workflow {
             // Run the FEATURE_COUNTS reads quantification process
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))
         }
+
+        /* Perform splicing alignment analysis */
+        if (params.splicingAnalyzer == 'majiq') {
+
+            // Build the config file
+            all_sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                    .groupTuple(by: 1)  
+                    .map { samples, group, reads -> tuple(group, reads.simpleName) }.collect(flat: false, sort: true)
+            
+            bam_dirs = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                .groupTuple(by: 1)  
+                .map { samples, group, reads -> tuple(group, reads) }.collect(flat: false, sort: true)
+                .collectMany { it[1] }  // get only the bam paths     
+                .collect { it.parent }  // get the parent work folder for each bam file
+                .unique()
+            
+            MAJIQ_CONFIG(all_sample_bams, bam_dirs, outputDir)
+
+            // Run majiq build
+            MAJIQ_BUILD(MAJIQ_CONFIG.out.config, file(params.annotationsGFF3File), outputDir)
+
+            if (params.individualSplicingAnalysis) {
+
+            }
+
+            if (params.differentialSplicingAnalysis) {
+                
+            }
+
+        } else if (params.splicingAnalyzer == 'rMats') {
+
+            if (params.individualSplicingAnalysis) {
+                // Return a channel where each output is of the format:
+                // [sample_group, [bam_files of replicates]]
+                sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                    .groupTuple(by: 1)  
+                    .map { samples, group, reads -> tuple(group, reads) }
+                
+                // Run splicing analysis on each sample group
+                rMATS_INDIVIDUAL(sample_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
+
+                println SORT_AND_INDEX_BAM.out.indexed_bam_output.view()
+            }
+
+            if (params.differentialSplicingAnalysis) {
+                // Return a channel were each output is of the format:
+                // [[sample_group_1, [sample_group_1's replicates bam_files]], [sample_group_2, [sample_group_2's replicates bam_files]]]
+                grouped_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                    .groupTuple(by: 1, sort: true)  
+                    .map { samples, group, reads -> tuple(group, reads) } // each channel would be in this form [sample_group, [bam_files of replicates]]
+                    .toList()
+                    .flatMap { grouped_list ->
+                        def pairs = []
+                        for (i in 0..<grouped_list.size()) {
+                            for (j in i+1..<grouped_list.size()) {
+                                pairs << [grouped_list[i], grouped_list[j]]
+                            }
+                        }
+                        return pairs
+                    }
+            
+                // Run differential splicing analysis on each possible pair of samples
+                rMATS_DIFFERENTIAL(grouped_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
+            }
+
+
+        } else if (params.splicingAnalyzer == 'suppa2') {
+
+        } else if (params.splicingAnalyzer == 'whippet') {
+
+        }
+
     } else {  // use quantifiers that don't need prior alignment
         if (params.quantifier == 'salmon-quasi-mapping-mode') {
             // Create the reference genome index
