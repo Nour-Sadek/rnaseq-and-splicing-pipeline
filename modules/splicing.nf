@@ -56,3 +56,60 @@ process rMATS_DIFFERENTIAL {
     python /opt/conda/rMATS/rmats.py --b1 b1.txt --b2 b2.txt --gtf $gtf_file --od rmats_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]} --tmp rmats_temp_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]} --readLength $read_length --nthread $task.cpus
     """
 }
+
+/* Preparing the majiq config file */
+process MAJIQ_CONFIG {
+    label 'majiq_config'
+    publishDir "${outputDir}/majiq/build", mode: "copy"
+
+	input:
+        val all_sample_bams
+        val bam_dirs
+        val outputDir
+
+	output:
+        path "config.ini", emit: config
+    
+    script:
+    // Generate the [experiments] part of the config file
+    experiments_lines = all_sample_bams.collect { g ->
+        "${g[0]}=${g[1].join(',')}"
+    }.join("\n")
+
+    """
+    echo "[info]" > config.ini
+    echo "bamdirs=${bam_dirs.join(',')}" >> config.ini
+    echo "genome=cel1\n" >> config.ini
+
+    echo "[experiments]" >> config.ini
+    echo "${experiments_lines}" >> config.ini
+    """
+}
+
+/* Outlining the MAJIQ build process */
+process MAJIQ_BUILD {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'majiq_build'
+    publishDir "${outputDir}/majiq/build", mode: "copy"
+
+    container 'mcfonsecalab/majiq'
+
+	input:
+        //tuple all_bam_files
+        //tuple all_bam_bai_files
+        path config
+        path gff_file
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    """
+    majiq build -c $config $gff_file -o .
+    """
+}
+
+
