@@ -97,8 +97,6 @@ process MAJIQ_BUILD {
     container 'mcfonsecalab/majiq'
 
 	input:
-        //tuple all_bam_files
-        //tuple all_bam_bai_files
         path config
         path gff_file
         val outputDir
@@ -112,4 +110,29 @@ process MAJIQ_BUILD {
     """
 }
 
+/* Outlining the MAJIQ psi splicing process */
+process MAJIQ_PSI {
+    memory '7.6 GB'
+    cpus 2
 
+    label 'majiq_psi'
+    tag "${sample_group}"
+    publishDir "${outputDir}/majiq/majiq_psi/${sample_group}_psi", mode: "copy"
+
+    container 'mcfonsecalab/majiq'
+
+	input:
+        tuple val(sample_group), val(file_names)  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted]
+        path build  // this folder contains the majiq files for the samples
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    majiq_file_names = file_names.collect { it + '.majiq' }.join(' ')
+    """
+    echo $majiq_file_names
+    majiq psi $majiq_file_names -o . -n ${sample_group}_psi
+    """
+}
