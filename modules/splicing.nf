@@ -9,7 +9,7 @@ process rMATS_INDIVIDUAL {
     tag "${sample_bams[0]}"
     publishDir "${outputDir}/rMats/individual_analysis", mode: "copy"
 
-    container 'community.wave.seqera.io/library/rmats:4.3.0--177f3a2035a879e5'
+    container 'mcfonsecalab/rmats'
 
 	input:
         val sample_bams
@@ -24,7 +24,7 @@ process rMATS_INDIVIDUAL {
     script:
     """
     echo "${sample_bams[1].join(',')}" > b1.txt
-    python /opt/conda/rMATS/rmats.py --b1 b1.txt --gtf $gtf_file --od rmats_${sample_bams[0]} --tmp rmats_temp_${sample_bams[0]} --readLength $read_length --nthread $task.cpus
+    python /rmats-turbo/rmats.py --b1 b1.txt --gtf $gtf_file --od rmats_${sample_bams[0]} --tmp rmats_temp_${sample_bams[0]} --readLength $read_length --nthread $task.cpus
     """
 }
 
@@ -34,26 +34,26 @@ process rMATS_DIFFERENTIAL {
     cpus 2
     
     label 'rMats_differential'
-    tag "${grouped_bams[0][0]}_vs_${grouped_bams[1][0]}"
+    tag "${sample_group_1}_v_${sample_group_2}"
     publishDir "${outputDir}/rMats/differential_analysis", mode: "copy"
 
-    container 'community.wave.seqera.io/library/rmats:4.3.0--177f3a2035a879e5'
+    container 'mcfonsecalab/rmats'
 
 	input:
-        val grouped_bams
+        tuple val(sample_group_1), val(bam_files_1), val(sample_group_2), val(bam_files_2)
         val read_length
         path gtf_file
         val outputDir
 
 	output:
-        path "rmats_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]}"
-        path "rmats_temp_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]}"
+        path "rmats_${sample_group_1}_vs_${sample_group_2}"
+        path "rmats_temp_${sample_group_1}_vs_${sample_group_2}"
 
     script:
     """
-    echo "${grouped_bams[0][1].join(',')}" > b1.txt
-    echo "${grouped_bams[1][1].join(',')}" > b2.txt
-    python /opt/conda/rMATS/rmats.py --b1 b1.txt --b2 b2.txt --gtf $gtf_file --od rmats_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]} --tmp rmats_temp_${grouped_bams[0][0]}_vs_${grouped_bams[1][0]} --readLength $read_length --nthread $task.cpus
+    echo "${bam_files_1.join(',')}" > b1.txt
+    echo "${bam_files_2.join(',')}" > b2.txt
+    python /rmats-turbo/rmats.py --b1 b1.txt --b2 b2.txt --gtf $gtf_file --od rmats_${sample_group_1}_vs_${sample_group_2} --tmp rmats_temp_${sample_group_1}_vs_${sample_group_2} --readLength $read_length --nthread $task.cpus
     """
 }
 
@@ -127,12 +127,42 @@ process MAJIQ_PSI {
         val outputDir
 
 	output:
-        path "*"
+        path "${sample_group}.psi.tsv"
+        path "${sample_group}.psi.voila"
+        path "psi_majiq.log"
     
     script:
     majiq_file_names = file_names.collect { it + '.majiq' }.join(' ')
     """
-    echo $majiq_file_names
-    majiq psi $majiq_file_names -o . -n ${sample_group}_psi
+    majiq psi $majiq_file_names -o . -n ${sample_group} -j $task.cpus
+    """
+}
+
+/* Outlining the MAJIQ delta-psi splicing process */
+process MAJIQ_DELTA_PSI {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'majiq_delta_psi'
+    tag "${sample_group_1}_v_${sample_group_2}"
+    publishDir "${outputDir}/majiq/majiq_delta_psi/${sample_group_1}_v_${sample_group_2}", mode: "copy"
+
+    container 'mcfonsecalab/majiq'
+
+	input:
+        tuple val(sample_group_1), val(file_names_1), val(sample_group_2), val(file_names_2)  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]
+        path build  // this folder contains the majiq files for the samples
+        val outputDir
+
+	output:
+        path "${sample_group_1}-${sample_group_2}.deltapsi.tsv"
+        path "${sample_group_1}-${sample_group_2}.deltapsi.voila"
+        path "deltapsi_majiq.log"
+    
+    script:
+    majiq_file_names_1 = file_names_1.collect { it + '.majiq' }.join(' ')
+    majiq_file_names_2 = file_names_2.collect { it + '.majiq' }.join(' ')
+    """
+    majiq deltapsi -grp1 $majiq_file_names_1 -grp2 $majiq_file_names_2 -o . -n $sample_group_1 $sample_group_2 -j $task.cpus
     """
 }

@@ -38,7 +38,7 @@ params.stringency = 1
 /* STAR parameters */
 params.overhang = 101
 params.genomeSAindexNbases = 12
-params.filterMatch = 0.66
+params.filterMatch = 0.3
 
 /* HISAT2 parameters */
 params.hisat2_index_prefix = 'genome'
@@ -63,14 +63,14 @@ params.read_length = 100
 /* Default Parameters */
 // If the user specifies a different parameter, it will be what the user specifies; these defaults only apply 
 // if the user doesn't specify a value to the paramaters
-params.genomeFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.genomic.fa'
-params.transcriptFastaFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.mRNA_transcripts.fa'
-params.annotationsGTFFile = './genome_files/caenorhabditis_elegans.PRJNA13758.WBPS19.canonical_geneset.gtf'
+params.genomeFastaFile = './genome_files/GCF_000002985.6_WBcel235_genomic.fna'
+params.transcriptFastaFile = './genome_files/rna.fna'
+params.annotationsGTFFile = './genome_files/genomic.gtf'
 params.annotationsGFF3File = './genome_files/genomic.gff'
 params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
 params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
 params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-params.splicingAnalyzer = 'rMats'  // other options are 'rMats', 'suppa2', 'whippet', 'majiq'
+params.splicingAnalyzer = 'majiq'  // other options are 'rMats', 'suppa2', 'whippet', 'majiq'
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
 
 workflow {
 
@@ -172,7 +172,7 @@ workflow {
 
         /* Perform splicing alignment analysis */
         if (params.splicingAnalyzer == 'majiq') {
-
+            
             // Build the config file
             all_sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1)  
@@ -191,11 +191,34 @@ workflow {
             MAJIQ_BUILD(MAJIQ_CONFIG.out.config, file(params.annotationsGFF3File), outputDir)
 
             if (params.individualSplicingAnalysis) {
-
+                // Create a channel that would return values such as [sample_group, [files names of replicates]]
+                groups_file_names = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                    .groupTuple(by: 1)  
+                    .map { samples, group, reads -> tuple(group, reads.simpleName) }
+                
+                // Run majiq psi
+                MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out, outputDir)
             }
 
             if (params.differentialSplicingAnalysis) {
+                // Return a channel were each output is of the format:
+                // [sample_group_1, [sample_group_1's replicates file names], sample_group_2, [sample_group_2's replicates file names]]
+                grouped_files_pairs = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                    .groupTuple(by: 1, sort: true)  
+                    .map { samples, group, reads -> tuple(group, reads.simpleName) }
+                    .toList()
+                    .flatMap { grouped_list ->
+                        def pairs = []
+                        for (i in 0..<grouped_list.size()) {
+                            for (j in i+1..<grouped_list.size()) {
+                                pairs << [grouped_list[i][0], grouped_list[i][1], grouped_list[j][0], grouped_list[j][1]]
+                            }
+                        }
+                        return pairs
+                    }
                 
+                // Run differential splicing analysis on each possible pair of samples
+                MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out, outputDir)
             }
 
         } else if (params.splicingAnalyzer == 'rMats') {
@@ -209,14 +232,12 @@ workflow {
                 
                 // Run splicing analysis on each sample group
                 rMATS_INDIVIDUAL(sample_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
-
-                println SORT_AND_INDEX_BAM.out.indexed_bam_output.view()
             }
 
             if (params.differentialSplicingAnalysis) {
                 // Return a channel were each output is of the format:
                 // [[sample_group_1, [sample_group_1's replicates bam_files]], [sample_group_2, [sample_group_2's replicates bam_files]]]
-                grouped_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
+                grouped_bams_pairs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1, sort: true)  
                     .map { samples, group, reads -> tuple(group, reads) } // each channel would be in this form [sample_group, [bam_files of replicates]]
                     .toList()
@@ -224,14 +245,14 @@ workflow {
                         def pairs = []
                         for (i in 0..<grouped_list.size()) {
                             for (j in i+1..<grouped_list.size()) {
-                                pairs << [grouped_list[i], grouped_list[j]]
+                                pairs << [grouped_list[i][0], grouped_list[i][1], grouped_list[j][0], grouped_list[j][1]]
                             }
                         }
                         return pairs
                     }
             
                 // Run differential splicing analysis on each possible pair of samples
-                rMATS_DIFFERENTIAL(grouped_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
+                rMATS_DIFFERENTIAL(grouped_bams_pairs, params.read_length, file(params.annotationsGTFFile), outputDir)
             }
 
 
