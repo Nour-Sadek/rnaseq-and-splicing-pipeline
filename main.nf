@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
 
 workflow {
 
@@ -176,11 +176,11 @@ workflow {
             // Build the config file
             all_sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1)  
-                    .map { samples, group, reads -> tuple(group, reads.simpleName) }.collect(flat: false, sort: true)
+                    .map { samples, group, reads -> [group, reads.simpleName] }.collect(flat: false, sort: true)
             
             bam_dirs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                 .groupTuple(by: 1)  
-                .map { samples, group, reads -> tuple(group, reads) }.collect(flat: false, sort: true)
+                .map { samples, group, reads -> [group, reads] }.collect(flat: false, sort: true)
                 .collectMany { it[1] }  // get only the bam paths     
                 .collect { it.parent }  // get the parent work folder for each bam file
                 .unique()
@@ -198,6 +198,12 @@ workflow {
                 
                 // Run majiq psi
                 MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out, outputDir)
+
+                // Get the work folder for the psi files
+                majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_psi_files.map { it.parent }.first()
+
+                // Run voila psi
+                VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out, outputDir)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -205,7 +211,7 @@ workflow {
                 // [sample_group_1, [sample_group_1's replicates file names], sample_group_2, [sample_group_2's replicates file names]]
                 grouped_files_pairs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1, sort: true)  
-                    .map { samples, group, reads -> tuple(group, reads.simpleName) }
+                    .map { samples, group, reads -> [group, reads.simpleName] }
                     .toList()
                     .flatMap { grouped_list ->
                         def pairs = []
@@ -228,7 +234,7 @@ workflow {
                 // [sample_group, [bam_files of replicates]]
                 sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1)  
-                    .map { samples, group, reads -> tuple(group, reads) }
+                    .map { samples, group, reads -> [group, reads] }
                 
                 // Run splicing analysis on each sample group
                 rMATS_INDIVIDUAL(sample_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
@@ -239,7 +245,7 @@ workflow {
                 // [[sample_group_1, [sample_group_1's replicates bam_files]], [sample_group_2, [sample_group_2's replicates bam_files]]]
                 grouped_bams_pairs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1, sort: true)  
-                    .map { samples, group, reads -> tuple(group, reads) } // each channel would be in this form [sample_group, [bam_files of replicates]]
+                    .map { samples, group, reads -> [group, reads] } // each channel would be in this form [sample_group, [bam_files of replicates]]
                     .toList()
                     .flatMap { grouped_list ->
                         def pairs = []

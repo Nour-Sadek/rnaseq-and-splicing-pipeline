@@ -116,25 +116,24 @@ process MAJIQ_PSI {
     cpus 2
 
     label 'majiq_psi'
-    tag "${sample_group}"
-    publishDir "${outputDir}/majiq/majiq_psi/${sample_group}_psi", mode: "copy"
+    tag "${grouped_file_names[0]}"
+    publishDir "${outputDir}/majiq/majiq_psi/${grouped_file_names[0]}_psi", mode: "copy"
 
     container 'mcfonsecalab/majiq'
 
 	input:
-        tuple val(sample_group), val(file_names)  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted]
+        val grouped_file_names  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted]
         path build  // this folder contains the majiq files for the samples
         val outputDir
 
 	output:
-        path "${sample_group}.psi.tsv"
-        path "${sample_group}.psi.voila"
-        path "psi_majiq.log"
+        val "${grouped_file_names[0]}", emit: sample_group
+        tuple path("${grouped_file_names[0]}.psi.tsv"), path("${grouped_file_names[0]}.psi.voila"), path("psi_majiq.log"), emit: majiq_psi_files
     
     script:
-    majiq_file_names = file_names.collect { it + '.majiq' }.join(' ')
+    majiq_file_names = grouped_file_names[1].collect { it + '.majiq' }.join(' ')
     """
-    majiq psi $majiq_file_names -o . -n ${sample_group} -j $task.cpus
+    majiq psi $majiq_file_names -o . -n ${grouped_file_names[0]} -j $task.cpus
     """
 }
 
@@ -144,25 +143,51 @@ process MAJIQ_DELTA_PSI {
     cpus 2
 
     label 'majiq_delta_psi'
-    tag "${sample_group_1}_v_${sample_group_2}"
-    publishDir "${outputDir}/majiq/majiq_delta_psi/${sample_group_1}_v_${sample_group_2}", mode: "copy"
+    tag "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}"
+    publishDir "${outputDir}/majiq/majiq_delta_psi/${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", mode: "copy"
 
     container 'mcfonsecalab/majiq'
 
 	input:
-        tuple val(sample_group_1), val(file_names_1), val(sample_group_2), val(file_names_2)  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]
+        val grouped_files_pairs  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]
         path build  // this folder contains the majiq files for the samples
         val outputDir
 
 	output:
-        path "${sample_group_1}-${sample_group_2}.deltapsi.tsv"
-        path "${sample_group_1}-${sample_group_2}.deltapsi.voila"
+        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.tsv"
+        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.voila"
         path "deltapsi_majiq.log"
     
     script:
-    majiq_file_names_1 = file_names_1.collect { it + '.majiq' }.join(' ')
-    majiq_file_names_2 = file_names_2.collect { it + '.majiq' }.join(' ')
+    majiq_file_names_1 = grouped_files_pairs[1].collect { it + '.majiq' }.join(' ')
+    majiq_file_names_2 = grouped_files_pairs[3].collect { it + '.majiq' }.join(' ')
     """
-    majiq deltapsi -grp1 $majiq_file_names_1 -grp2 $majiq_file_names_2 -o . -n $sample_group_1 $sample_group_2 -j $task.cpus
+    majiq deltapsi -grp1 $majiq_file_names_1 -grp2 $majiq_file_names_2 -o . -n ${grouped_files_pairs[0]} ${grouped_files_pairs[2]} -j $task.cpus
+    """
+}
+
+/* Outlining the VOILA psi process */
+process VOILA_PSI {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'voila_psi'
+    tag "${sample_group}"
+    publishDir "${outputDir}/voila/voila_psi/${sample_group}_psi", mode: "copy"
+
+    container 'mcfonsecalab/majiq'
+
+	input:
+        val sample_group
+        path majiq_psi_files_parent
+        path build
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    """
+    voila modulize -d . splicegraph.sql $majiq_psi_files_parent -j $task.cpus
     """
 }
