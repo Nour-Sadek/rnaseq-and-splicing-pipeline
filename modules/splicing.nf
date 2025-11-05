@@ -102,7 +102,10 @@ process MAJIQ_BUILD {
         val outputDir
 
 	output:
-        path "*"
+        path "*.majiq", emit: samples_splice_graphs
+        path "*.sj", emit: samples_splice_junctions
+        path "majiq.log", emit: majiq_log_file
+        path "splicegraph.sql", emit: splicegraph_file
     
     script:
     """
@@ -128,7 +131,9 @@ process MAJIQ_PSI {
 
 	output:
         val "${grouped_file_names[0]}", emit: sample_group
-        tuple path("${grouped_file_names[0]}.psi.tsv"), path("${grouped_file_names[0]}.psi.voila"), path("psi_majiq.log"), emit: majiq_psi_files
+        path "${grouped_file_names[0]}.psi.tsv", emit: majiq_tsv_file
+        path "${grouped_file_names[0]}.psi.voila", emit: majiq_voila_file
+        path "psi_majiq.log", emit: majiq_log_file
     
     script:
     majiq_file_names = grouped_file_names[1].collect { it + '.majiq' }.join(' ')
@@ -150,7 +155,7 @@ process MAJIQ_DELTA_PSI {
 
 	input:
         val grouped_files_pairs  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]
-        path build  // this folder contains the majiq files for the samples
+        path samples_splice_graphs  // this folder contains the majiq files for the samples
         val outputDir
 
 	output:
@@ -180,7 +185,7 @@ process VOILA_PSI {
 	input:
         val sample_group
         path majiq_psi_files_parent
-        path build
+        path splicegraph_file
         val outputDir
 
 	output:
@@ -188,6 +193,6 @@ process VOILA_PSI {
     
     script:
     """
-    voila modulize -d . splicegraph.sql $majiq_psi_files_parent -j $task.cpus
+    voila modulize -d . $splicegraph_file $majiq_psi_files_parent -j $task.cpus
     """
 }

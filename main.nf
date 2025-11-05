@@ -197,13 +197,13 @@ workflow {
                     .map { samples, group, reads -> tuple(group, reads.simpleName) }
                 
                 // Run majiq psi
-                MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out, outputDir)
+                MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
 
                 // Get the work folder for the psi files
-                majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_psi_files.map { it.parent }.first()
+                majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_tsv_file.map { it.parent }.view()
 
                 // Run voila psi
-                VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out, outputDir)
+                VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -224,7 +224,7 @@ workflow {
                     }
                 
                 // Run differential splicing analysis on each possible pair of samples
-                MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out, outputDir)
+                MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
             }
 
         } else if (params.splicingAnalyzer == 'rMats') {
