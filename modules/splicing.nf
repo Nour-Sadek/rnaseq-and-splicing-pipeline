@@ -159,9 +159,10 @@ process MAJIQ_DELTA_PSI {
         val outputDir
 
 	output:
-        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.tsv"
-        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.voila"
-        path "deltapsi_majiq.log"
+        val "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", emit: paired_samples_name
+        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.tsv", emit: majiq_tsv_file
+        path "${grouped_files_pairs[0]}-${grouped_files_pairs[2]}.deltapsi.voila", emit: majiq_voila_file
+        path "deltapsi_majiq.log", emit: majiq_log_file
     
     script:
     majiq_file_names_1 = grouped_files_pairs[1].collect { it + '.majiq' }.join(' ')
@@ -194,5 +195,31 @@ process VOILA_PSI {
     script:
     """
     voila modulize -d . $splicegraph_file $majiq_psi_files_parent -j $task.cpus
+    """
+}
+
+/* Outlining the VOILA delta psi process */
+process VOILA_DELTA_PSI {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'voila_delta_psi'
+    tag "${paired_samples_name}"
+    publishDir "${outputDir}/voila/voila_delta_psi/${paired_samples_name}", mode: "copy"
+
+    container 'mcfonsecalab/majiq'
+
+	input:
+        val paired_samples_name
+        path majiq_delta_psi_files_parent
+        path splicegraph_file
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    """
+    voila modulize -d . $splicegraph_file $majiq_delta_psi_files_parent -j $task.cpus
     """
 }

@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
 
 workflow {
 
@@ -200,9 +200,9 @@ workflow {
                 MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
 
                 // Get the work folder for the psi files
-                majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_tsv_file.map { it.parent }.view()
+                majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_tsv_file.map { it.parent }
 
-                // Run voila psi
+                // Run voila modulize psi
                 VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
             }
 
@@ -225,6 +225,12 @@ workflow {
                 
                 // Run differential splicing analysis on each possible pair of samples
                 MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
+
+                // Get the work folder for the delta psi files
+                majiq_delta_psi_parent_folder = MAJIQ_DELTA_PSI.out.majiq_tsv_file.map { it.parent }
+
+                // Run voila modulize delta psi
+                VOILA_DELTA_PSI(MAJIQ_DELTA_PSI.out.paired_samples_name, majiq_delta_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
             }
 
         } else if (params.splicingAnalyzer == 'rMats') {
