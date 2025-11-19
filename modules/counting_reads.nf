@@ -71,7 +71,7 @@ process SALMON_ALIGNMENT_MODE {
 process SALMON_QUASI_MAPPING_MODE {
     label 'salmon_quasi_mapping_mode_counts'
     tag "$sample_id"
-    publishDir "${outputDir}/salmon/salmon_quasi_mapping_mode_counts/${sample_id}", mode: "copy"
+    publishDir "${outputDir}/salmon/salmon_quasi_mapping_mode_counts", mode: "copy"
 
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
 
@@ -81,11 +81,17 @@ process SALMON_QUASI_MAPPING_MODE {
         path reference_index
 
 	output:
-		path "*"
+        tuple val(sample_id), val(sample_group), path("${sample_id}/quant.sf"), emit: quants_file
+        path "${sample_id}/aux_info", emit: aux_info
+        path "${sample_id}/libParams", emit: lib_params
+        path "${sample_id}/logs", emit: logs
+        path "${sample_id}/cmd_info.json", emit: cmd_info
+        path "${sample_id}/lib_format_counts.json", emit: lib_format_counts
 	
     script:
     """
-    salmon quant -i $reference_index -l A -1 $read_1 -2 $read_2 -p $task.cpus --validateMappings --gcBias -o .
+    mkdir $sample_id
+    salmon quant -i $reference_index -l A -1 $read_1 -2 $read_2 -p $task.cpus --validateMappings --gcBias -o $sample_id
     """
 }
 
