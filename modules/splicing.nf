@@ -258,6 +258,7 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
         val sample_ids_list  // e.g. ["AIY_1", "AIY_2"]
         val quants_files_list  // e.g. ["/path/to/quant.sf", "/path/to/another/quant.sf"]
         path all_ioe_events_file
+        val tpm_column
         val outputDir
 
 	output:
@@ -268,13 +269,13 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
     quant_files = quants_files_list.join(' ')
     """
     # Extract the TPM values from the 4th column of the salmon output
-    python /SUPPA-2.3/multipleFieldSelection.py -i $quant_files -k 1 -f 4 -o samples_tpm.txt
+    python /SUPPA-2.3/multipleFieldSelection.py -i $quant_files -k 1 -f $tpm_column -o samples_tpm.txt
     # Get the psi values
     python /SUPPA-2.3/suppa.py psiPerEvent -i $all_ioe_events_file -e samples_tpm.txt -o all_samples
     """
 }
 
-/* Outlining the SUPPA2 splitting files before doing deifferential splicing analysis process */
+/* Outlining the SUPPA2 splitting files before doing differential splicing analysis process */
 process SUPPA2_SPLIT_FILES {
 
     label 'suppa2_split_files'

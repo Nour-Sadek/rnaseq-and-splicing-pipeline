@@ -2,7 +2,7 @@
 
 /* Outlining the STAR alignment process */
 process STAR {
-    memory '7 GB'
+    memory '12 GB'
     cpus 2
 
     label 'star'

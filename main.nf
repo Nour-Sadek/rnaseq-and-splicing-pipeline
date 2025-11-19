@@ -278,12 +278,18 @@ workflow {
 
             // Run the SALMON_QUASSI_MAPPING_MODE reads quantification process
             SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, SALMON_REFERENCE_INDEX.out.reference_index)
+            tpm_column = 4
+            
+            quantifier_output_channel = SALMON_QUASI_MAPPING_MODE.out.quants_file
         } else if (params.quantifier == 'kallisto') {
             // Create the reference genome index
             KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
 
             // Run the KALLISTO reads quantification process
             KALLISTO(trimming_output_channel, outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, params.num_bootstrap_samples)
+            tpm_column = 5
+
+            quantifier_output_channel = KALLISTO.out.quants_file
         } else if (params.quantifier == 'rsem') {
             // Create the reference genome index
             RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile))
@@ -297,16 +303,16 @@ workflow {
             SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
-                all_salmon_samples = SALMON_QUASI_MAPPING_MODE.out.quants_file.collect(flat: false)
+                all_salmon_samples = quantifier_output_channel.collect(flat: false)
                 all_sample_ids = all_salmon_samples.map { it*.get(0) }
                 all_sample_quants = all_salmon_samples.map { it*.get(2) }
 
-                SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
+                SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, tpm_column, outputDir)
             }
 
             if (params.differentialSplicingAnalysis) {
                 // Create a channel that would return values such as [sample_group, [files names of replicates]]
-                groups_file_names_quant = SALMON_QUASI_MAPPING_MODE.out.quants_file
+                groups_file_names_quant = quantifier_output_channel
                     .groupTuple(by: 1)  
                     .map { sample_id, group, quant -> tuple(group, sample_id) }
                 

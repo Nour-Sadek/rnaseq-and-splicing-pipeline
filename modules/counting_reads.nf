@@ -99,7 +99,7 @@ process SALMON_QUASI_MAPPING_MODE {
 process KALLISTO {
     label 'kallisto'
     tag "$sample_id"
-    publishDir "${outputDir}/kallisto/counts/${sample_id}", mode: "copy"
+    publishDir "${outputDir}/kallisto/counts", mode: "copy"
 
     container 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'
 
@@ -110,13 +110,13 @@ process KALLISTO {
         val num_bootstrap_samples
 
 	output:
-        path "abundance.h5"
-        path "abundance.tsv"
-        path "run_info.json"
+        tuple val(sample_id), val(sample_group), path("${sample_id}/abundance.tsv"), emit: quants_file
+        path "${sample_id}/abundance.h5", emit: h5_file
+        path "${sample_id}/run_info.json", emit: run_info
 	
     script:
     """
-    kallisto quant -i $reference_index -o . -t $task.cpus -b $num_bootstrap_samples $read_1 $read_2
+    kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples $read_1 $read_2
     """
 }
 
@@ -135,11 +135,11 @@ process RSEM {
         path rsem_index_files
 
 	output:
-		path "${sample_id}.stat"
-        path "${sample_id}.genes.results"
-        path "${sample_id}.isoforms.results"
-        path "${sample_id}.log"
-        path "${sample_id}.transcript.bam"
+		path "${sample_id}.stat", emit: stats_file
+        path "${sample_id}.genes.results", emit: genes_results
+        path "${sample_id}.isoforms.results", emit: isoforms_results
+        path "${sample_id}.log", emit: log_file
+        path "${sample_id}.transcript.bam", emit: transcript_bam_file
 	
     script:
     """
