@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI } from './modules/splicing.nf'
 
 workflow {
 
@@ -267,9 +267,6 @@ workflow {
                 rMATS_DIFFERENTIAL(grouped_bams_pairs, params.read_length, file(params.annotationsGTFFile), outputDir)
             }
 
-
-        } else if (params.splicingAnalyzer == 'suppa2') {
-
         } else if (params.splicingAnalyzer == 'whippet') {
 
         }
@@ -293,6 +290,48 @@ workflow {
 
             // Run the RSEM alignment and quantification process
             RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
+        }
+
+        if (params.splicingAnalyzer == 'suppa2') {
+            // Generate the event annotations (ioe) file
+            SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
+
+            if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
+                all_salmon_samples = SALMON_QUASI_MAPPING_MODE.out.quants_file.collect(flat: false)
+                all_sample_ids = all_salmon_samples.map { it*.get(0) }
+                all_sample_quants = all_salmon_samples.map { it*.get(2) }
+
+                SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
+            }
+
+            if (params.differentialSplicingAnalysis) {
+                // Create a channel that would return values such as [sample_group, [files names of replicates]]
+                groups_file_names_quant = SALMON_QUASI_MAPPING_MODE.out.quants_file
+                    .groupTuple(by: 1)  
+                    .map { sample_id, group, quant -> tuple(group, sample_id) }
+                
+                // Seperate the psi and TPM files for the conditions
+                r_file = file("./modules/split_file.R")
+                SUPPA2_SPLIT_FILES(r_file, groups_file_names_quant, SUPPA2_CALCULATE_EVENTS_PSI.out.tpm_file, SUPPA2_CALCULATE_EVENTS_PSI.out.psi_file, outputDir)
+
+                // Return a channel were each output is of the format:
+                // [sample_group_1, sample_group_1_psi_file, sample_group_1_tpm_file, sample_group_2, sample_group_2_psi_file, sample_group_2_tpm_file]
+                all_suppa2_files = SUPPA2_SPLIT_FILES.out.individual_sample_files.collect(flat: false)
+                paired_suppa2 = all_suppa2_files
+                    .flatMap { grouped_list ->
+                        def pairs = []
+                        for (i in 0..<grouped_list.size()) {
+                            for (j in i+1..<grouped_list.size()) {
+                                pairs << [grouped_list[i][0], grouped_list[i][1], grouped_list[i][2], grouped_list[j][0], grouped_list[j][1], grouped_list[j][2]]
+                            }
+                        }
+                        return pairs
+                    }
+                
+                // Perform differential splicing analysis
+                SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
+                
+            }
         }
     }
     
