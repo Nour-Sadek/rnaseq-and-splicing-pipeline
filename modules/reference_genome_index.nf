@@ -90,6 +90,9 @@ process KALLISTO_REFERENCE_INDEX {
 
 /* Outlining the RSEM process of creating a reference genome index */
 process RSEM_REFERENCE_INDEX {
+    memory '12 GB'
+    cpus 2
+
     label 'rsem_reference_index'
     publishDir "${outputDir}/rsem/reference_index", mode: "copy"
 
@@ -100,15 +103,17 @@ process RSEM_REFERENCE_INDEX {
         val rsem_index_prefix
         path genome_fasta_files
         path gtf_file
+        val overhang
+        val genomeSAindexNbases
 
 	output:
-        val outputDir, emit: outputDir
-        path "*", emit: rsem_index_files
-        val "$rsem_index_prefix", emit: rsem_index_prefix
+        path reference_index, emit: rsem_index_files
 	
     script:
     """
-    rsem-prepare-reference -gtf $gtf_file --star --star-sjdboverhang 40 $genome_fasta_files $rsem_index_prefix
+    mkdir reference_index
+    rsem-prepare-reference -gtf $gtf_file $genome_fasta_files reference_index/$rsem_index_prefix
+    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir reference_index --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file --sjdbOverhang $overhang --genomeSAindexNbases $genomeSAindexNbases
     """
 }
 

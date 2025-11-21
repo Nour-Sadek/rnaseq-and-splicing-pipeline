@@ -122,6 +122,9 @@ process KALLISTO {
 
 /* Outlining the RSEM alignment and reads quantification process */
 process RSEM {
+    memory '12 GB'
+    cpus 2
+
     label 'rsem'
     tag "$sample_id"
     publishDir "${outputDir}/rsem/counts/${sample_id}", mode: "copy"
@@ -143,6 +146,6 @@ process RSEM {
 	
     script:
     """
-    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 $rsem_index_prefix $sample_id
+    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 reference_index/$rsem_index_prefix $sample_id
     """
 }
