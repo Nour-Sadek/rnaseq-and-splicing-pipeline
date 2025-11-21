@@ -327,3 +327,77 @@ process SUPPA2_CALCULATE_EVENTS_DELTA_PSI {
     python /SUPPA-2.3/suppa.py diffSplice -m empirical -gc -i $all_ioe_events_file -p ${paired_files[1]} ${paired_files[4]} -e ${paired_files[2]} ${paired_files[5]} -o ${paired_files[0]}_v_${paired_files[3]}_diffsplice
     """
 }
+
+/* Outlining the WHIPPET creating index process */
+process WHIPPET_INDEX {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'whippet_index'
+    publishDir "${outputDir}/whippet/index", mode: "copy"
+
+    container 'naotokubota/whippet:1.6.1'
+
+	input:
+        path genome_fasta_file
+        path gtf_file
+        val outputDir
+
+	output:
+        path "whippet_index.exons.tab.gz", emit: exons
+        path "whippet_index.jls", emit: whippet_index
+    
+    script:
+    """
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-index.jl --fasta $genome_fasta_file --gtf $gtf_file --index whippet_index
+    """
+}
+
+/* Outlining the WHIPPET quantifying FASTQ file process */
+process WHIPPET_QUANT {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'whippet_quant'
+    publishDir "${outputDir}/whippet/quant", mode: "copy"
+
+    container 'naotokubota/whippet:1.6.1'
+
+	input:
+        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        path whippet_index
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    """
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl $read_1 $read_2 -x $whippet_index -o .
+    """
+}
+
+/* Outlining the WHIPPET delta psi process */
+process WHIPPET_DELTA {
+    memory '7.6 GB'
+    cpus 2
+
+    label 'whippet_delta'
+    publishDir "${outputDir}/whippet/delta_psi", mode: "copy"
+
+    container 'naotokubota/whippet:1.6.1'
+
+	input:
+        val grouped_files_pairs
+        val outputDir
+
+	output:
+        path "*"
+    
+    script:
+    group_one = grouped_files_pairs[1].join(',')
+    group_two = grouped_files_pairs[3].join(',')
+    """
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-delta.jl -a $group_one -b $group_two
+    """
+}

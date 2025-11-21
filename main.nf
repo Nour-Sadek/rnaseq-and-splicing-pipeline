@@ -63,10 +63,10 @@ params.read_length = 100
 /* Default Parameters */
 // If the user specifies a different parameter, it will be what the user specifies; these defaults only apply 
 // if the user doesn't specify a value to the paramaters
-params.genomeFastaFile = './genome_files/GCF_000002985.6_WBcel235_genomic.fna'
-params.transcriptFastaFile = './genome_files/rna.fna'
-params.annotationsGTFFile = './genome_files/genomic.gtf'
-params.annotationsGFF3File = './genome_files/genomic.gff'
+params.genomeFastaFile = './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
+params.transcriptFastaFile = './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
+params.annotationsGTFFile = './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
+params.annotationsGFF3File = './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
 params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
 params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI; WHIPPET_INDEX; WHIPPET_QUANT } from './modules/splicing.nf'
 
 workflow {
 
@@ -91,8 +91,8 @@ workflow {
         .map { row -> [row.sample_id, row.sample_group, file(row.fastq_1), file(row.fastq_2)] }
     
     /* Run initial FastQC */
-    fastqc_before_dir = outputDir + "/fastqc/before_trimming"
-    FASTQC(reads_channel, fastqc_before_dir)
+    //fastqc_before_dir = outputDir + "/fastqc/before_trimming"
+    //FASTQC(reads_channel, fastqc_before_dir)
 
     /* Trim the reads */
     if (params.trimming == 'trimmomatic') {
@@ -128,8 +128,8 @@ workflow {
     }
 
     /* Run fastqc after trimming */
-    fastqc_after_dir = outputDir + "/fastqc/after_trimming"
-    FASTQCAFTERTRIMMING(trimming_output_channel, fastqc_after_dir)
+    //fastqc_after_dir = outputDir + "/fastqc/after_trimming"
+    //FASTQCAFTERTRIMMING(trimming_output_channel, fastqc_after_dir)
 
     /* Run the Alignment (if needed) */
     if (params.aligner == "star") {
@@ -267,8 +267,6 @@ workflow {
                 rMATS_DIFFERENTIAL(grouped_bams_pairs, params.read_length, file(params.annotationsGTFFile), outputDir)
             }
 
-        } else if (params.splicingAnalyzer == 'whippet') {
-
         }
 
     } else {  // use quantifiers that don't need prior alignment
@@ -337,6 +335,17 @@ workflow {
                 // Perform differential splicing analysis
                 SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
                 
+            }
+        } else if (params.splicingAnalyzer == 'whippet') {
+            // Build the index for Whippet
+            WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir)
+
+            if (params.individualSplicingAnalysis) {
+                WHIPPET_QUANT(trimming_output_channel, WHIPPET_INDEX.out.whippet_index, outputDir)
+            }
+
+            if (params.differentialSplicingAnalysis) {
+                // WHIPPET_DELTA()
             }
         }
     }
