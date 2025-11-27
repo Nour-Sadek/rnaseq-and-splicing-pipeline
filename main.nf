@@ -80,7 +80,7 @@ include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { GFFREAD } from './modules/gff_utilities.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI; WHIPPET_INDEX; WHIPPET_QUANT } from './modules/splicing.nf'
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI; WHIPPET_INDEX; WHIPPET_QUANT; WHIPPET_DELTA } from './modules/splicing.nf'
 
 workflow {
 
@@ -290,7 +290,7 @@ workflow {
             quantifier_output_channel = KALLISTO.out.quants_file
         } else if (params.quantifier == 'rsem') {
             // Create the reference genome index
-            RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile))
+            RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
 
             // Run the RSEM alignment and quantification process
             RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
@@ -340,20 +340,33 @@ workflow {
             // Build the index for Whippet
             WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir)
 
-            if (params.individualSplicingAnalysis) {
+            if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
                 WHIPPET_QUANT(trimming_output_channel, WHIPPET_INDEX.out.whippet_index, outputDir)
             }
 
             if (params.differentialSplicingAnalysis) {
-                // WHIPPET_DELTA()
+                // Get the pairs of psi files between each sample group
+                // The output of the channel would be [group_1, [group_1's replicates psi files], group_2 [group_2's replicates psu files]]
+                grouped_files_pairs = WHIPPET_QUANT.out.sample_psi_file
+                    .groupTuple(by: 1, sort: true)
+                    .map { sample_id, group, psi_file -> [group, psi_file] }
+                    .toList()
+                    .flatMap { grouped_list ->
+                        def pairs = []
+                        for (i in 0..<grouped_list.size()) {
+                            for (j in i+1..<grouped_list.size()) {
+                                pairs << [grouped_list[i][0], grouped_list[i][1], grouped_list[j][0], grouped_list[j][1]]
+                            }
+                        }
+                        return pairs
+                    }
+                
+                // Run the delta psi process
+                all_samples_psi_files = WHIPPET_QUANT.out.sample_psi_file 
+                    .map { sample_id, group, psi_file -> psi_file }.collect()
+                WHIPPET_DELTA(grouped_files_pairs, all_samples_psi_files, outputDir)
             }
         }
     }
-    
-
-
-
-
-
 
 }
