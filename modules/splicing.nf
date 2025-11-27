@@ -359,7 +359,8 @@ process WHIPPET_QUANT {
     cpus 2
 
     label 'whippet_quant'
-    publishDir "${outputDir}/whippet/quant", mode: "copy"
+    tag "${sample_id}"
+    publishDir "${outputDir}/whippet/quant/${sample_id}", mode: "copy"
 
     container 'naotokubota/whippet:1.6.1'
 
@@ -369,11 +370,18 @@ process WHIPPET_QUANT {
         val outputDir
 
 	output:
-        path "*"
+        tuple val(sample_id), val(sample_group), path("${sample_id}.psi.gz"), emit: sample_psi_file
+        path "${sample_id}.gene.tpm.gz", emit: gene_tpm_file
+        path "${sample_id}.isoform.tpm.gz", emit: isoform_tpm_file
+        path "${sample_id}.jnc.gz", emit: junctions_file
+        path "${sample_id}.map.gz", emit: map_file
     
     script:
     """
-    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl $read_1 $read_2 -x $whippet_index -o .
+    # Fix the fatsq files by letting them follow the standard 4 line format
+    awk 'NR % 4 == 3 { print "+"; next } { print }' "$read_1" > fixed_R1.fastq
+    awk 'NR % 4 == 3 { print "+"; next } { print }' "$read_2" > fixed_R2.fastq
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl fixed_R1.fastq fixed_R2.fastq -x $whippet_index -o $sample_id
     """
 }
 
@@ -383,21 +391,23 @@ process WHIPPET_DELTA {
     cpus 2
 
     label 'whippet_delta'
-    publishDir "${outputDir}/whippet/delta_psi", mode: "copy"
+    tag "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}"
+    publishDir "${outputDir}/whippet/delta_psi/${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", mode: "copy"
 
     container 'naotokubota/whippet:1.6.1'
 
 	input:
-        val grouped_files_pairs
+        val grouped_files_pairs  // e.g.: "AIY", [AIY_1.psi.gz, AIY_2.psi.gz], "ASK", [ASK_1.psi.gz, ASK_2.psi.gz]
+        path psi_files
         val outputDir
 
 	output:
-        path "*"
+        path "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}.diff.gz"
     
     script:
     group_one = grouped_files_pairs[1].join(',')
     group_two = grouped_files_pairs[3].join(',')
     """
-    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-delta.jl -a $group_one -b $group_two
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-delta.jl -a $group_one -b $group_two -o ${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}
     """
 }
