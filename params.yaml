@@ -1,0 +1,64 @@
+# files parameters
+csv_reads: './test_data_single/test_csv_single.txt'  # './test_data/test_csv.txt' './test_data_single/test_csv_single.txt'
+outputDir: './results'
+genomeFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
+transcriptFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
+annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
+annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
+
+# which tools to use for each process
+trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
+quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+
+# Parameters shared by at least two trimming tools
+base_quality_encoding: 'phred33'
+min_len: 36
+
+# Trimmomatic parameters
+adapters_file: './adapters/TruSeq3-PE-2.fa'
+seed_mismatches: 2
+palindrome_clip_threshold: 30
+simple_clip_threshold: 10
+leading: 3
+trailing: 3
+window_size: 4
+required_quality: 15
+
+# Bbduk parameters
+ktrim: 'r'
+kmer_length: 23
+min_kmer_size: 11
+hdist: 1
+min_len: 10
+tbo: true
+tpe: true
+
+# Trim-Galore parameters
+quality: 20
+stringency: 1
+
+# STAR parameters
+overhang: 101
+genomeSAindexNbases: 12
+filterMatch: 0.3
+
+# HISAT2 parameters
+hisat2_index_prefix: 'genome'
+
+# SALMON parameters
+kmer_size: 31
+
+# KALLISTO parameters
+num_bootstrap_samples: 0
+
+# General Splicing parameters
+individualSplicingAnalysis: true
+differentialSplicingAnalysis: true
+
+#RSEM parameters
+rsem_index_prefix: 'rsem_reference'
+
+# rMats parameters
+read_length: 100
