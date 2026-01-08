@@ -12,7 +12,7 @@ process STAR {
     container 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_genome_index
         val filterMatch
@@ -25,9 +25,15 @@ process STAR {
         path "${sample_id}_SJ.out.tab", emit: splicing_junctions
 	
     script:
-    """
-    STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn $read_1 $read_2 --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted --outFilterMatchNminOverLread $filterMatch
-    """
+    if (params.paired_end) {
+        """
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} ${reads[1]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted --outFilterMatchNminOverLread $filterMatch
+        """
+    } else {
+        """
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted --outFilterMatchNminOverLread $filterMatch
+        """
+    }
 }
 
 /* Outlining the HISAT2 alignment process */
@@ -42,7 +48,7 @@ process HISAT2 {
     container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         val hisat2_prefix_index
         path hisat2_index_files
@@ -51,9 +57,15 @@ process HISAT2 {
         tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
 	
     script:
-    """
-    hisat2 -q -x $hisat2_prefix_index -1 $read_1 -2 $read_2 -S ${sample_id}_Aligned.out.sam
-    """
+    if (params.paired_end) {
+        """
+        hisat2 -q -x $hisat2_prefix_index -1 ${reads[0]} -2 ${reads[1]} -S ${sample_id}_Aligned.out.sam
+        """
+    } else {
+        """
+        hisat2 -q -x $hisat2_prefix_index -U ${reads[0]} -S ${sample_id}_Aligned.out.sam
+        """
+    }
 }
 
 /* Outlining the MINIMAP2 alignment process */
@@ -68,7 +80,7 @@ process MINIMAP2 {
     container 'community.wave.seqera.io/library/minimap2:2.30--dde6b0c5fbc82ebd'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         path reference_genome_index
         val outputDir
         val preset
@@ -77,7 +89,13 @@ process MINIMAP2 {
         tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.sam"), emit: alignment_output
 	
     script:
-    """
-    minimap2 -t $task.cpus -ax $preset $reference_genome_index $read_1 $read_2 > ${sample_id}_Aligned.sam
-    """
+    if (params.paired_end) {
+        """
+        minimap2 -t $task.cpus -ax $preset $reference_genome_index ${reads[0]} ${reads[1]} > ${sample_id}_Aligned.sam
+        """
+    } else {
+        """
+        minimap2 -t $task.cpus -ax $preset $reference_genome_index ${reads[0]} > ${sample_id}_Aligned.sam
+        """
+    }
 }
