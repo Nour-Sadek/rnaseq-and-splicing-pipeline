@@ -9,7 +9,7 @@ process FASTQC {
 	container 'community.wave.seqera.io/library/fastqc:0.12.1--af7a5314d5015c29'
 
 	input:
-		tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+		tuple val(sample_id), val(sample_group), path(reads)  // reads could be either [read_1] for single-end reads or [read_1, read_2] for paired-end reads
         val(outputDir)
 
 	output:
@@ -17,9 +17,15 @@ process FASTQC {
 		path "*_fastqc.zip", emit: zip
 	
     script:
-    """
-    fastqc $read_1 $read_2 --threads ${task.cpus}
-    """
+    if (params.paired_end) {
+        """
+        fastqc ${reads[0]} ${reads[1]} --threads ${task.cpus}
+        """
+    } else {
+        """
+        fastqc ${reads[0]} --threads ${task.cpus}
+        """
+    }
 
 }
 

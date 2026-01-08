@@ -1,76 +1,14 @@
 #!/usr/bin/env nextflow
 
-/* Input csv file */
-params.csv_reads = './test_data_big/test_csv.txt'
-
-/* Output Directory */
-// If user doesn't specify an output directory, let results be the default output directory
+// Specifying outputDir and specific bbduk parameters based on the parameters from the yaml file
 outputDir = params.outputDir ?: './results'
+if (params.trimming == 'bbduk') {
+    tbo = params.tbo ? 'tbo' : ''
+    tpe = params.tpe ? 'tpe' : ''
+}
 
-/* Parameters shared by at least two trimming tools */
-params.base_quality_encoding = 'phred33'
-params.min_len = 36
-
-/* Trimmomatic parameters */
-params.adapters_file = './adapters/TruSeq3-PE-2.fa'
-params.seed_mismatches = 2
-params.palindrome_clip_threshold = 30
-params.simple_clip_threshold = 10
-params.leading = 3
-params.trailing = 3
-params.window_size = 4
-params.required_quality = 15
-
-/* Bbduk parameters */
-params.ktrim = 'r'
-params.kmer_length = 23
-params.min_kmer_size = 11
-params.hdist = 1
-params.tbo = true
-params.tpe = true
-tbo = params.tbo ? 'tbo' : ''
-tpe = params.tpe ? 'tpe' : ''
-
-/* Trim-Galore parameters */
-params.quality = 20
-params.stringency = 1
-
-/* STAR parameters */
-params.overhang = 101
-params.genomeSAindexNbases = 12
-params.filterMatch = 0.3
-
-/* HISAT2 parameters */
-params.hisat2_index_prefix = 'genome'
-
-/* SALMON parameters */
-params.kmer_size = 31
-
-/* KALLISTO parameters */
-params.num_bootstrap_samples = 0
-
-/* RSEM parameters */
-params.rsem_index_prefix = 'rsem_reference'
-
-/* General Splicing parameters */
-params.individualSplicingAnalysis = true
-params.differentialSplicingAnalysis = true
-
-/* rMats parameters */
-params.read_length = 100
-
-
-/* Default Parameters */
-// If the user specifies a different parameter, it will be what the user specifies; these defaults only apply 
-// if the user doesn't specify a value to the paramaters
-params.genomeFastaFile = './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
-params.transcriptFastaFile = './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
-params.annotationsGTFFile = './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
-params.annotationsGFF3File = './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
-params.trimming = 'trimmomatic'  // other options are 'bbduk', 'trim_galore'
-params.aligner = 'star'  // other options are 'hisat2', 'minimap2', 'none'
-params.quantifier = 'htseq-count'  // other options are 'featureCounts', 'htseq-count', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-params.splicingAnalyzer = 'majiq'  // other options are 'rMats', 'suppa2', 'whippet', 'majiq'
+// Specify whether reasd are paired or single end
+params.paired_end = false
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
@@ -85,14 +23,20 @@ include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOIL
 workflow {
 
     /* Read in the csv file */
-    // Get the information in this format [sample_id, sample_group, read_1, read_2]
-    reads_channel = Channel.fromPath(params.csv_reads)
+    // Get the information in this format [sample_id, sample_group, read_1, read_2] or [sample_id, sample_group, read]
+    if (params.paired_end) {
+        reads_channel = Channel.fromPath(params.csv_reads)
         .splitCsv(header:true)
-        .map { row -> [row.sample_id, row.sample_group, file(row.fastq_1), file(row.fastq_2)] }
+        .map { row -> [row.sample_id, row.sample_group, [file(row.fastq_1), file(row.fastq_2)]] }
+    } else {
+        reads_channel = Channel.fromPath(params.csv_reads)
+        .splitCsv(header:true)
+        .map { row -> [row.sample_id, row.sample_group, [file(row.fastq_1)]] }
+    }
     
     /* Run initial FastQC */
-    //fastqc_before_dir = outputDir + "/fastqc/before_trimming"
-    //FASTQC(reads_channel, fastqc_before_dir)
+    // fastqc_before_dir = outputDir + "/fastqc/before_trimming"
+    // FASTQC(reads_channel, fastqc_before_dir)
 
     /* Trim the reads */
     if (params.trimming == 'trimmomatic') {
