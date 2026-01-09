@@ -13,12 +13,16 @@ params.paired_end = false
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
 include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
-include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; MINIMAP2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
-include { STAR; HISAT2; MINIMAP2 } from './modules/aligning.nf'
+include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
+include { STAR; HISAT2 } from './modules/aligning.nf'
+include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
-include { GFFREAD } from './modules/gff_utilities.nf'
-include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_ALIGNMENT_MODE; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
-include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI; VOILA_PSI; VOILA_DELTA_PSI; rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL; SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI; WHIPPET_INDEX; WHIPPET_QUANT; WHIPPET_DELTA } from './modules/splicing.nf'
+// processes for splicing
+include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI } from './modules/splicing/majiq.nf'
+include { VOILA_PSI; VOILA_DELTA_PSI } from './modules/splicing/voila.nf'
+include { rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing/rMATS.nf'
+include { SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI } from './modules/splicing/suppa2.nf'
+include { WHIPPET_INDEX; WHIPPET_QUANT; WHIPPET_DELTA } from './modules/splicing/whippet.nf'
 
 workflow {
 
