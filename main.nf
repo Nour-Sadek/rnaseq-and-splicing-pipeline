@@ -2,10 +2,6 @@
 
 // Specifying outputDir and specific bbduk parameters based on the parameters from the yaml file
 outputDir = params.outputDir ?: './results'
-if (params.trimming == 'bbduk') {
-    tbo = params.tbo ? 'tbo' : ''
-    tpe = params.tpe ? 'tpe' : ''
-}
 
 // Specify whether reasd are paired or single end
 params.paired_end = false
@@ -45,25 +41,76 @@ workflow {
     /* Trim the reads */
     if (params.trimming == 'trimmomatic') {
         // Add all the trimmomatic arguments required into the <trimmomaticArgs> variable
-        trimmomaticArgs = "${params.seed_mismatches}:${params.palindrome_clip_threshold}:${params.simple_clip_threshold} "
-        trimmomaticArgs = trimmomaticArgs + "-${params.base_quality_encoding} LEADING:${params.leading} TRAILING:${params.trailing} "
-        trimmomaticArgs = trimmomaticArgs + "SLIDINGWINDOW:${params.window_size}:${params.required_quality} MINLEN:${params.min_len}"
-        
+        trimmomaticArgs = ["-${params.base_quality_encoding}"]
+
+        // Specifying the parameters for ILLUMINACLIP
+        if (params.seed_mismatches != "none" && params.palindrome_clip_threshold != "none" && params.simple_clip_threshold != "none") {
+            if (params.min_adapter_length_palindrome != "none" && params.keepbothreads != "none") {
+                trimmomaticArgs << "ILLUMINACLIP:${params.adapters_file}:${params.seed_mismatches}:${params.palindrome_clip_threshold}:${params.simple_clip_threshold}:${params.min_adapter_length_palindrome}:${params.keepbothreads}"
+            } else {
+                trimmomaticArgs << "ILLUMINACLIP:${params.adapters_file}:${params.seed_mismatches}:${params.palindrome_clip_threshold}:${params.simple_clip_threshold}"
+            }
+            // /opt/conda/share/trimmomatic-0.40-0/adapters/
+        }
+
+        // Specifying the parameters for SLIDINGWINDOW
+        if (params.windowsize != "none" && params.required_quality != "none") {
+            trimmomaticArgs << "SLIDINGWINDOW:${params.window_size}:${params.required_quality}"
+        }
+
+        // Specifying the parameters for MAXINFO
+        if (params.target_length != "none" && params.strictness != "none") {
+            trimmomaticArgs << "MAXINFO:${params.target_length}:${params.strictness}"
+        }
+
+        // Specifying the parameters for BASECOUNT
+        if (params.bases != "none" && params.min_count != "none" && params.max_count != "none") {
+            trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}:${params.max_count}"
+        }
+
+        // Specifying the single parameters
+        if (params.leading != "none") trimmomaticArgs << "LEADING:${params.leading}"
+        if (params.trailing != "none") trimmomaticArgs << "TRAILING:${params.trailing}"
+        if (params.headcrop != "none") trimmomaticArgs << "HEADCROP:${params.headcrop}"
+        if (params.tailcrop != "none") trimmomaticArgs << "TAILCROP:${params.tailcrop}"
+        if (params.crop != "none") trimmomaticArgs << "CROP:${params.crop}"
+        if (params.minlen != "none") trimmomaticArgs << "MINLEN:${params.minlen}"
+        if (params.maxlen != "none") trimmomaticArgs << "MAXLEN:${params.maxlen}"
+        if (params.avgqual != "none") trimmomaticArgs << "AVGQUAL:${params.avgqual}"
+        trimmomaticArgs = trimmomaticArgs.join(" ")
+
         // Run the TRIMMOMATIC process
-        TRIMMOMATIC(reads_channel, file(params.adapters_file), outputDir, trimmomaticArgs)
+        TRIMMOMATIC(reads_channel, outputDir, trimmomaticArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = TRIMMOMATIC.out.trimmed_samples
+        
     } else if (params.trimming == 'bbduk') {
         // Add all the bbduk arguments required into the <bbdukArgs> variable
-        bbdukArgs = "ktrim=${params.ktrim} k=${params.kmer_length} mink=${params.min_kmer_size} hdist=${params.hdist} "
-        bbdukArgs = bbdukArgs + "minlen=${params.min_len} ${tbo} ${tpe}"
+        bbdukArgs = [
+            "qin=${params.qin}", "reads=${params.reads}", "samplerate=${params.samplerate}", "k=${params.k}", "rcomp=${params.rcomp}",
+            "maskmiddle=${params.maskmiddle}", "minkmerhits=${params.minkmerhits}", "minkmerfraction=${params.minkmerfraction}",
+            "mincovfraction=${params.mincovfraction}", "hammingdistance=${params.hammingdistance}", "editdistance=${params.editdistance}", 
+            "hammingdistance2=${params.hammingdistance2}", "editdistance2=${params.editdistance2}", "forbidn=${params.forbidn}", 
+            "ktrim=${params.ktrim}", "maskfullycovered=${params.maskfullycovered}", "mink=${params.mink}", "qtrim=${params.qtrim}", 
+            "trimq=${params.trimq}", "minlength=${params.minlength}", "minlengthfraction=${params.minlengthfraction}", "minavgquality=${params.minavgquality}", 
+            "minbasequality=${params.minbasequality}", "maxns=${params.maxns}", "minconsecutivebases=${params.minconsecutivebases}", 
+            "trimpad=${params.trimpad}", "trimbyoverlap=${params.trimbyoverlap}", "strictoverlap=${params.strictoverlap}", "minoverlap=${params.minoverlap}", 
+            "mininsert=${params.mininsert}", "trimpairsevenly=${params.trimpairsevenly}", "forcetrimleft=${params.forcetrimleft}",  
+            "forcetrimright=${params.forcetrimright}", "forcetrimright2=${params.forcetrimright2}", "forcetrimmod=${params.forcetrimmod}",  
+            "restrictleft=${params.restrictleft}", "restrictright=${params.restrictright}", "mingc=${params.mingc}", "maxgc=${params.maxgc}", 
+            "tossjunk=${params.tossjunk}"
+        ]
+
+        if (params.mink == 0) bbdukArgs.remove("mink=${params.mink}")
+        bbdukArgs = bbdukArgs.join(" ")
 
         // Run the BBDUK process
         BBDUK(reads_channel, outputDir, bbdukArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = BBDUK.out.trimmed_samples
+
     } else if (params.trimming == 'trim_galore') {
         // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
         trimGaloreArgs = "--quality ${params.quality} --length ${params.min_len} --stringency ${params.stringency} --${params.base_quality_encoding}"

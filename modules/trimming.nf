@@ -10,7 +10,6 @@ process TRIMMOMATIC {
 
 	input:
 		tuple val(sample_id), val(sample_group), path(reads)
-        path adapters_file
         val outputDir
         val trimmomaticArgs
 
@@ -24,11 +23,11 @@ process TRIMMOMATIC {
     script:
     if (params.paired_end) {
         """
-        trimmomatic PE ${reads[0]} ${reads[1]} ${sample_id}_fwd_trimmed.fastq ${sample_id}_fwd_unpaired.fastq ${sample_id}_rev_trimmed.fastq ${sample_id}_rev_unpaired.fastq -threads $task.cpus ILLUMINACLIP:${adapters_file}:${trimmomaticArgs}
+        trimmomatic PE ${reads[0]} ${reads[1]} ${sample_id}_fwd_trimmed.fastq ${sample_id}_fwd_unpaired.fastq ${sample_id}_rev_trimmed.fastq ${sample_id}_rev_unpaired.fastq -threads $task.cpus ${trimmomaticArgs}
         """
     } else {
         """
-        trimmomatic SE ${reads[0]} ${sample_id}_trimmed.fastq -threads $task.cpus ILLUMINACLIP:${adapters_file}:${trimmomaticArgs}
+        trimmomatic SE ${reads[0]} ${sample_id}_trimmed.fastq -threads $task.cpus ${trimmomaticArgs}
         """
     }
 }
@@ -55,11 +54,11 @@ process BBDUK {
     script:
     if (params.paired_end) {
         """
-        bbduk.sh threads=$task.cpus ${bbdukArgs} in1=${reads[0]} in2=${reads[1]} out1="${sample_id}_fwd_trimmed.fastq" out2="${sample_id}_rev_trimmed.fastq" outs="${sample_id}_unpaired.fastq"
+        bbduk.sh -Xmx${task.memory.toGiga()}g threads=$task.cpus ${bbdukArgs} -da in1=${reads[0]} in2=${reads[1]} out1="${sample_id}_fwd_trimmed.fastq" out2="${sample_id}_rev_trimmed.fastq" outs="${sample_id}_unpaired.fastq"
         """
     } else {
         """
-        bbduk.sh threads=$task.cpus ${bbdukArgs} in=${reads[0]} out="${sample_id}_trimmed.fastq"
+        bbduk.sh -Xmx${task.memory.toGiga()}g threads=$task.cpus ${bbdukArgs} -da in=${reads[0]} out="${sample_id}_trimmed.fastq"
         """
     }
 }

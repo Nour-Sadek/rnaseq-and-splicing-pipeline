@@ -7,33 +7,92 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+trimming: 'trimmomatic'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
 quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
-# Parameters shared by at least two trimming tools
-base_quality_encoding: 'phred33'
-min_len: 36
+#--------------------------- Trimmomatic parameters ---------------------------#
+# Change the value for any trimming step for it to be included. If all values stay "none", nothing happens (reads are just copied unchanged)
+adapters_file: 'TruSeq3-SE.fa'  # options are 'NexteraPE-PE.fa', 'TruSeq2-PE.fa', 'TruSeq2-SE.fa', 'TruSeq3-PE-2-GGGGG.fa', "TruSeq3-PE-2.fa", 'TruSeq3-PE.fa', 'TruSeq3-SE.fa'
+base_quality_encoding: 'phred33'  # options are 'phred64' and 'phred33'
+seed_mismatches: 'none'
+palindrome_clip_threshold: 'none'
+simple_clip_threshold: 'none'
+min_adapter_length_palindrome: 'none'
+keepbothreads: 'none'
+window_size: 'none'
+required_quality: 'none'
+leading: 'none'
+trailing: 'none'
+headcrop: 'none'
+tailcrop: 'none'
+crop: 'none'
+target_length: 'none'
+strictness: 'none'  # value between 0 and 1
+minlen: 'none'
+maxlen: 'none'
+avgqual: 'none'
+bases: 'none'  # string of bases to be counted, eg: "N", "GC"
+min_count: 'none'
+max_count: 'none'
 
-# Trimmomatic parameters
-adapters_file: './adapters/TruSeq3-PE-2.fa'
-seed_mismatches: 2
-palindrome_clip_threshold: 30
-simple_clip_threshold: 10
-leading: 3
-trailing: 3
-window_size: 4
-required_quality: 15
+# Common default parameters that people use are (uncomment them to apply)
+# seed_mismatches: 2
+# palindrome_clip_threshold: 30
+# simple_clip_threshold: 10
+# leading: 3
+# trailing: 3
+# window_size: 4
+# required_quality: 15
+# minlen: 36
 
-# Bbduk parameters
-ktrim: 'r'
-kmer_length: 23
-min_kmer_size: 11
-hdist: 1
-min_len: 10
-tbo: true
-tpe: true
+
+#--------------------------- Bbduk parameters ---------------------------#
+# Input parameters
+qin: 'auto'
+reads: -1
+samplerate: 1
+# Processing parameters
+k: 27
+rcomp: 't'
+maskmiddle: 't'
+minkmerhits: 1
+minkmerfraction: 0.0
+mincovfraction: 0.0
+hammingdistance: 0
+editdistance: 0
+hammingdistance2: 0
+editdistance2: 0
+forbidn: 'f'
+# Trimming/filtering/masking parameters
+ktrim: 'f'
+maskfullycovered: 'f'
+mink: 0
+qtrim: 'f'
+trimq: 6
+minlength: 10
+minlengthfraction: 0
+minavgquality: 0
+minbasequality: 0
+maxns: -1
+minconsecutivebases: 0
+trimpad: 0
+trimbyoverlap: 'f'
+strictoverlap: 't'
+minoverlap: 14
+mininsert: 40
+trimpairsevenly: 'f'
+forcetrimleft: 0
+forcetrimright: 0
+forcetrimright2: 0
+forcetrimmod: 0
+restrictleft: 0
+restrictright: 0
+mingc: 0
+maxgc: 1
+tossjunk: 'f'
+
 
 # Trim-Galore parameters
 quality: 20
@@ -52,6 +111,8 @@ kmer_size: 31
 
 # KALLISTO parameters
 num_bootstrap_samples: 0
+mean_fragment_length: 200  # estimated for paired-end reads, used only for single-end reads
+sd_fragment_length: 70  # estimated for single-end reads, used only for single-end reads
 
 # General Splicing parameters
 individualSplicingAnalysis: true
@@ -59,6 +120,9 @@ differentialSplicingAnalysis: true
 
 #RSEM parameters
 rsem_index_prefix: 'rsem_reference'
+strandedness: 'none'
+fragment_length_mean: -1  # used only for single-end reads, change the value if you know it
+fragment_length_sd: 0  # used only for single-end reads, change the value if you know it
 
 # rMats parameters
 read_length: 100
