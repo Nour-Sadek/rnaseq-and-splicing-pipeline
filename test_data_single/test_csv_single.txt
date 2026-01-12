@@ -1,0 +1,7 @@
+sample_id,sample_group,fastq_1
+WT_1,WT,./test_data_single/SRR36719202.fastq
+WT_2,WT,./test_data_single/SRR36719203.fastq
+WT_3,WT,./test_data_single/SRR36719204.fastq
+MUT_1,MUT,./test_data_single/SRR36719199.fastq
+MUT_2,MUT,./test_data_single/SRR36719200.fastq
+MUT_3,MUT,./test_data_single/SRR36719201.fastq
