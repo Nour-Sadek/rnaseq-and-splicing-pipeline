@@ -76,7 +76,7 @@ process SALMON_QUASI_MAPPING_MODE {
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_index
 
@@ -89,10 +89,17 @@ process SALMON_QUASI_MAPPING_MODE {
         path "${sample_id}/lib_format_counts.json", emit: lib_format_counts
 	
     script:
-    """
-    mkdir $sample_id
-    salmon quant -i $reference_index -l A -1 $read_1 -2 $read_2 -p $task.cpus --validateMappings --gcBias -o $sample_id
-    """
+    if (params.paired_end) {
+        """
+        mkdir $sample_id
+        salmon quant -i $reference_index -l A -1 ${reads[0]} -2 ${reads[1]} -p $task.cpus --validateMappings --gcBias -o $sample_id
+        """
+    } else {
+        """
+        mkdir $sample_id
+        salmon quant -i $reference_index -l A -r ${reads[0]} -p $task.cpus --validateMappings --gcBias -o $sample_id
+        """
+    }
 }
 
 /* Outlining the KALLISTO reads quantification process */
@@ -104,7 +111,7 @@ process KALLISTO {
     container 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_index
         val num_bootstrap_samples
@@ -115,9 +122,15 @@ process KALLISTO {
         path "${sample_id}/run_info.json", emit: run_info
 	
     script:
-    """
-    kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples $read_1 $read_2
-    """
+    if (params.paired_end) {
+        """
+        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples ${reads[0]} ${reads[1]}
+        """
+    } else {
+        """
+        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples --single -l $params.mean_fragment_length -s $params.sd_fragment_length ${reads[0]}
+        """
+    }
 }
 
 /* Outlining the RSEM alignment and reads quantification process */
@@ -132,7 +145,7 @@ process RSEM {
     container 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
 
 	input:
-        tuple val(sample_id), val(sample_group), path(read_1), path(read_2)
+        tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         val rsem_index_prefix
         path rsem_index_files
@@ -145,7 +158,13 @@ process RSEM {
         path "${sample_id}.transcript.bam", emit: transcript_bam_file
 	
     script:
-    """
-    rsem-calculate-expression --paired-end --star -p $task.cpus $read_1 $read_2 reference_index/$rsem_index_prefix $sample_id
-    """
+    if (params.paired_end) {
+        """
+        rsem-calculate-expression --paired-end --star -p $task.cpus ${reads[0]} ${reads[1]} reference_index/$rsem_index_prefix $sample_id
+        """
+    } else {
+        """
+        rsem-calculate-expression --star --strandedness $params.strandedness --fragment-length-mean $params.fragment_length_mean --fragment-length-sd $params.fragment_length_sd -p $task.cpus ${reads[0]} reference_index/$rsem_index_prefix $sample_id
+        """
+    }
 }
