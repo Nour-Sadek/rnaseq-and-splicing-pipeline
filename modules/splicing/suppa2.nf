@@ -38,7 +38,7 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
     label 'suppa2_calculate_events_psi'
     publishDir "${outputDir}/suppa2/suppa2_psi", mode: "copy"
 
-    container 'suppa2_with_r'
+    container 'naotokubota/suppa:2.3'
 
 	input:
         val sample_ids_list  // e.g. ["AIY_1", "AIY_2"]
@@ -68,7 +68,7 @@ process SUPPA2_SPLIT_FILES {
     tag "${grouped_files[0]}"
     publishDir "${outputDir}/suppa2/suppa2_psi/${grouped_files[0]}", mode: "copy"
 
-    container 'suppa2_with_r'
+    container 'rocker/r-base:4.3.2'
 
 	input:
         path r_file
@@ -83,8 +83,8 @@ process SUPPA2_SPLIT_FILES {
     script:
     group_ids = grouped_files[1].join(',')
     """
-    /usr/bin/Rscript $r_file $tpm_file $group_ids ./${grouped_files[0]}.tpm
-    /usr/bin/Rscript $r_file $psi_file $group_ids ./${grouped_files[0]}_events.psi
+    Rscript $r_file $tpm_file $group_ids ./${grouped_files[0]}.tpm
+    Rscript $r_file $psi_file $group_ids ./${grouped_files[0]}_events.psi
     """
 }
 
@@ -97,7 +97,7 @@ process SUPPA2_CALCULATE_EVENTS_DELTA_PSI {
     tag "${paired_files[0]}_v_${paired_files[3]}"
     publishDir "${outputDir}/suppa2/suppa2_delta_psi/${paired_files[0]}_v_${paired_files[3]}", mode: "copy"
 
-    container 'suppa2_with_r'
+    container 'naotokubota/suppa:2.3'
 
 	input:
         val paired_files  // e.g. ["AIY", "AIY_events.psi", "AIY.tpm", "ASK", "ASK_events.psi", "ASK.tpm"]
