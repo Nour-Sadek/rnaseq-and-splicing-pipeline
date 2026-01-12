@@ -54,7 +54,7 @@ workflow {
         }
 
         // Specifying the parameters for SLIDINGWINDOW
-        if (params.windowsize != "none" && params.required_quality != "none") {
+        if (params.window_size != "none" && params.required_quality != "none") {
             trimmomaticArgs << "SLIDINGWINDOW:${params.window_size}:${params.required_quality}"
         }
 
@@ -310,7 +310,7 @@ workflow {
                     .map { sample_id, group, quant -> tuple(group, sample_id) }
                 
                 // Seperate the psi and TPM files for the conditions
-                r_file = file("./modules/split_file.R")
+                r_file = file("./modules/splicing/split_file.R")
                 SUPPA2_SPLIT_FILES(r_file, groups_file_names_quant, SUPPA2_CALCULATE_EVENTS_PSI.out.tpm_file, SUPPA2_CALCULATE_EVENTS_PSI.out.psi_file, outputDir)
 
                 // Return a channel were each output is of the format:
