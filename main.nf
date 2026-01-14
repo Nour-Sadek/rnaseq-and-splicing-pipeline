@@ -64,8 +64,11 @@ workflow {
         }
 
         // Specifying the parameters for BASECOUNT
-        if (params.bases != "none" && params.min_count != "none" && params.max_count != "none") {
-            trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}:${params.max_count}"
+        if (params.bases != "none") { 
+            if (params.min_count != "none") {
+                if (params.max_count != "none") trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}:${params.max_count}"
+                else trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}"
+            } else trimmomaticArgs << "BASECOUNT:${params.bases}"
         }
 
         // Specifying the single parameters
@@ -90,9 +93,9 @@ workflow {
         bbdukArgs = [
             "qin=${params.qin}", "reads=${params.reads}", "samplerate=${params.samplerate}", "k=${params.k}", "rcomp=${params.rcomp}",
             "maskmiddle=${params.maskmiddle}", "minkmerhits=${params.minkmerhits}", "minkmerfraction=${params.minkmerfraction}",
-            "mincovfraction=${params.mincovfraction}", "hammingdistance=${params.hammingdistance}", "editdistance=${params.editdistance}", 
-            "hammingdistance2=${params.hammingdistance2}", "editdistance2=${params.editdistance2}", "forbidn=${params.forbidn}", 
-            "ktrim=${params.ktrim}", "maskfullycovered=${params.maskfullycovered}", "mink=${params.mink}", "qtrim=${params.qtrim}", 
+            "mincovfraction=${params.mincovfraction}", "hammingdistance=${params.hammingdistance}", "qhdist=${params.qhdist}", "editdistance=${params.editdistance}", 
+            "hammingdistance2=${params.hammingdistance2}", "qhdist2=${params.qhdist2}", "editdistance2=${params.editdistance2}", "forbidn=${params.forbidn}", 
+            "ktrim=${params.ktrim}", "ktrimtips=${params.ktrimtips}", "maskfullycovered=${params.maskfullycovered}", "mink=${params.mink}", "qtrim=${params.qtrim}", 
             "trimq=${params.trimq}", "minlength=${params.minlength}", "minlengthfraction=${params.minlengthfraction}", "minavgquality=${params.minavgquality}", 
             "minbasequality=${params.minbasequality}", "maxns=${params.maxns}", "minconsecutivebases=${params.minconsecutivebases}", 
             "trimpad=${params.trimpad}", "trimbyoverlap=${params.trimbyoverlap}", "strictoverlap=${params.strictoverlap}", "minoverlap=${params.minoverlap}", 
@@ -113,7 +116,27 @@ workflow {
 
     } else if (params.trimming == 'trim_galore') {
         // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
-        trimGaloreArgs = "--quality ${params.quality} --length ${params.min_len} --stringency ${params.stringency} --${params.base_quality_encoding}"
+        trimGaloreArgs = ["--${params.quality_encoding}"]
+
+        // Specifying the adapters parameters
+        if (params.adapter_sequence_1 != 'none') trimGaloreArgs << "--adapter ${params.adapter_sequence_1}"
+        if (!params.paired_end && params.adapter_sequence_2 != 'none') trimGaloreArgs << "--adapter2 ${params.adapter_sequence_2}"
+        if (params.specific_adapters != 'none') trimGaloreArgs << "--${params.specific_adapters}"
+
+        // Specify the trimming parameters
+        if (params.max_length != 'none') trimGaloreArgs << "--max_n ${params.max_length}"
+        if (params.stringency != 'none') trimGaloreArgs << "--stringency ${params.stringency}"
+        if (params.error_rate != 'none') trimGaloreArgs << "-e ${params.error_rate}"
+        if (params.length != 'none') trimGaloreArgs << "--length ${params.length}"
+        if (params.maxn != 'none') trimGaloreArgs << "--max_n ${params.maxn}"
+        if (params.trim_n) trimGaloreArgs << "--trim-n"
+        
+
+
+
+
+        // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
+        trimGaloreArgs = "--quality ${params.quality} --length ${params.length} --stringency ${params.stringency} --${params.base_quality_encoding}"
 
         // Run the TRIM_GALORE process
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)

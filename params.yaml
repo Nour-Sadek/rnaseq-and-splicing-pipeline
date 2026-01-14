@@ -13,39 +13,31 @@ quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'sa
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 #--------------------------- Trimmomatic parameters ---------------------------#
-# Change the value for any trimming step for it to be included. If all values stay "none", nothing happens (reads are just copied unchanged)
-adapters_file: 'TruSeq3-SE.fa'  # options are 'NexteraPE-PE.fa', 'TruSeq2-PE.fa', 'TruSeq2-SE.fa', 'TruSeq3-PE-2-GGGGG.fa', "TruSeq3-PE-2.fa", 'TruSeq3-PE.fa', 'TruSeq3-SE.fa'
-base_quality_encoding: 'phred33'  # options are 'phred64' and 'phred33'
-seed_mismatches: 'none'
-palindrome_clip_threshold: 'none'
-simple_clip_threshold: 'none'
+# Change the value for any trimming step (from none) for it to be included. Make sure to have at least one trimming option active, otherwise there will be an error.
+# If you want to use ILLUMINACLIP command, then at least these three parameters need to have values: <seed_mismatches>, <palindrome_clip_threshold>, <simple_clip_threshold>
+# If you want to use SLIDINGWINDOW command, then both <window_size> and <required_quality> need ot have values.
+base_quality_encoding: 'phred33'
+adapters_file: 'TruSeq3-SE.fa'
+seed_mismatches: 2
+palindrome_clip_threshold: 30
+simple_clip_threshold: 10
 min_adapter_length_palindrome: 'none'
 keepbothreads: 'none'
-window_size: 'none'
-required_quality: 'none'
-leading: 'none'
-trailing: 'none'
+window_size: 4
+required_quality: 15
+leading: 3
+trailing: 3
 headcrop: 'none'
 tailcrop: 'none'
 crop: 'none'
 target_length: 'none'
-strictness: 'none'  # value between 0 and 1
-minlen: 'none'
+strictness: 'none'
+minlen: 36
 maxlen: 'none'
 avgqual: 'none'
-bases: 'none'  # string of bases to be counted, eg: "N", "GC"
+bases: 'none'
 min_count: 'none'
 max_count: 'none'
-
-# Common default parameters that people use are (uncomment them to apply)
-# seed_mismatches: 2
-# palindrome_clip_threshold: 30
-# simple_clip_threshold: 10
-# leading: 3
-# trailing: 3
-# window_size: 4
-# required_quality: 15
-# minlen: 36
 
 
 #--------------------------- Bbduk parameters ---------------------------#
@@ -61,12 +53,15 @@ minkmerhits: 1
 minkmerfraction: 0.0
 mincovfraction: 0.0
 hammingdistance: 0
+qhdist: 0
 editdistance: 0
 hammingdistance2: 0
+qhdist2: 0
 editdistance2: 0
 forbidn: 'f'
 # Trimming/filtering/masking parameters
 ktrim: 'f'
+ktrimtips: 0
 maskfullycovered: 'f'
 mink: 0
 qtrim: 'f'
@@ -94,9 +89,27 @@ maxgc: 1
 tossjunk: 'f'
 
 
-# Trim-Galore parameters
+#--------------------------- Trim-Galore parameters ---------------------------#
+# general options
 quality: 20
+quality_encoding: 'phred33'  # options: phred33 or phred64
+adapter_sequence_1: 'none'  # Or specify the sequence, for example 'GATCGTCGGACT'
+adapter_sequence_2: 'none'  # This is ignored in single-end reads. If not specified for paired-end reads, <adapter_sequence_1> will be applied on both reads.
+specific_adapters: 'illumina'  # options are: 'illumina', 'stranded_illumina', 'nextera', 'small_rna', 'bgiseq'. Can only be none if adapter_sequence_1 and/or adapter_sequence_2 are specified
+max_length: 'none'
 stringency: 1
+error_rate: 0.1
+length: 20
+maxn: 'none'
+trim_n: false  # either true or false
+clip_R1: 'none'
+clip_R2: 'none'
+three_prime_clip_R1: 'none'
+three_prime_clip_R2: 'none'
+nextseq_quality: 'none'  # only specify the qualty with nextseq and novaseq reads (replaces rge <quality> parameter)
+hardtrim5: 'none'
+hardtrim3: 'none'
+
 
 # STAR parameters
 overhang: 101
