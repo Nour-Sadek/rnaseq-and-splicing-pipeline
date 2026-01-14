@@ -1,10 +1,8 @@
 #!/usr/bin/env nextflow
+nextflow.enable.dsl=2
 
-// Specifying outputDir and specific bbduk parameters based on the parameters from the yaml file
-outputDir = params.outputDir ?: './results'
-
-// Specify whether reasd are paired or single end
-params.paired_end = false
+// Specifying outputDir
+def outputDir = params.outputDir ?: './results'
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
@@ -13,7 +11,6 @@ include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; 
 include { STAR; HISAT2 } from './modules/aligning.nf'
 include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
-// processes for splicing
 include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI } from './modules/splicing/majiq.nf'
 include { VOILA_PSI; VOILA_DELTA_PSI } from './modules/splicing/voila.nf'
 include { rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing/rMATS.nf'
@@ -23,7 +20,6 @@ include { WHIPPET_INDEX; WHIPPET_QUANT; WHIPPET_DELTA } from './modules/splicing
 workflow {
 
     /* Read in the csv file */
-    // Get the information in this format [sample_id, sample_group, read_1, read_2] or [sample_id, sample_group, read]
     if (params.paired_end) {
         reads_channel = Channel.fromPath(params.csv_reads)
         .splitCsv(header:true)
@@ -35,52 +31,18 @@ workflow {
     }
     
     /* Run initial FastQC */
-    // fastqc_before_dir = outputDir + "/fastqc/before_trimming"
-    // FASTQC(reads_channel, fastqc_before_dir)
+    if (params.run_fastqc_before_trimming) {
+        fastqc_before_dir = outputDir + "/fastqc/before_trimming"
+        FASTQC(reads_channel, fastqc_before_dir)
+    }
 
     /* Trim the reads */
     if (params.trimming == 'trimmomatic') {
-        // Add all the trimmomatic arguments required into the <trimmomaticArgs> variable
-        trimmomaticArgs = ["-${params.base_quality_encoding}"]
 
-        // Specifying the parameters for ILLUMINACLIP
-        if (params.seed_mismatches != "none" && params.palindrome_clip_threshold != "none" && params.simple_clip_threshold != "none") {
-            if (params.min_adapter_length_palindrome != "none" && params.keepbothreads != "none") {
-                trimmomaticArgs << "ILLUMINACLIP:${params.adapters_file}:${params.seed_mismatches}:${params.palindrome_clip_threshold}:${params.simple_clip_threshold}:${params.min_adapter_length_palindrome}:${params.keepbothreads}"
-            } else {
-                trimmomaticArgs << "ILLUMINACLIP:${params.adapters_file}:${params.seed_mismatches}:${params.palindrome_clip_threshold}:${params.simple_clip_threshold}"
-            }
-            // /opt/conda/share/trimmomatic-0.40-0/adapters/
-        }
-
-        // Specifying the parameters for SLIDINGWINDOW
-        if (params.window_size != "none" && params.required_quality != "none") {
-            trimmomaticArgs << "SLIDINGWINDOW:${params.window_size}:${params.required_quality}"
-        }
-
-        // Specifying the parameters for MAXINFO
-        if (params.target_length != "none" && params.strictness != "none") {
-            trimmomaticArgs << "MAXINFO:${params.target_length}:${params.strictness}"
-        }
-
-        // Specifying the parameters for BASECOUNT
-        if (params.bases != "none") { 
-            if (params.min_count != "none") {
-                if (params.max_count != "none") trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}:${params.max_count}"
-                else trimmomaticArgs << "BASECOUNT:${params.bases}:${params.min_count}"
-            } else trimmomaticArgs << "BASECOUNT:${params.bases}"
-        }
-
-        // Specifying the single parameters
-        if (params.leading != "none") trimmomaticArgs << "LEADING:${params.leading}"
-        if (params.trailing != "none") trimmomaticArgs << "TRAILING:${params.trailing}"
-        if (params.headcrop != "none") trimmomaticArgs << "HEADCROP:${params.headcrop}"
-        if (params.tailcrop != "none") trimmomaticArgs << "TAILCROP:${params.tailcrop}"
-        if (params.crop != "none") trimmomaticArgs << "CROP:${params.crop}"
-        if (params.minlen != "none") trimmomaticArgs << "MINLEN:${params.minlen}"
-        if (params.maxlen != "none") trimmomaticArgs << "MAXLEN:${params.maxlen}"
-        if (params.avgqual != "none") trimmomaticArgs << "AVGQUAL:${params.avgqual}"
-        trimmomaticArgs = trimmomaticArgs.join(" ")
+        // Prepare the arguments to be used in the trimmomatic call
+        trimmomaticArgs = OrganizeArguments.makeTrimmomaticArgs(params.base_quality_encoding, params.adapters_file, params.seed_mismatches, params.palindrome_clip_threshold, params.simple_clip_threshold, 
+                    params.min_adapter_length_palindrome, params.keepbothreads, params.window_size, params.required_quality, params.target_length, params.strictness, params.bases, 
+                    params.min_count, params.max_count, params.leading, params.trailing, params.headcrop, params.tailcrop, params.crop, params.minlen, params.maxlen, params.avgqual)
 
         // Run the TRIMMOMATIC process
         TRIMMOMATIC(reads_channel, outputDir, trimmomaticArgs)
@@ -89,24 +51,13 @@ workflow {
         trimming_output_channel = TRIMMOMATIC.out.trimmed_samples
         
     } else if (params.trimming == 'bbduk') {
-        // Add all the bbduk arguments required into the <bbdukArgs> variable
-        bbdukArgs = [
-            "qin=${params.qin}", "reads=${params.reads}", "samplerate=${params.samplerate}", "k=${params.k}", "rcomp=${params.rcomp}",
-            "maskmiddle=${params.maskmiddle}", "minkmerhits=${params.minkmerhits}", "minkmerfraction=${params.minkmerfraction}",
-            "mincovfraction=${params.mincovfraction}", "hammingdistance=${params.hammingdistance}", "qhdist=${params.qhdist}", "editdistance=${params.editdistance}", 
-            "hammingdistance2=${params.hammingdistance2}", "qhdist2=${params.qhdist2}", "editdistance2=${params.editdistance2}", "forbidn=${params.forbidn}", 
-            "ktrim=${params.ktrim}", "ktrimtips=${params.ktrimtips}", "maskfullycovered=${params.maskfullycovered}", "mink=${params.mink}", "qtrim=${params.qtrim}", 
-            "trimq=${params.trimq}", "minlength=${params.minlength}", "minlengthfraction=${params.minlengthfraction}", "minavgquality=${params.minavgquality}", 
-            "minbasequality=${params.minbasequality}", "maxns=${params.maxns}", "minconsecutivebases=${params.minconsecutivebases}", 
-            "trimpad=${params.trimpad}", "trimbyoverlap=${params.trimbyoverlap}", "strictoverlap=${params.strictoverlap}", "minoverlap=${params.minoverlap}", 
-            "mininsert=${params.mininsert}", "trimpairsevenly=${params.trimpairsevenly}", "forcetrimleft=${params.forcetrimleft}",  
-            "forcetrimright=${params.forcetrimright}", "forcetrimright2=${params.forcetrimright2}", "forcetrimmod=${params.forcetrimmod}",  
-            "restrictleft=${params.restrictleft}", "restrictright=${params.restrictright}", "mingc=${params.mingc}", "maxgc=${params.maxgc}", 
-            "tossjunk=${params.tossjunk}"
-        ]
 
-        if (params.mink == 0) bbdukArgs.remove("mink=${params.mink}")
-        bbdukArgs = bbdukArgs.join(" ")
+        // Prepare the arguments to be used in the bbduk call
+        bbdukArgs = OrganizeArguments.makeBbdukArgs(params.qin, params.reads, params.samplerate, params.k, params.rcomp, params.maskmiddle, params.minkmerhits, params.minkmerfraction, params.mincovfraction, 
+                params.hammingdistance, params.qhdist, params.editdistance, params.hammingdistance2, params.qhdist2, params.editdistance2, params.forbidn, params.ktrim, params.ktrimtips, params.maskfullycovered, 
+                params.mink, params.qtrim, params.trimq, params.minlength, params.minlengthfraction, params.minavgquality, params.minbasequality, params.maxns, params.minconsecutivebases, params.trimpad, 
+                params.trimbyoverlap, params.strictoverlap, params.minoverlap, params.mininsert, params.trimpairsevenly, params.forcetrimleft, params.forcetrimright, params.forcetrimright2, params.forcetrimmod, 
+                params.restrictleft, params.restrictright, params.mingc, params.maxgc, params.tossjunk)
 
         // Run the BBDUK process
         BBDUK(reads_channel, outputDir, bbdukArgs)
@@ -146,8 +97,10 @@ workflow {
     }
 
     /* Run fastqc after trimming */
-    //fastqc_after_dir = outputDir + "/fastqc/after_trimming"
-    //FASTQCAFTERTRIMMING(trimming_output_channel, fastqc_after_dir)
+    if (params.run_fastqc_after_trimming) {
+        fastqc_after_dir = outputDir + "/fastqc/after_trimming"
+        FASTQCAFTERTRIMMING(trimming_output_channel, fastqc_after_dir)
+    }
 
     /* Run the Alignment (if needed) */
     if (params.aligner == "star") {

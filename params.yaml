@@ -7,10 +7,17 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'trimmomatic'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
 quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+
+# Specify whether reads are paired or single end
+paired_end: false
+
+# Choose whether to run Fastqc before and/or after trimming
+run_fastqc_before_trimming: false
+run_fastqc_after_trimming: false
 
 #--------------------------- Trimmomatic parameters ---------------------------#
 # Change the value for any trimming step (from none) for it to be included. Make sure to have at least one trimming option active, otherwise there will be an error.
