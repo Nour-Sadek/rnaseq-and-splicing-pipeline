@@ -7,7 +7,7 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
 quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
@@ -97,7 +97,6 @@ tossjunk: 'f'
 
 
 #--------------------------- Trim-Galore parameters ---------------------------#
-# general options
 quality: 20
 quality_encoding: 'phred33'  # options: phred33 or phred64
 adapter_sequence_1: 'none'  # Or specify the sequence, for example 'GATCGTCGGACT'
@@ -109,11 +108,12 @@ error_rate: 0.1
 length: 20
 maxn: 'none'
 trim_n: false  # either true or false
+trim_1: false  # either true or false
 clip_R1: 'none'
 clip_R2: 'none'
 three_prime_clip_R1: 'none'
 three_prime_clip_R2: 'none'
-nextseq_quality: 'none'  # only specify the qualty with nextseq and novaseq reads (replaces rge <quality> parameter)
+nextseq_quality: 'none'  # only specify the qualty with nextseq and novaseq reads (replaces <quality> parameter)
 hardtrim5: 'none'
 hardtrim3: 'none'
 

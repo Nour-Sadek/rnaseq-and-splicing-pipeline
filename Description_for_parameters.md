@@ -81,3 +81,27 @@ Trimming/filtering/masking parameters:
 - `mingc`: Default: 0. Discard reads with GC content below this.
 - `maxgc`: Default: 1. Discard reads with GC content above this.
 - `tossjunk`: Default: f. Discard reads with invalid characters as bases.
+
+## Trim Galore
+
+Please refer to the official user guide on their GitHub page for more information: https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md
+
+- `quality`: Default: 20. Trim low-quality ends from reads in addition to adapter removal in a single pass.
+- `quality_encoding`: Instructs Cutadapt to use ASCII+33 quality scores as Phred scores for phred33 and ASCII+64 for phred64 for quality trimming.
+- `adapter_sequence_1`: Adapter sequence to be trimmed. If not specified explicitly, Trim Galore will try to auto-detect whether the Illumina universal, Nextera transposase or Illumina small RNA adapter sequence was used. If no adapter can be detected within the first 1 million sequences of the first file specified Trim Galore defaults to --illumina. A single base may also be given as e.g. -a A{10}, to be expanded to -a AAAAAAAAAA.
+- `adapter_sequence_2`: Optional adapter sequence to be trimmed off read 2 of paired-end files. This option requires --paired to be specified as well.
+- `specific_adapters`: Options are `illumina` for the adapter sequence to be trimmed be the first 13bp of the illumina universal adapter `AGATCGGAAGAGC`, `stranded_illumina` for the first 13bp of the Illumina stranded mRNA or Total RNA adapter `ACTGTCTCTTATA`, `nextera` for the first 12bp of the Nextera adapter `CTGTCTCTTATA`, `small_rna` for the first 12bp of the Illumina Small RNA 3' Adapter `TGGAATTCTCGG`, and `bgiseq` for BGISEQ/DNBSEQ/MGISEQ instead the default auto-detection (uses sequences AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA for Read 1 (BGI/MGI forward), and AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG for Read 2 (BGI/MGI reverse)).
+- `max_length`: Discard reads that are longer than bp after trimming. This is only advised for smallRNA sequencing to remove non-small RNA sequences.
+- `stringency`: Default: 1. Overlap with adapter sequence required to trim a sequence.
+- `error_rate`: Default: 0.1. Maximum allowed error rate (no. of errors divided by the length of the matching region).
+- `length`: Default: 20. Discard reads that became shorter than length INT because of either quality or adapter trimming. A value of 0 effectively disables this behaviour.
+- `maxn`: The total number of Ns (as integer) a read may contain before it will be removed altogether.
+- `trim_n`: Removes Ns from either side of the read.
+- `trim_1`: Trims 1 bp off every read from its 3' end. Only used for paired-end reads
+- `clip_R1`: Instructs Trim Galore to remove bp from the 5' end of read 1 (or single-end reads). This may be useful if the qualities were very poor, or if there is some sort of unwanted bias at the 5' end.
+- `clip_R2`: Instructs Trim Galore to remove bp from the 5' end of read 2 (paired-end reads only). This may be useful if the qualities were very poor, or if there is some sort of unwanted bias at the 5' end.
+- `three_prime_clip_R1`: Instructs Trim Galore to remove <int> bp from the 3' end of read 1 (or single-end reads) AFTER adapter/quality trimming has been performed. This may remove some unwanted bias from the 3' end that is not directly related to adapter sequence or basecall quality.
+- `three_prime_clip_R2`: Instructs Trim Galore to remove bp from the 3' end of read 2 AFTER adapter/quality trimming has been performed. This may remove some unwanted bias from the 3' end that is not directly related to adapter sequence or basecall quality.
+- `nextseq_quality`: This enables the option --nextseq-trim=3'CUTOFF within Cutadapt, which will set a quality cutoff (that is normally given with -quality instead), but qualities of G bases are ignored. This trimming is in common for the NextSeq- and NovaSeq-platforms, where basecalls without any signal are called as high-quality G bases. This is mutually exclusive with -quality (if this is specified, then -quality determined by the `quality` parameter)
+- `hardtrim5`: Instead of performing adapter-/quality trimming, this option will simply hard-trim sequences to bp from the 3'-end. Once hard-trimming of files is complete, Trim Galore will exit.
+- `harftrim3`: Instead of performing adapter-/quality trimming, this option will simply hard-trim sequences to bp from the 5'-end. Once hard-trimming of files is complete, Trim Galore will exit.

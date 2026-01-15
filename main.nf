@@ -66,28 +66,11 @@ workflow {
         trimming_output_channel = BBDUK.out.trimmed_samples
 
     } else if (params.trimming == 'trim_galore') {
-        // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
-        trimGaloreArgs = ["--${params.quality_encoding}"]
-
-        // Specifying the adapters parameters
-        if (params.adapter_sequence_1 != 'none') trimGaloreArgs << "--adapter ${params.adapter_sequence_1}"
-        if (!params.paired_end && params.adapter_sequence_2 != 'none') trimGaloreArgs << "--adapter2 ${params.adapter_sequence_2}"
-        if (params.specific_adapters != 'none') trimGaloreArgs << "--${params.specific_adapters}"
-
-        // Specify the trimming parameters
-        if (params.max_length != 'none') trimGaloreArgs << "--max_n ${params.max_length}"
-        if (params.stringency != 'none') trimGaloreArgs << "--stringency ${params.stringency}"
-        if (params.error_rate != 'none') trimGaloreArgs << "-e ${params.error_rate}"
-        if (params.length != 'none') trimGaloreArgs << "--length ${params.length}"
-        if (params.maxn != 'none') trimGaloreArgs << "--max_n ${params.maxn}"
-        if (params.trim_n) trimGaloreArgs << "--trim-n"
         
-
-
-
-
-        // Add all the trim_galore arguments required into the <trimGaloreArgs> variable
-        trimGaloreArgs = "--quality ${params.quality} --length ${params.length} --stringency ${params.stringency} --${params.base_quality_encoding}"
+        // Prepare the arguments to be used in the trim-galore call
+        trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
+                params.max_length, params.stringency, params.error_rate, params.length, params.maxn, params.trim_n, params.trim_1, params.clip_R1, params.clip_R2, params.three_prime_clip_R1, params.three_prime_clip_R2, 
+                params.nextseq_quality, params.hardtrim5, params.hardtrim3)
 
         // Run the TRIM_GALORE process
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)
