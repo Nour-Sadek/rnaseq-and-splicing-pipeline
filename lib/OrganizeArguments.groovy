@@ -184,4 +184,29 @@ class OrganizeArguments {
         return starArgs  
     }
 
+    /* Making arguments for the counting reads tools */
+    static String makeHtseqCountArgs(max_reads_in_buffer, stranded, minaqual, feature_type, id_attribute, additional_attributes, mode, nonunique_mode, secondary_alignments, supplementary_alignments, 
+    add_chromosome_info) {
+
+        // Add all the HTseq arguments required into the <htseqCountArgs> variable
+        def htseqCountArgs = ["--max-reads-in-buffer=${max_reads_in_buffer}", "--stranded=${stranded}", "-a ${minaqual}", "--type=${feature_type}", "--idattr=${id_attribute}", "--mode=${mode}", 
+            "--nonunique=${nonunique_mode}", "--secondary-alignments=${secondary_alignments}", "--supplementary-alignments=${supplementary_alignments}"]
+        
+        // Add additional attributes if specified as a list
+        if (additional_attributes) {
+            if (!(additional_attributes instanceof List)) throw new IllegalArgumentException("Expected a List for the additional_attributes parameter for htseq-count process, but got ${additional_attributes.getClass().name}")
+            else htseqCountArgs << additional_attributes.collect { "--additional-attr=${it}" }.join(" ")
+        }
+
+        // Check other parameters
+        if (add_chromosome_info) htseqCountArgs << "--add-chromosome-info"
+
+        htseqCountArgs = htseqCountArgs.join(" ")
+
+        return htseqCountArgs
+
+    }
+
+
+
 }

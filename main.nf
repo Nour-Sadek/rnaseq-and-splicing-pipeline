@@ -129,8 +129,12 @@ workflow {
 
         /* Count number of reads for features (genes) using the sorted alignment bam files */
         if (params.quantifier == 'htseq-count') {
+            
             // Run the HTSEQ_COUNT reads quantification process
-            HTSEQ_COUNT(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))
+            htseqCountArgs = OrganizeArguments.makeHtseqCountArgs(params.max_reads_in_buffer, params.stranded, params.minaqual, params.feature_type, params.id_attribute, params.additional_attributes, params.mode, params.nonunique_mode, 
+                params.secondary_alignments, params.supplementary_alignments, params.add_chromosome_info)
+            HTSEQ_COUNT(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), htseqCountArgs)
+
         } else if (params.quantifier == 'featureCounts') {
             // Run the FEATURE_COUNTS reads quantification process
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))

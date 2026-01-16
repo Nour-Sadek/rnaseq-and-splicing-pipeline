@@ -9,7 +9,7 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 # which tools to use for each process
 trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'star'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+quantifier: 'htseq-count'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
@@ -121,7 +121,7 @@ hardtrim3: null
 #--------------------------- STAR parameters ---------------------------#
 # Run parameters
 runRNGseed: 777
-# Parameters used only with -runMode genomeGenerate (creating the reference genome)
+# Genome Indexing Parameters - only used with –runMode genomeGenerate
 genomeChrBinNbits: 18
 genomeSAindexNbases: 12
 genomeSAsparseD: 1
@@ -232,6 +232,20 @@ winReadCoverageBasesMin: 0
 quantMode: null
 quantTranscriptomeBAMcompression: 1
 quantTranscriptomeSAMoutput: 'BanSingleEnd_BanIndels_ExtendSoftclip'
+
+
+#--------------------------- HTSEQ-COUNT parameters ---------------------------#
+max_reads_in_buffer: 30000000
+stranded: 'no'
+minaqual: 10
+feature_type: 'exon'
+id_attribute: 'gene_id'
+additional_attributes: null  # specify the additional attributes as a list of strings, e.g. ['gene_name', 'exon_number']
+mode: 'union'
+nonunique_mode: 'none'
+secondary_alignments: 'score'
+supplementary_alignments: 'score'
+add_chromosome_info: false
 
 
 # HISAT2 parameters

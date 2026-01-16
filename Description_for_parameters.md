@@ -235,3 +235,19 @@ Windows, Anchors, Binning:
 - `quantMode`: Default: null. Types of quantification requested. If you want to use it, options are either TranscriptomeSAM or GeneCounts.
 - `quantTranscriptomeBAMcompression`: Default: 1. Transcriptome BAM compression level. Options are values between -2 to 10.
 - `quantTranscriptomeSAMoutput`: Default: BanSingleEnd_BanIndels_ExtendSoftclip. Alignment filtering for TranscriptomeSAM output. Options are: BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd, or BanSingleEnd_ExtendSoftclip.
+
+## HTSeq
+
+Please refer to the official website for more information: https://htseq.readthedocs.io/en/latest/htseqcount.html#htseqcount
+
+- `max_reads_in_buffer`: Default: 30000000. When alignment_file is paired end sorted by position, allow only so many reads to stay in memory until the mates are found (raising this number will use more memory). Has no effect for single end or paired end sorted by name.
+- `stranded`: Default: 'no'. Whether the data is from a strand-specific assay. For stranded=no, a read is considered overlapping with a feature regardless of whether it is mapped to the same or the opposite strand as the feature. For stranded=yes and single-end reads, the read has to be mapped to the same strand as the feature. For paired-end reads, the first read has to be on the same strand and the second read on the opposite strand. For stranded=reverse, these rules are reversed. Options are: yes, no, or reverse.
+- `minaqual`: Default: 10. Skip all reads with MAPQ alignment quality lower than the given minimum value. MAPQ is the 5th column of a SAM/BAM file and its usage depends on the software used to map the reads.
+- `feature_type`: Default: 'exon'. Feature type (3rd column in GTF file) to be used, all features of other type are ignored (default, suitable for RNA-Seq analysis using an Ensembl GTF file: exon).
+- `id_attribute`: Default: 'gene_id'. GTF attribute to be used as feature ID. Several GTF lines with the same feature ID will be considered as parts of the same feature. The feature ID is used to identity the counts in the output table. The default, suitable for RNA-Seq analysis using an Ensembl GTF file, is gene_id.
+- `additional_attributes`: Default: null. Additional feature attributes, which will be printed as an additional column after the primary attribute column but before the counts column(s). The default is none, a suitable value to get gene names using an Ensembl GTF file is gene_name. To specify these attributes, present them as a list of string, e.g. ['gene_name', 'exon_number'].
+- `mode`: Default: 'union'. Mode to handle reads overlapping more than one feature. Options are: union, intersection-strict, or intersection-nonempty.
+- `nonunique_mode`: Default: 'none'. Mode to handle reads that align to or are assigned to more than one feature in the overlap mode of choice. Options are: none, all, fraction, or random.
+- `secondary_alignments`: Default: 'score'. Mode to handle secondary alignments (SAM flag 0x100). Options are: score or ignore.
+- `supplementary_alignments`: Default: 'score'. Mode to handle supplementary/chimeric alignments (SAM flag 0x800). Options are: score or ignore.
+- `add_chromosome_info`: Default: false. Store information about the chromosome of each feature as an additional attribute (e.g. column in the TSV output file).

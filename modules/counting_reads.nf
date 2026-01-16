@@ -12,6 +12,7 @@ process HTSEQ_COUNT {
         tuple val(sample_id), val(sample_group), path(sorted_bam_file)
         val outputDir
         path gtf_file
+        val htseqCountArgs
 
 	output:
         val sample_id, emit: sample_id
@@ -19,7 +20,7 @@ process HTSEQ_COUNT {
 	
     script:
     """
-    htseq-count -f bam -r pos -s no -t exon -i gene_id -m union $sorted_bam_file $gtf_file > ${sample_id}_htseq.txt
+    htseq-count --nprocesses=${task.cpus} --format bam --order pos $htseqCountArgs $sorted_bam_file $gtf_file > ${sample_id}_htseq.txt
     """
 }
 
@@ -41,7 +42,7 @@ process FEATURE_COUNTS {
 	
     script:
     """
-    featureCounts -a $gtf_file -o ${sample_id}_feature.txt -t exon -g gene_id -s 0 -p -T ${task.cpus} $sorted_bam_file
+    featureCounts -a $gtf_file -o ${sample_id}_feature.txt -t exon -g gene_id -s 0 -p -T $task.cpus $sorted_bam_file
     """
 }
 
