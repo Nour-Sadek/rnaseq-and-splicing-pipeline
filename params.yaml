@@ -8,7 +8,7 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
 trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
+aligner: 'star'  # available options are: 'star', 'hisat2', 'none'
 quantifier: 'none'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
@@ -28,23 +28,23 @@ adapters_file: 'TruSeq3-SE.fa'
 seed_mismatches: 2
 palindrome_clip_threshold: 30
 simple_clip_threshold: 10
-min_adapter_length_palindrome: 'none'
-keepbothreads: 'none'
+min_adapter_length_palindrome: null
+keepbothreads: null
 window_size: 4
 required_quality: 15
 leading: 3
 trailing: 3
-headcrop: 'none'
-tailcrop: 'none'
-crop: 'none'
-target_length: 'none'
-strictness: 'none'
+headcrop: null
+tailcrop: null
+crop: null
+target_length: null
+strictness: null
 minlen: 36
-maxlen: 'none'
-avgqual: 'none'
-bases: 'none'
-min_count: 'none'
-max_count: 'none'
+maxlen: null
+avgqual: null
+bases: null
+min_count: null
+max_count: null
 
 
 #--------------------------- Bbduk parameters ---------------------------#
@@ -99,29 +99,140 @@ tossjunk: 'f'
 #--------------------------- Trim-Galore parameters ---------------------------#
 quality: 20
 quality_encoding: 'phred33'  # options: phred33 or phred64
-adapter_sequence_1: 'none'  # Or specify the sequence, for example 'GATCGTCGGACT'
-adapter_sequence_2: 'none'  # This is ignored in single-end reads. If not specified for paired-end reads, <adapter_sequence_1> will be applied on both reads.
+adapter_sequence_1: null  # Or specify the sequence, for example 'GATCGTCGGACT'
+adapter_sequence_2: null  # This is ignored in single-end reads. If not specified for paired-end reads, <adapter_sequence_1> will be applied on both reads.
 specific_adapters: 'illumina'  # options are: 'illumina', 'stranded_illumina', 'nextera', 'small_rna', 'bgiseq'. Can only be none if adapter_sequence_1 and/or adapter_sequence_2 are specified
-max_length: 'none'
+max_length: null
 stringency: 1
 error_rate: 0.1
 length: 20
-maxn: 'none'
+maxn: null
 trim_n: false  # either true or false
 trim_1: false  # either true or false
-clip_R1: 'none'
-clip_R2: 'none'
-three_prime_clip_R1: 'none'
-three_prime_clip_R2: 'none'
-nextseq_quality: 'none'  # only specify the qualty with nextseq and novaseq reads (replaces <quality> parameter)
-hardtrim5: 'none'
-hardtrim3: 'none'
+clip_R1: null
+clip_R2: null
+three_prime_clip_R1: null
+three_prime_clip_R2: null
+nextseq_quality: null  # only specify the qualty with nextseq and novaseq reads (replaces <quality> parameter)
+hardtrim5: null
+hardtrim3: null
 
 
-# STAR parameters
-overhang: 101
+#--------------------------- STAR parameters ---------------------------#
+# Run parameters
+runRNGseed: 777
+# Parameters used only with -runMode genomeGenerate (creating the reference genome)
+genomeChrBinNbits: 18
 genomeSAindexNbases: 12
-filterMatch: 0.3
+genomeSAsparseD: 1
+genomeSuffixLengthMax: -1
+# Splice Junctions Database
+sjdbGTFfeatureExon: 'exon'
+sjdbGTFtagExonParentTranscript: 'transcript_id'
+sjdbGTFtagExonParentGene: 'gene_id'
+sjdbGTFtagExonParentGeneName: 'gene_name'
+sjdbGTFtagExonParentGeneType: 'gene_type gene_biotype'
+sjdbOverhang: 100
+sjdbScore: 2
+sjdbInsertSave: 'Basic'
+readMapNumber: -1
+readMatesLengthsIn: 'NotEqual'
+readQualityScoreBase: 33
+# Read Clipping
+clipAdapterType: 'Hamming'
+clip3pNbases: 0
+clip3pAdapterSeq: null
+clip3pAdapterMMp: 0.1
+clip3pAfterAdapterNbases: 0
+clip5pNbases: 0
+# Output: General
+outReadsUnmapped: 'None'
+outQSconversionAdd: 0
+outMultimapperOrder: 'Old_2.4'
+# Output: SAM and BAM
+outSAMmode: 'Full'
+outSAMstrandField: 'None'
+outSAMattributes: 'Standard'
+outSAMattrIHstart: 1
+outSAMunmapped: 'None'
+outSAMprimaryFlag: 'OneBestScore'
+outSAMreadID: 'Standard'
+outSAMmapqUnique: 255
+outSAMflagOR: 0
+outSAMflagAND: 65535
+outSAMmultNmax: -1
+outSAMtlen: 1
+outBAMcompression: 1
+# Output Filtering
+outFilterType: 'Normal'
+outFilterMultimapScoreRange: 1
+outFilterMultimapNmax: 10
+outFilterMismatchNmax: 10
+outFilterMismatchNoverLmax: 0.3
+outFilterMismatchNoverReadLmax: 1.0
+outFilterScoreMin: 0
+outFilterScoreMinOverLread: 0.66
+outFilterMatchNmin: 0
+outFilterMatchNminOverLread: 0.66
+outFilterIntronMotifs: 'None'
+outFilterIntronStrands: 'RemoveInconsistentStrands'
+# Output Filtering: Splice Junctions
+outSJfilterReads: 'All'
+outSJfilterOverhangMin: '30 12 12 12'
+outSJfilterCountUniqueMin: '3 1 1 1'
+outSJfilterCountTotalMin: '3 1 1 1'
+outSJfilterDistToOtherSJmin: '10 0 5 10'
+outSJfilterIntronMaxVsReadN: '50000 100000 200000'
+# Scoring
+scoreGap: 0
+scoreGapNoncan: -8
+scoreGapGCAG: -4
+scoreGapATAC: -8
+scoreGenomicLengthLog2scale: -0.25
+scoreDelOpen: -2
+scoreDelBase: -2
+scoreInsOpen: -2
+scoreInsBase: -2
+scoreStitchSJshift: 1
+# Alignments and Seeding
+seedSearchStartLmax: 50
+seedSearchStartLmaxOverLread: 1.0
+seedSearchLmax: 0
+seedMultimapNmax: 10000
+seedPerReadNmax: 1000
+seedPerWindowNmax: 50
+seedNoneLociPerWindow: 10
+seedSplitMin: 12
+seedMapMin: 5
+alignIntronMin: 21
+alignIntronMax: 0
+alignMatesGapMax: 0
+alignSJoverhangMin: 5
+alignSJstitchMismatchNmax: '0 -1 0 0'
+alignSJDBoverhangMin: 3
+alignSplicedMateMapLmin: 0
+alignSplicedMateMapLminOverLmate: 0.66
+alignWindowsPerReadNmax: 10000
+alignTranscriptsPerWindowNmax: 100
+alignTranscriptsPerReadNmax: 10000
+alignEndsType: 'Local'
+alignEndsProtrude: '0 ConcordantPair'
+alignSoftClipAtReferenceEnds: 'Yes'
+alignInsertionFlush: 'None'
+# Paired-End reads
+peOverlapNbasesMin: 0
+peOverlapMMp: 0.01
+# Windows, Anchors, Binning
+winAnchorMultimapNmax: 50
+winBinNbits: 16
+winAnchorDistNbins: 9
+winFlankNbins: 4
+winReadCoverageRelativeMin: 0.5
+winReadCoverageBasesMin: 0
+quantMode: null
+quantTranscriptomeBAMcompression: 1
+quantTranscriptomeSAMoutput: 'BanSingleEnd_BanIndels_ExtendSoftclip'
+
 
 # HISAT2 parameters
 hisat2_index_prefix: 'genome'

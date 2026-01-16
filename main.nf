@@ -39,12 +39,10 @@ workflow {
     /* Trim the reads */
     if (params.trimming == 'trimmomatic') {
 
-        // Prepare the arguments to be used in the trimmomatic call
+        // Run the TRIMMOMATIC process
         trimmomaticArgs = OrganizeArguments.makeTrimmomaticArgs(params.base_quality_encoding, params.adapters_file, params.seed_mismatches, params.palindrome_clip_threshold, params.simple_clip_threshold, 
                     params.min_adapter_length_palindrome, params.keepbothreads, params.window_size, params.required_quality, params.target_length, params.strictness, params.bases, 
                     params.min_count, params.max_count, params.leading, params.trailing, params.headcrop, params.tailcrop, params.crop, params.minlen, params.maxlen, params.avgqual)
-
-        // Run the TRIMMOMATIC process
         TRIMMOMATIC(reads_channel, outputDir, trimmomaticArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
@@ -52,14 +50,12 @@ workflow {
         
     } else if (params.trimming == 'bbduk') {
 
-        // Prepare the arguments to be used in the bbduk call
+        // Run the BBDUK process
         bbdukArgs = OrganizeArguments.makeBbdukArgs(params.qin, params.reads, params.samplerate, params.k, params.rcomp, params.maskmiddle, params.minkmerhits, params.minkmerfraction, params.mincovfraction, 
                 params.hammingdistance, params.qhdist, params.editdistance, params.hammingdistance2, params.qhdist2, params.editdistance2, params.forbidn, params.ktrim, params.ktrimtips, params.maskfullycovered, 
                 params.mink, params.qtrim, params.trimq, params.minlength, params.minlengthfraction, params.minavgquality, params.minbasequality, params.maxns, params.minconsecutivebases, params.trimpad, 
                 params.trimbyoverlap, params.strictoverlap, params.minoverlap, params.mininsert, params.trimpairsevenly, params.forcetrimleft, params.forcetrimright, params.forcetrimright2, params.forcetrimmod, 
                 params.restrictleft, params.restrictright, params.mingc, params.maxgc, params.tossjunk)
-
-        // Run the BBDUK process
         BBDUK(reads_channel, outputDir, bbdukArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
@@ -67,12 +63,10 @@ workflow {
 
     } else if (params.trimming == 'trim_galore') {
         
-        // Prepare the arguments to be used in the trim-galore call
+        // Run the TRIM_GALORE process
         trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
                 params.max_length, params.stringency, params.error_rate, params.length, params.maxn, params.trim_n, params.trim_1, params.clip_R1, params.clip_R2, params.three_prime_clip_R1, params.three_prime_clip_R2, 
                 params.nextseq_quality, params.hardtrim5, params.hardtrim3)
-
-        // Run the TRIM_GALORE process
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
@@ -87,15 +81,33 @@ workflow {
 
     /* Run the Alignment (if needed) */
     if (params.aligner == "star") {
+
         // Create the reference genome index
-        STAR_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
+        starReferenceIndexArgs = OrganizeArguments.makeStarReferenceIndexArgs(params.runRNGseed, params.genomeChrBinNbits, params.genomeSAindexNbases, params.genomeSAsparseD, params.genomeSuffixLengthMax, 
+            params.sjdbGTFfeatureExon, params.sjdbGTFtagExonParentTranscript, params.sjdbGTFtagExonParentGene, params.sjdbGTFtagExonParentGeneName, params.sjdbGTFtagExonParentGeneType, params.sjdbOverhang, 
+            params.sjdbScore, params.sjdbInsertSave)
+        STAR_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile), file(params.annotationsGTFFile), starReferenceIndexArgs)
 
         // Run the STAR alignment process
-        STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, params.filterMatch)
+        starArgs = OrganizeArguments.makeStarArgs(params.paired_end, params.runRNGseed, params.readMapNumber, params.readMatesLengthsIn, params.readQualityScoreBase, params.clipAdapterType, params.clip3pNbases, 
+            params.clip3pAdapterSeq, params.clip3pAdapterMMp, params.clip3pAfterAdapterNbases, params.clip5pNbases, params.outReadsUnmapped, params.outQSconversionAdd, params.outMultimapperOrder, params.outSAMmode, 
+            params.outSAMstrandField, params.outSAMattributes, params.outSAMattrIHstart, params.outSAMunmapped, params.outSAMprimaryFlag, params.outSAMreadID, params.outSAMmapqUnique, params.outSAMflagOR, params.outSAMflagAND, 
+            params.outSAMmultNmax, params.outSAMtlen, params.outBAMcompression, params.outFilterType, params.outFilterMultimapScoreRange, params.outFilterMultimapNmax, params.outFilterMismatchNmax, params.outFilterMismatchNoverLmax, 
+            params.outFilterMismatchNoverReadLmax, params.outFilterScoreMin, params.outFilterScoreMinOverLread, params.outFilterMatchNmin, params.outFilterMatchNminOverLread, params.outFilterIntronMotifs, params.outFilterIntronStrands, 
+            params.outSJfilterReads, params.outSJfilterOverhangMin, params.outSJfilterCountUniqueMin, params.outSJfilterCountTotalMin, params.outSJfilterDistToOtherSJmin, params.outSJfilterIntronMaxVsReadN, params.scoreGap, 
+            params.scoreGapNoncan, params.scoreGapGCAG, params.scoreGapATAC, params.scoreGenomicLengthLog2scale, params.scoreDelOpen, params.scoreDelBase, params.scoreInsOpen, params.scoreInsBase, params.scoreStitchSJshift, 
+            params.seedSearchStartLmax, params.seedSearchStartLmaxOverLread, params.seedSearchLmax, params.seedMultimapNmax, params.seedPerReadNmax, params.seedPerWindowNmax, params.seedNoneLociPerWindow, params.seedSplitMin, 
+            params.seedMapMin, params.alignIntronMin, params.alignIntronMax, params.alignMatesGapMax, params.alignSJoverhangMin, params.alignSJstitchMismatchNmax, params.alignSJDBoverhangMin, params.alignSplicedMateMapLmin, 
+            params.alignSplicedMateMapLminOverLmate, params.alignWindowsPerReadNmax, params.alignTranscriptsPerWindowNmax, params.alignTranscriptsPerReadNmax, params.alignEndsType, params.alignEndsProtrude, params.alignSoftClipAtReferenceEnds, 
+            params.alignInsertionFlush, params.peOverlapNbasesMin, params.peOverlapMMp, params.winAnchorMultimapNmax, params.winBinNbits, params.winAnchorDistNbins, params.winFlankNbins, params.winReadCoverageRelativeMin, 
+            params.winReadCoverageBasesMin, params.quantMode, params.quantTranscriptomeBAMcompression, params.quantTranscriptomeSAMoutput)
+        STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, starArgs)
 
         // Extract the sample_id and bam_file outputs
         alignment_output_channel = STAR.out.alignment_output
+
     } else if (params.aligner == 'hisat2') {
+
         // Create the reference genome index
         HISAT2_REFERENCE_INDEX(outputDir, params.hisat2_index_prefix, file(params.genomeFastaFile))
 

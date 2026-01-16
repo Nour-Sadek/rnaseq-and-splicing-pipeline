@@ -11,8 +11,7 @@ process STAR_REFERENCE_INDEX {
         val outputDir
 		path genome_fasta_files
         path gtf_file
-        val overhang
-        val genomeSAindexNbases
+        val starReferenceIndexArgs
 
 	output:
         path reference_index, emit: reference_index
@@ -20,7 +19,7 @@ process STAR_REFERENCE_INDEX {
     script:
     """
     mkdir reference_index
-    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir reference_index --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file --sjdbOverhang $overhang --genomeSAindexNbases $genomeSAindexNbases
+    STAR --runThreadN $task.cpus --runMode genomeGenerate --genomeDir reference_index --genomeFastaFiles $genome_fasta_files --sjdbGTFfile $gtf_file $starReferenceIndexArgs
     """
 }
 

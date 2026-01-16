@@ -34,13 +34,13 @@ Please refer to the original github page for more information: https://github.co
 Please refer to the official website for more information: https://bbmap.org/tools/bbduk
 
 Input parameters:
-- `qin`: Input quality offset: 33 (Sanger), 64, or auto.
-- `reads`: If positive, quit after processing X reads or pairs.
+- `qin`: Default: auto. Input quality offset: 33 (Sanger), 64, or auto.
+- `reads`: Default: -1. If positive, quit after processing X reads or pairs.
 - `samplerate`: Default: 1. Set lower to only process a fraction of input reads.
 
 Processing parameters:
-- `k`: Kmer length used for finding contaminants. Contaminants shorter than k will not be found. k must be at least 1. For k>31, BBDuk uses emulated long kmers by requiring consecutive 31-mer matches.
-- `rcomp`: Look for reverse-complements of kmers in addition to forward kmers. Set rcomp=f to match only forward orientation if exact directional matching is required.
+- `k`: Default: 27. Kmer length used for finding contaminants. Contaminants shorter than k will not be found. k must be at least 1. For k>31, BBDuk uses emulated long kmers by requiring consecutive 31-mer matches.
+- `rcomp`: Default: t. Look for reverse-complements of kmers in addition to forward kmers. Set rcomp=f to match only forward orientation if exact directional matching is required.
 - `maskmiddle`: (mm) Default: t. Treat the middle base of a kmer as a wildcard, to increase sensitivity in the presence of errors. This may also be set to a number, e.g. mm=3, to mask that many bp. Default mm=t corresponds to mm=1 for odd-length kmers and mm=2 for even-length kmers, while mm=f equals mm=0. Disabled when using mink or kbig>k.
 - `minkmerhits`: (mkh) Default: 1. Reads need at least this many matching kmers to be considered as matching the reference.
 - `minkmerfraction`: (mkf) Default: 0.0. A read needs at least this fraction of its total kmers to hit a ref, in order to be considered a match. If this and minkmerhits are set, the greater is used.
@@ -90,7 +90,7 @@ Please refer to the official user guide on their GitHub page for more informatio
 - `quality_encoding`: Instructs Cutadapt to use ASCII+33 quality scores as Phred scores for phred33 and ASCII+64 for phred64 for quality trimming.
 - `adapter_sequence_1`: Adapter sequence to be trimmed. If not specified explicitly, Trim Galore will try to auto-detect whether the Illumina universal, Nextera transposase or Illumina small RNA adapter sequence was used. If no adapter can be detected within the first 1 million sequences of the first file specified Trim Galore defaults to --illumina. A single base may also be given as e.g. -a A{10}, to be expanded to -a AAAAAAAAAA.
 - `adapter_sequence_2`: Optional adapter sequence to be trimmed off read 2 of paired-end files. This option requires --paired to be specified as well.
-- `specific_adapters`: Options are `illumina` for the adapter sequence to be trimmed be the first 13bp of the illumina universal adapter `AGATCGGAAGAGC`, `stranded_illumina` for the first 13bp of the Illumina stranded mRNA or Total RNA adapter `ACTGTCTCTTATA`, `nextera` for the first 12bp of the Nextera adapter `CTGTCTCTTATA`, `small_rna` for the first 12bp of the Illumina Small RNA 3' Adapter `TGGAATTCTCGG`, and `bgiseq` for BGISEQ/DNBSEQ/MGISEQ instead the default auto-detection (uses sequences AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA for Read 1 (BGI/MGI forward), and AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG for Read 2 (BGI/MGI reverse)).
+- `specific_adapters`: Default: illumina. Options are `illumina` for the adapter sequence to be trimmed be the first 13bp of the illumina universal adapter `AGATCGGAAGAGC`, `stranded_illumina` for the first 13bp of the Illumina stranded mRNA or Total RNA adapter `ACTGTCTCTTATA`, `nextera` for the first 12bp of the Nextera adapter `CTGTCTCTTATA`, `small_rna` for the first 12bp of the Illumina Small RNA 3' Adapter `TGGAATTCTCGG`, and `bgiseq` for BGISEQ/DNBSEQ/MGISEQ instead the default auto-detection (uses sequences AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA for Read 1 (BGI/MGI forward), and AAGTCGGATCGTAGCCATGTCGTTCTGTGAGCCAAGGAGTTG for Read 2 (BGI/MGI reverse)).
 - `max_length`: Discard reads that are longer than bp after trimming. This is only advised for smallRNA sequencing to remove non-small RNA sequences.
 - `stringency`: Default: 1. Overlap with adapter sequence required to trim a sequence.
 - `error_rate`: Default: 0.1. Maximum allowed error rate (no. of errors divided by the length of the matching region).
@@ -105,3 +105,133 @@ Please refer to the official user guide on their GitHub page for more informatio
 - `nextseq_quality`: This enables the option --nextseq-trim=3'CUTOFF within Cutadapt, which will set a quality cutoff (that is normally given with -quality instead), but qualities of G bases are ignored. This trimming is in common for the NextSeq- and NovaSeq-platforms, where basecalls without any signal are called as high-quality G bases. This is mutually exclusive with -quality (if this is specified, then -quality determined by the `quality` parameter)
 - `hardtrim5`: Instead of performing adapter-/quality trimming, this option will simply hard-trim sequences to bp from the 3'-end. Once hard-trimming of files is complete, Trim Galore will exit.
 - `harftrim3`: Instead of performing adapter-/quality trimming, this option will simply hard-trim sequences to bp from the 5'-end. Once hard-trimming of files is complete, Trim Galore will exit.
+
+## Star
+
+Please refer to the official user guide on their GitHub page for more information: https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+
+Run parameters:
+- `runRNGseed`: Default: 777. Random number generator seed.
+
+Genome Indexing Parameters - only used with –runMode genomeGenerate:
+- `genomeChrBinNbits`: Default: 18. int: =log2(chrBin), where chrBin is the size of the bins for genome storage: each chromosome will occupy an integer number of bins.
+- `genomeSAindexNbases`: Default: 12. int: length (bases) of the SA pre-indexing string. Typically between 10 and 15. Longer strings will use much more memory, but allow faster searches. For small genomes, the parameter –genomeSAindexNbases must be scaled down to min(14, log2(GenomeLength)/2 - 1).
+- `genomeSAsparseD`: Default: 1. Suffux array sparsity, i.e. distance between indices: use bigger numbers to decrease needed RAM at the cost of mapping speed reduction
+- `genomeSuffixLengthMax`: Default: -1. Maximum length of the suffixes, has to be longer than read length. -1 = infinite.
+
+Splice Junctions Database:
+- `sjdbGTFfeatureExon`: Default: exon. Feature type in GTF file to be used as exons for building transcripts.
+- `sjdbGTFtagExonParentTranscript`: Default: transcript_id. GTF attribute name for parent transcript ID.
+- `sjdbGTFtagExonParentGene`: Default: gene_id. GTF attribute name for parent gene ID.
+- `sjdbGTFtagExonParentGeneName`: Default: gene_name. GTF attribute name for parent gene name.
+- `sjdbGTFtagExonParentGeneType`: Default: gene_type gene_biotype. GTF attribute name for parent gene type.
+- `sjdbOverhang`: Default: 100.  Length of the donor/acceptor sequence on each side of the junctions, ideally = (mate length - 1).
+- `sjdbScore`: Default: 2. Extra alignment score for alignments that cross database junctions.
+- `sjdbInsertSave`: Default: Basic. Which files to save when sjdb junctions are inserted on the fly at the mapping step.
+- `readMapNumber`: Default: -1. Number of reads to map from the beginning of the file.
+- `readMatesLengthsIn`: Default: NotEqual. Equal/NotEqual - lengths of names,sequences,qualities for both mates are the same / not the same. NotEqual is safe in all situations.
+- `readQualityScoreBase`: Default: 33. number to be subtracted from the ASCII code to get Phred quality score
+
+Read Clipping:
+- `clipAdapterType`: Default: Hamming. Adapter clipping type. Options are: Hamming, CellRanger4, or None.
+- `clip3pNbases`: Default: 0.  Number(s) of bases to clip from 3p of each mate. If one value is given, it will be assumed the same for both mates.
+- `clip3pAdapterSeq`: Default: null. Adapter sequences to clip from 3p of each mate. If one value is given, it will be assumed the same for both mates.
+- `clip3pAdapterMMp`: Default: 0.1. Max proportion of mismatches for 3p adapter clipping for each mate. If one value is given, it will be assumed the same for both mates.
+- `clip3pAfterAdapterNbases`: Default: 0. Number of bases to clip from 3p of each mate after the adapter clipping. If one value is given, it will be assumed the same for both mates.
+- `clip5pNbases`: Default: 0. Number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates.
+
+Output - General:
+- `outReadsUnmapped`: Default: None. Output of unmapped and partially mapped (i.e. mapped only one mate of a paired end read) reads in separate file(s). Options are: None or Fastx.
+- `outQSconversionAdd`: Default: 0. Add this number to the quality score (e.g. to convert from Illumina to Sanger, use -31).
+- `outMultimapperOrder`: Default: Old_2.4. Order of multimapping alignments in the output files. Options are: Old_2.4 or Random.
+
+Output - SAM and BAM:
+- `outSAMmode`: Default: Full. Mode of SAM output. Options are: None, Full, or NoQS.
+- `outSAMstrandField`: Default: None. Cufflinks-like strand field flag. Options are: None or intronMotif.
+- `outSAMattributes`: Default: Standard. A string of desired SAM attributes, in the order desired for the output SAM. Tags can be listed in any combination/order. Many options are available (check the manual for the full list).
+- `outSAMattrIHstart`: Default: 1. Start value for the IH attribute. 0 may be required by some downstream software, such as Cufflinks or StringTie.
+- `outSAMunmapped`: Default: None. Output of unmapped reads in the SAM format.
+- `outSAMprimaryFlag`: Default: OneBestScore. Which alignments are considered primary - all others will be marked with 0x100 bit in the FLAG
+- `outSAMreadID`: Default: Standard. Read ID record type. Options are: Standard or Number.
+- `outSAMmapqUnique`: Default: 255. The MAPQ value for unique mappers. Options are values 0 to 255.
+- `outSAMflagOR`: Default: 0. sam FLAG will be bitwise OR’d with this value, i.e. FLAG=FLAG — outSAMflagOR. This is applied after all flags have been set by STAR, and after outSAMflagAND. Can be used to set specific bits that are not set otherwise. Options are values 0 to 65535.
+- `outSAMflagAND`: Default: 65535. sam FLAG will be bitwise AND’d with this value, i.e. FLAG=FLAG & outSAMflagOR. This is applied after all flags have been set by STAR, but before outSAMflagOR. Can be used to unset specific bits that are not set otherwise. Options are values 0 to 65535.
+- `outSAMmultNmax`: Default: -1. max number of multiple alignments for a read that will be output to the SAM/BAM files. Note that if this value is not equal to -1, the top scoring alignment will be output first.
+- `outSAMtlen`: Default: 1. Calculation method for the TLEN field in the SAM/BAM files. Options are: 1 or 2.
+- `outBAMcompression`: Default: 1. BAM compression level, -1=default compression (6?), 0=no compression, 10=maximum compression. Options are values -1 to 10.
+
+Output Filtering:
+- `outFilterType`: Default: Normal. Tyoe of filtering. Options are: Normal or BySJout.
+- `outFilterMultimapScoreRange`: Default: 1. The score range below the maximum score for multimapping alignments.
+- `outFilterMultimapNmax`: Default: 10. maximum number of loci the read is allowed to map to. Alignments (all of them) will be output only if the read maps to no more loci than this value. Otherwise no alignments will be output, and the read will be counted as "mapped to too many loci" in the Log.final.out.
+- `outFilterMismatchNmax`: Default: 10. Alignment will be output only if it has no more mismatches than this value.
+- `outFilterMismatchNoverLmax`: Default: 0.3. Alignment will be output only if its ratio of mismatches to mapped length is less than or equal to this value.
+- `outFilterMismatchNoverReadLmax`: Default: 1.0. Alignment will be output only if its ratio of mismatches to read length is less than or equal to this value.
+- `outFilterScoreMin`: Default: 0. Alignment will be output only if its score is higher than or equal to this value.
+- `outFilterScoreMinOverLread`: Default: 0.66. Same as outFilterScoreMin, but normalized to read length (sum of mates' lengths for paired-end reads).
+- `outFilterMatchNmin`: Default: 0.  Alignment will be output only if the number of matched bases is higher than or equal to this value.
+- `outFilterMatchNminOverLread`: Default: 0.66. Same as outFilterMatchNmin, but normalized to the read length (sum of mates' lengths for paired-end reads).
+- `outFilterIntronMotifs`: Default: None. Filter alignment using their motifs. Options are: None, RemoveNoncanonical, or RemoveNoncanonicalUnannotated.
+- `outFilterIntronStrands`: Default: RemoveInconsistentStrands. Filter strands. Options are: RemoveInconsistentStrands or None.
+
+Output Filtering - Splice Junctions:
+- `outSJfilterReads`: Default: All. Which reads to consider for collapsed splice junctions output. Options are: All or Unique.
+- `outSJfilterOverhangMin`: Default: 30 12 12 12. 4 integers: minimum overhang length for splice junctions on both sides for: (1) non-canonical motifs, (2) GT/AG and CT/AC motif, (3) GC/AG and CT/GC motif, (4) AT/AC and GT/AT motif. -1 means no output for that motif. Does not apply to annotatoed junctions.
+- `outSJfilterCountUniqueMin`: Default: 3 1 1 1. 4 integers: minimum uniquely mapping read count per junction for: (1) non-canonical motifs, (2) GT/AG and CT/AC motif, (3) GC/AG and CT/GC motif, (4) AT/AC and GT/AT motif. -1 means no output for that motif. Junctions are output if one of outSJfilterCountUniqueMin OR outSJfilterCountTotalMin conditions are satisfied. Does not apply to annotatoed junctions.
+- `outSJfilterCountTotalMin`: Default: 3 1 1 1. 4 integers: minimum total (multi-mapping+unique) read count per junction for: (1) non-canonical motifs, (2) GT/AG and CT/AC motif, (3) GC/AG and CT/GC motif, (4) AT/AC and GT/AT motif. -1 means no output for that
+motif. Junctions are output if one of outSJfilterCountUniqueMin OR outSJfilterCountTotalMin conditions are satisfied. Does not apply to annotatoed junctions.
+- `outSJfilterDistToOtherSJmin`: Default: 10 0 5 10. 4 integers>=0: minimum allowed distance to other junctions’ donor/acceptor. Does not apply to annotatoed junctions.
+- `outSJfilterIntronMaxVsReadN`: Default: 50000 100000 200000. N integers>=0: maximum gap allowed for junctions supported by 1,2,3,,,N reads i.e. by default junctions supported by 1 read can have gaps <=50000b, by 2 reads: <=100000b, by 3 reads: <=200000. by >=4 reads any gap <=alignIntronMax. Does not apply to annotatoed junctions.
+
+Scoring:
+- `scoreGap`: Default: 0. Splice junction penalty (independent on intron motif).
+- `scoreGapNoncan`: Default: -8. Non-canonical junction penalty (in addition to scoreGap).
+- `scoreGapGCAG`: Default: -4. GC/AG and CT/GC junction penalty (in addition to scoreGap).
+- `scoreGapATAC`: Default: -8. AT/AC and GT/AT junction penalty (in addition to scoreGap).
+- `scoreGenomicLengthLog2scale`: Default: -0.25. Extra score logarithmically scaled with genomic length of the alignment: scoreGenomicLengthLog2scale*log2(genomicLength).
+- `scoreDelOpen`: Default: -2. Deletion open penalty.
+- `scoreDelBase`: Default: -2.  Deletion extension penalty per base (in addition to scoreDelOpen).
+- `scoreInsOpen`: Default: -2. Insertion open penalty.
+- `scoreInsBase`: Default: -2. Insertion extension penalty per base (in addition to scoreInsOpen).
+- `scoreStitchSJshift`: Default: 1. Maximum score reduction while searching for SJ boundaries in the stitching step.
+
+Alignments and Seeding:
+- `seedSearchStartLmax`: Default: 50. Defines the search start point through the read - the read is split into pieces no longer than this value.
+- `seedSearchStartLmaxOverLread`: Default: 1.0. seedSearchStartLmax normalized to read length (sum of mates' lengths for paired-end reads).
+- `seedSearchLmax`: Default: 0. Defines the maximum length of the seeds, if =0 seed length is not limited.
+- `seedMultimapNmax`: Default: 10000. Only pieces that map fewer than this value are utilized in the stitching procedure.
+- `seedPerReadNmax`: Default: 1000. Max number of seeds per read.
+- `seedPerWindowNmax`: Default: 50. Max number of seeds per window.
+- `seedNoneLociPerWindow`: Default: 10. Max number of one seed loci per window.
+- `seedSplitMin`: Default: 12. Min length of the seed sequences split by Ns or mate gap.
+- `seedMapMin`: Default: 5. Min length of seeds to be mapped.
+- `alignIntronMin`: Default: 21. Minimum intron size, genomic gap is considered intron if its length>=alignIntronMin, otherwise it is considered Deletion.
+- `alignIntronMax`: Default: 0. Maximum intron size, if 0, max intron size will be determined by (2ˆwinBinNbits)*winAnchorDistNbins.
+- `alignMatesGapMax`: Default: 0. Maximum gap between two mates, if 0, max intron gap will be determined by (2ˆwinBinNbits)*winAnchorDistNbins.
+- `alignSJoverhangMin`: Default: 5. Minimum overhang (i.e. block size) for spliced alignments.
+- `alignSJstitchMismatchNmax`: Default: 0 -1 0 0. 4*int>=0: maximum number of mismatches for stitching of the splice junctions (-1: no limit). (1) non-canonical motifs, (2) GT/AG and CT/AC motif, (3) GC/AG and CT/GC motif, (4) AT/AC and GT/AT motif.
+- `alignSJDBoverhangMin`: Default: 3. Minimum overhang (i.e. block size) for annotated (sjdb) spliced.
+- `alignSplicedMateMapLmin`: Default: 0. Minimum mapped length for a read mate that is spliced.
+- `alignSplicedMateMapLminOverLmate`: Default: 0.66. alignSplicedMateMapLmin normalized to mate length.
+- `alignWindowsPerReadNmax`: Default: 10000. Max number of windows per read.
+- `alignTranscriptsPerWindowNmax`: Default: 100. Max number of transcripts per window.
+- `alignTranscriptsPerReadNmax`: Default: 10000. Max number of different alignments per read to consider.
+- `alignEndsType`: Default: Local. Type of read ends alignment. Options are: Local, EndToEnd, Extend5pOfRead1, or Extend5pOfReads12.
+- `alignEndsProtrude`: Default: 0 ConcordantPair. Allow protrusion of alignment ends, i.e. start (end) of the +strand mate downstream of the start (end) of the -strand mate. 1st word: maximum number of protrusion bases allowed. 2nd word: Options are either ConcordantPair or DiscordantPair.
+- `alignSoftClipAtReferenceEnds`: Default: Yes. Allow the soft-clipping of the alignments past the end of the chromosomes. Options are: Yes or No.
+- `alignInsertionFlush`: Default: None. How to flush ambiguous insertion positions. Options are: None or Right.
+
+Paired-End reads:
+- `peOverlapNbasesMin`: Default: 0. Minimum number of overlapping bases to trigger mates merging and realignment. Specify >0 value to switch on the "merginf of overlapping mates" algorithm.
+- `peOverlapMMp`: Default: 0.01. Maximum proportion of mismatched bases in the overlap area. Options are real values between 0 and 1.
+
+Windows, Anchors, Binning:
+- `winAnchorMultimapNmax`: Default: 50. Max number of loci anchors are allowed to map to.
+- `winBinNbits`: Default: 16. =log2(winBin), where winBin is the size of the bin for the windows/clustering, each window will occupy an integer number of bins.
+- `winAnchorDistNbins`: Default: 9. Max number of bins between two anchors that allows aggregation of anchors into one window.
+- `winFlankNbins`: Default: 4. log2(winFlank), where win Flank is the size of the left and right flanking regions for each window.
+- `winReadCoverageRelativeMin`: Default: 0.5. Minimum relative coverage of the read sequence by the seeds in a window, for STARlong algorithm only.
+- `winReadCoverageBasesMin`: Default: 0. Minimum number of bases covered by the seeds in a window, for STARlong algorithm only.
+- `quantMode`: Default: null. Types of quantification requested. If you want to use it, options are either TranscriptomeSAM or GeneCounts.
+- `quantTranscriptomeBAMcompression`: Default: 1. Transcriptome BAM compression level. Options are values between -2 to 10.
+- `quantTranscriptomeSAMoutput`: Default: BanSingleEnd_BanIndels_ExtendSoftclip. Alignment filtering for TranscriptomeSAM output. Options are: BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd, or BanSingleEnd_ExtendSoftclip.

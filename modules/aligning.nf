@@ -15,7 +15,7 @@ process STAR {
         tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_genome_index
-        val filterMatch
+        val starArgs
 
 	output:
         tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.bam"), emit: alignment_output
@@ -27,11 +27,11 @@ process STAR {
     script:
     if (params.paired_end) {
         """
-        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} ${reads[1]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted --outFilterMatchNminOverLread $filterMatch
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} ${reads[1]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted $starArgs
         """
     } else {
         """
-        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted --outFilterMatchNminOverLread $filterMatch
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted $starArgs
         """
     }
 }
