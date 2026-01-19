@@ -1,0 +1,6 @@
+zcat dmel-all-tRNA-r6.61.fasta.gz \
+     dmel-all-ncRNA-r6.61.fasta.gz \
+     dmel-all-miscRNA-r6.61.fasta.gz \
+     mitochondria.fa > contaminants.fasta
+
+bowtie2-build contaminants.fasta contaminants_index
