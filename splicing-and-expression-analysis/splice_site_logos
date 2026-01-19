@@ -1,0 +1,245 @@
+```{r}
+library(readr)
+library(tidydr)
+library(dplyr)
+BiocManager::install(c("rtracklayer", "BSgenome.Celegans.UCSC.ce11"))
+library(rtracklayer)
+library(BSgenome.Celegans.UCSC.ce11)
+library(ggseqlogo)
+BiocManager::install("memes")
+library(memes)
+```
+
+Import alt3prime file output from voila
+
+```{r}
+alt3prime <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/alt3prime.tsv", comment.char="#")
+```
+
+Import file with chromosome names
+
+```{r}
+Chromosome_seqid <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/Donelly_sequencing_centre/edgeR/Chromosome_seqid")
+```
+
+join imported files to annotate chromosomes
+
+```{r}
+# combine datasets to find chromosomal locations
+alt3prime <- left_join(alt3prime, Chromosome_seqid, by = "seqid")
+```
+
+## Prepare bed files to make sequence logos to compare proximal and distal splice sites for all splice sites
+
+Get coordinate of base pairs before the proximal and distal splice sites
+
+```{r}
+# select relevant columns
+alt3_bed_SS <- alt3prime %>% select(gene_name, chromosome, strand, junction_coord, junction_name, event_size, daf2.N2_median_dpsi, daf7.N2_median_dpsi)
+
+# add "chr" to chromsome name 
+alt3_bed_SS$chromosome <- paste0("chr",alt3_bed_SS$chromosome)
+
+
+as_size <- 12
+
+# identify motif coordinates
+alt3_bed_SS_f <- alt3_bed_SS %>% 
+  # create the score column and set it to 0
+  mutate(score = 0) %>%
+  # separate the junction beginning and end into separate columns
+  separate(junction_coord, into = c("junc_beg", "junc_end"), sep = "-") %>%
+  # filter to keep only the coordinates for the distal site
+  filter(
+        junction_name == "Distal", event_size == as_size
+        )
+  
+# size of the motifs
+motif_size <- 30
+
+alt3_bed_SS_filt <- alt3_bed_SS_f %>%
+  mutate(
+          SS5_beg = if_else(strand == "+", 
+                                   as.numeric(junc_beg) + 1,
+                                   as.numeric(junc_end) - 1),
+          SS3_end = if_else(strand == "+", 
+                                 as.numeric(junc_end) - 1, 
+                                 as.numeric(junc_beg) + 1)
+          ) %>%
+  mutate(
+          SS3_beg = if_else(strand == "+", 
+                            SS3_end - (motif_size - 1), 
+                            SS3_end + (motif_size - 1)),
+    
+
+          SS5_end = if_else(strand == "+", 
+                            SS5_beg + (motif_size - 1), 
+                            SS5_beg - (motif_size - 1))
+    
+        ) %>%
+  mutate(motif_beg_SS3 = pmin(SS3_beg,SS3_end), 
+         motif_end_SS3 = pmax(SS3_beg,SS3_end),
+         motif_beg_SS5 = pmin(SS5_beg,SS5_end), 
+         motif_end_SS5 = pmax(SS5_beg,SS5_end))
+  
+```
+
+prepare sequences files for daf-2 and daf-7
+
+```{r}
+# Filter datasets and convert to BED format 
+##daf2
+daf2_3SS_bed <- alt3_bed_SS_filt %>% 
+  filter(abs(daf2.N2_median_dpsi)>0.15) %>%
+  select(chromosome, motif_beg_SS3, motif_end_SS3, gene_name, score, strand)
+
+daf2_5SS_bed <- alt3_bed_SS_filt %>% 
+  filter(abs(daf2.N2_median_dpsi)>0.15) %>%
+  select(chromosome, motif_beg_SS5, motif_end_SS5, gene_name, score, strand)
+
+
+##daf7
+daf7_3SS_bed <- alt3_bed_SS_filt %>% 
+  filter(abs(daf7.N2_median_dpsi)>0.15) %>%
+  select(chromosome, motif_beg_SS3, motif_end_SS3, gene_name, score, strand)
+
+daf7_5SS_bed <- alt3_bed_SS_filt %>% 
+  filter(abs(daf7.N2_median_dpsi)>0.15) %>%
+  select(chromosome, motif_beg_SS5, motif_end_SS5, gene_name, score, strand)
+
+
+#Controls
+SS3_bed_control <- alt3_bed_SS_filt %>% 
+  select(chromosome, motif_beg_SS3, motif_end_SS3, gene_name, score, strand)
+
+SS5_bed_control <- alt3_bed_SS_filt %>% 
+  select(chromosome, motif_beg_SS5, motif_end_SS5, gene_name, score, strand)
+
+```
+
+```{r}
+# Create Granges objects from each BED file
+##daf2
+daf2_3SS_GR <- makeGRangesFromDataFrame(
+  daf2_3SS_bed,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS3",
+  end.field = "motif_end_SS3",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+
+daf2_5SS_GR <- makeGRangesFromDataFrame(
+  daf2_5SS_bed,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS5",
+  end.field = "motif_end_SS5",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+
+
+
+##daf7
+daf7_3SS_GR <- makeGRangesFromDataFrame(
+  daf7_3SS_bed,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS3",
+  end.field = "motif_end_SS3",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+
+daf7_5SS_GR <- makeGRangesFromDataFrame(
+  daf7_5SS_bed,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS5",
+  end.field = "motif_end_SS5",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+
+
+
+#controls
+SS3_GR_control <- makeGRangesFromDataFrame(
+  SS3_bed_control,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS3",
+  end.field = "motif_end_SS3",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+
+
+SS5_GR_control <- makeGRangesFromDataFrame(
+  SS5_bed_control,
+  seqnames.field = "chromosome",
+  start.field = "motif_beg_SS5",
+  end.field = "motif_end_SS5",
+  strand.field = "strand",
+  keep.extra.columns = TRUE)
+```
+
+```{r}
+# Get the sequences
+##daf2
+daf2_3SS_RNA_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, daf2_3SS_GR)
+daf2_5SS_RNA_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, daf2_5SS_GR)
+
+##daf7
+daf7_3SS_RNA_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, daf7_3SS_GR)
+daf7_5SS_RNA_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, daf7_5SS_GR)
+
+#control
+SS3_RNA_control_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, SS3_GR_control)
+SS5_RNA_control_getseq <- getSeq(BSgenome.Celegans.UCSC.ce11, SS5_GR_control)
+```
+
+```{r}
+# Save GRanges sequences as RNA strings
+##daf2
+daf2_3SS_RNA <- RNAStringSet(daf2_3SS_RNA_getseq)
+names(daf2_3SS_RNA) <- mcols(daf2_3SS_GR)$name
+
+daf2_5SS_RNA <- RNAStringSet(daf2_5SS_RNA_getseq)
+names(daf2_5SS_RNA) <- mcols(daf2_5SS_GR)$name
+
+
+##daf7
+daf7_3SS_RNA <- RNAStringSet(daf7_3SS_RNA_getseq)
+names(daf7_3SS_RNA) <- mcols(daf7_3SS_GR)$name
+
+
+daf7_5SS_RNA <- RNAStringSet(daf7_5SS_RNA_getseq)
+names(daf7_5SS_RNA) <- mcols(daf7_5SS_GR)$name
+
+
+#control
+SS3_RNA_control <- RNAStringSet(SS3_RNA_control_getseq)
+names(SS3_RNA_control) <- mcols(SS3_GR_control)$name
+
+SS5_RNA_control <- RNAStringSet(SS5_RNA_control_getseq)
+names(SS5_RNA_control) <- mcols(SS5_GR_control)$name
+```
+
+```{r}
+#Make sequence logos
+##daf2
+daf2_3SS_RNA_logo <- ggseqlogo(as.character(daf2_3SS_RNA), method = "bits")
+
+daf2_5SS_RNA_logo <- ggseqlogo(as.character(daf2_5SS_RNA), method = "bits")
+
+
+##daf7
+daf7_3SS_RNA_logo <- ggseqlogo(as.character(daf7_3SS_RNA), method = "bits")
+
+daf7_5SS_RNA_logo <- ggseqlogo(as.character(daf7_5SS_RNA), method = "bits")
+
+#control
+SS3_RNA_control_logo <- ggseqlogo(as.character(SS3_RNA_control), method = "bits") 
+SS5_RNA_control_logo <- ggseqlogo(as.character(SS5_RNA_control), method = "bits") 
+
+
+daf2_3SS_RNA_logo
+daf7_3SS_RNA_logo
+SS3_RNA_control_logo
+daf2_5SS_RNA_logo
+daf7_5SS_RNA_logo
+SS5_RNA_control_logo
+```
