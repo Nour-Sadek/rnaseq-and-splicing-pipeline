@@ -7,10 +7,10 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: 'star'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'htseq-count'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-splicingAnalyzer: 'none'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+trimming: null  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+aligner: null  # available options are: 'star', 'hisat2', 'none'
+quantifier: null  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
 paired_end: false
@@ -18,6 +18,10 @@ paired_end: false
 # Choose whether to run Fastqc before and/or after trimming
 run_fastqc_before_trimming: false
 run_fastqc_after_trimming: false
+
+# Bowtie2 filtering parameters
+filter_contaminants: true
+contaminants: ['./genome_files/Caenorhabditis_elegans.WBcel235.ncrna.fa.gz']  # provide as a list of paths for the contaminant files
 
 #--------------------------- Trimmomatic parameters ---------------------------#
 # Change the value for any trimming step (from none) for it to be included. Make sure to have at least one trimming option active, otherwise there will be an error.

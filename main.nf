@@ -6,6 +6,7 @@ def outputDir = params.outputDir ?: './results'
 
 /* Included Modules */
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
+include { BOWTIE2_CONTAMINANT_INDEX; BOWTIE2_REMOVE_CONTAMINANTS } from './modules/contaminant_rna_filtering.nf'
 include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
 include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
 include { STAR; HISAT2 } from './modules/aligning.nf'
@@ -36,8 +37,19 @@ workflow {
         FASTQC(reads_channel, fastqc_before_dir)
     }
 
+    /* Clean contaminants */
+    if (params.filter_contaminants && params.contaminants) {
+        // Create the contaminants index
+        contaminants = Channel.value(params.contaminants.collect { file(it) })  // e.g. [file('trna.fa'), file('ncrna.fa')]
+        BOWTIE2_CONTAMINANT_INDEX(contaminants, outputDir)
+
+        // Clean the fastq files from contaminants
+        BOWTIE2_REMOVE_CONTAMINANTS(reads_channel, BOWTIE2_CONTAMINANT_INDEX.out.contaminants_index_files, outputDir)
+        reads_channel = BOWTIE2_REMOVE_CONTAMINANTS.out.cleaned_samples
+    }
+
     /* Trim the reads */
-    if (params.trimming == 'trimmomatic') {
+    if (params.trimming && params.trimming == 'trimmomatic') {
 
         // Run the TRIMMOMATIC process
         trimmomaticArgs = OrganizeArguments.makeTrimmomaticArgs(params.base_quality_encoding, params.adapters_file, params.seed_mismatches, params.palindrome_clip_threshold, params.simple_clip_threshold, 
@@ -48,7 +60,7 @@ workflow {
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = TRIMMOMATIC.out.trimmed_samples
         
-    } else if (params.trimming == 'bbduk') {
+    } else if (params.trimming && params.trimming == 'bbduk') {
 
         // Run the BBDUK process
         bbdukArgs = OrganizeArguments.makeBbdukArgs(params.qin, params.reads, params.samplerate, params.k, params.rcomp, params.maskmiddle, params.minkmerhits, params.minkmerfraction, params.mincovfraction, 
@@ -61,7 +73,7 @@ workflow {
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = BBDUK.out.trimmed_samples
 
-    } else if (params.trimming == 'trim_galore') {
+    } else if (params.trimming && params.trimming == 'trim_galore') {
         
         // Run the TRIM_GALORE process
         trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
@@ -80,7 +92,7 @@ workflow {
     }
 
     /* Run the Alignment (if needed) */
-    if (params.aligner == "star") {
+    if (params.aligner && params.aligner == "star") {
 
         // Create the reference genome index
         starReferenceIndexArgs = OrganizeArguments.makeStarReferenceIndexArgs(params.runRNGseed, params.genomeChrBinNbits, params.genomeSAindexNbases, params.genomeSAsparseD, params.genomeSuffixLengthMax, 
@@ -106,7 +118,7 @@ workflow {
         // Extract the sample_id and bam_file outputs
         alignment_output_channel = STAR.out.alignment_output
 
-    } else if (params.aligner == 'hisat2') {
+    } else if (params.aligner && params.aligner == 'hisat2') {
 
         // Create the reference genome index
         HISAT2_REFERENCE_INDEX(outputDir, params.hisat2_index_prefix, file(params.genomeFastaFile))
@@ -122,26 +134,26 @@ workflow {
     }
 
     /* Quantify the reads of the genes */
-    if (params.aligner != 'none') {  // use quantifiers that need prior alignment
+    if (params.aligner && params.aligner != 'none') {  // use quantifiers that need prior alignment
         /* Sort then index the bam files */
         SORT_AND_INDEX_BAM(alignment_output_channel, outputDir)
         sorted_bam_output_channel = SORT_AND_INDEX_BAM.out.sorted_bam_output
 
         /* Count number of reads for features (genes) using the sorted alignment bam files */
-        if (params.quantifier == 'htseq-count') {
+        if (params.quantifier && params.quantifier == 'htseq-count') {
             
             // Run the HTSEQ_COUNT reads quantification process
             htseqCountArgs = OrganizeArguments.makeHtseqCountArgs(params.max_reads_in_buffer, params.stranded, params.minaqual, params.feature_type, params.id_attribute, params.additional_attributes, params.mode, params.nonunique_mode, 
                 params.secondary_alignments, params.supplementary_alignments, params.add_chromosome_info)
             HTSEQ_COUNT(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), htseqCountArgs)
 
-        } else if (params.quantifier == 'featureCounts') {
+        } else if (params.quantifier && params.quantifier == 'featureCounts') {
             // Run the FEATURE_COUNTS reads quantification process
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))
         }
 
         /* Perform splicing alignment analysis */
-        if (params.splicingAnalyzer == 'majiq') {
+        if (params.splicingAnalyzer && params.splicingAnalyzer == 'majiq') {
             
             // Build the config file
             all_sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
@@ -203,7 +215,7 @@ workflow {
                 VOILA_DELTA_PSI(MAJIQ_DELTA_PSI.out.paired_samples_name, majiq_delta_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
             }
 
-        } else if (params.splicingAnalyzer == 'rMats') {
+        } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'rMats') {
 
             if (params.individualSplicingAnalysis) {
                 // Return a channel where each output is of the format:
@@ -240,7 +252,7 @@ workflow {
         }
 
     } else {  // use quantifiers that don't need prior alignment
-        if (params.quantifier == 'salmon-quasi-mapping-mode') {
+        if (params.quantifier && params.quantifier == 'salmon-quasi-mapping-mode') {
             // Create the reference genome index
             SALMON_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), params.kmer_size)
 
@@ -249,7 +261,7 @@ workflow {
             tpm_column = 4
             
             quantifier_output_channel = SALMON_QUASI_MAPPING_MODE.out.quants_file
-        } else if (params.quantifier == 'kallisto') {
+        } else if (params.quantifier && params.quantifier == 'kallisto') {
             // Create the reference genome index
             KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
 
@@ -258,7 +270,7 @@ workflow {
             tpm_column = 5
 
             quantifier_output_channel = KALLISTO.out.quants_file
-        } else if (params.quantifier == 'rsem') {
+        } else if (params.quantifier && params.quantifier == 'rsem') {
             // Create the reference genome index
             RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
 
@@ -266,7 +278,7 @@ workflow {
             RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
         }
 
-        if (params.splicingAnalyzer == 'suppa2') {
+        if (params.splicingAnalyzer && params.splicingAnalyzer == 'suppa2') {
             // Generate the event annotations (ioe) file
             SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
 
@@ -306,7 +318,7 @@ workflow {
                 SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
                 
             }
-        } else if (params.splicingAnalyzer == 'whippet') {
+        } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'whippet') {
             // Build the index for Whippet
             WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir)
 
