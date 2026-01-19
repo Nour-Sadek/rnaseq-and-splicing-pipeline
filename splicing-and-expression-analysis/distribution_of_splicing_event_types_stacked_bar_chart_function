@@ -1,0 +1,85 @@
+
+import libraries
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r} 
+  import datasets and combine them
+```
+  
+
+dist_function <- function(x){
+ 
+  # make sure that module_event_combination has the right name even after a full join
+  names(x)[grepl("^module", names(x))] <- "module_event_combination" 
+  
+  # get perctanges of each splicing event type from all detected events
+  dist <- x %>% 
+    group_by(module_event_combination) %>% 
+    summarise(count = n()) %>%
+    mutate("all" = (count/sum(count))*100) %>%
+    rename("all_count" = "count") %>%
+    select(module_event_combination, all)
+
+  # prepare variable to identify which columns contain dpsi values
+  strains <- x %>%
+    select(ends_with("median_dpsi")) %>% names
+  
+  # loop through strains and find their distribution of splicing types
+  for (col in strains) {
+    perc <- x %>%
+      filter(abs(.data[[col]])>0.15) %>%
+      group_by(module_event_combination) %>% 
+      summarise(count = n()) %>%
+      mutate(!!col := (count/sum(count))*100) %>%
+      select(module_event_combination, !!col)
+      
+      #Join splicing event type distribution for current strain to the previous
+      dist <- full_join(dist, perc, by = "module_event_combination")
+  }
+  
+  # get rid of the ^1 from event type names
+  dist <- dist %>% mutate(module_event_combination = gsub("\\^1$", "", module_event_combination))
+  
+  # pivot table to long format to be used for plot
+  dist_long <- dist %>%
+    pivot_longer(cols = -module_event_combination, names_to = "strain", values_to = "percentage")
+ 
+  # Sort splicing event types in reverse (most common at top of stack)
+event_order <- dist_long %>%
+  group_by(module_event_combination) %>%
+  summarise(total = sum(percentage, na.rm = TRUE)) %>%
+  arrange(total) %>%  # ascending order (least common at bottom)
+  pull(module_event_combination)
+
+# Apply as factor levels
+dist_long$module_event_combination <- factor(dist_long$module_event_combination, levels = event_order)
+
+event_colors <- c(
+  "cassette" = "#1E968B",     # Exon skipping
+  "ir" = "#36693E",     # Intron retention
+  "alt5" = "#482677",   # Alternative 5' splice site
+  "alt3" = "#FCE723",   # Alternative 3' splice site
+  "mxe" = "#C33E34",    # Mutually exclusive exons
+  "ale" = "#4605FE"      # Skipped exon 
+)
+
+dist_plot <- ggplot(dist_long, aes(x = strain, y = percentage, fill = module_event_combination)) +
+  geom_bar(stat = "identity", color = "black", width = 0.6) +  # Adjust bar width here (e.g., 0.6)
+  scale_y_continuous(labels = function(x) paste0(x, "%"), limits = c(0, 100)) +
+  scale_fill_manual(values = event_colors, name = "") +
+  labs(
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank()) +
+  coord_flip()
+
+return(dist_plot)
+}
