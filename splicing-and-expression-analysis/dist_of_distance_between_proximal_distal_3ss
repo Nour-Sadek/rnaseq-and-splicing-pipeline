@@ -1,0 +1,58 @@
+## Find distribution of distance between proximal and distal splice sites
+
+import file with alt3 events
+
+```{r}
+alt3prime <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/alt3prime.tsv", comment.char="#")
+```
+
+prepare dataframes containing counts of the distance between proximal and distal sites
+
+```{r}
+daf2_3SS_distance <- alt3prime %>% 
+  dplyr::filter(junction_name == "Proximal", abs(daf2.N2_median_dpsi) > 0.15) %>% 
+  dplyr::group_by(event_size) %>% 
+  dplyr::summarise(count = n()) %>% 
+  mutate("daf2" = (count/sum(count))*100) %>%
+  rename(daf2_count = count) 
+
+daf7_3SS_distance <- alt3prime %>% 
+  dplyr::filter(junction_name == "Proximal", abs(daf7.N2_median_dpsi) > 0.15) %>% 
+  dplyr::group_by(event_size) %>% 
+  dplyr::summarise(count = n()) %>% 
+  mutate("daf7" = (count/sum(count))*100) %>%
+  rename(daf7_count = count)
+
+
+all_3SS_distance <- alt3prime %>% 
+  dplyr::filter(junction_name == "Proximal") %>% 
+  dplyr::group_by(event_size) %>% 
+  dplyr::summarise(count = n()) %>% 
+  mutate("all" = (count/sum(count))*100) %>%
+  rename(all_count = count)
+
+combined_3SS_distance <- full_join(all_3SS_distance, daf2_3SS_distance, by = "event_size") %>%
+  full_join(., daf7_3SS_distance, by = "event_size") %>%
+  select(-ends_with("_count")) %>%
+  pivot_longer(cols = -1, names_to = "dataset", values_to = "values") %>%
+  filter(event_size < 22)
+
+
+distance_plot <- ggplot(combined_3SS_distance, aes(x = event_size, y = values, fill = dataset)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), color = "black") +
+ scale_x_continuous(breaks = seq(0, 21, by = 3)) +
+  scale_fill_manual(
+    values = c("all" = "#FDE725FF", "daf2" = "#1F968BFF", "daf7" = "#482677FF"),
+    labels = c(
+                "all" = "All detected events", 
+                "daf2" = expression(italic("daf-2(e1370)") ~ "|ΔPSI > 15%|"), 
+                "daf7" = expression(italic("daf-7(e1372)") ~ "|ΔPSI > 15%|"))
+                  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  theme_minimal() +
+  theme(legend.title = element_blank()) +
+  labs(x = "Distance between proximal and distal 3′ splice sites", y = "Percentage of total")
+
+
+distance_plot
+```
