@@ -1,0 +1,215 @@
+```{r}
+BiocManager::install("GeneOverlap")
+# Load required libraries
+library(GeneOverlap)
+library(dplyr)
+library(tidyr)
+```
+
+Import datasets
+
+```{r}
+cols <- c("gene_name", "junction_coord", "module_event_combination")
+
+MZ_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/heatmap.tsv", comment.char="#") %>%
+  rename_with(~ paste0("Calarco: ", .), -all_of(cols)) %>%
+  rename_with(~ gsub("daf2", "daf-2(e1370)", .)) %>%
+  rename_with(~ gsub("daf7", "daf-7(e1372)", .)) %>%
+  #rename_with(~ gsub("egl20", "egl-20(n585)", .))
+  dplyr::select(-`Calarco: egl20_median_psi`, -`Calarco: egl20.N2_median_dpsi`)
+
+#Greenstein dataset
+greenstein_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/Information_about_sacy-1/Greenstein_lab/analysis_of_RNAseq/Majiq/voila/heatmap.tsv", comment.char="#") %>%
+  rename_with(~ paste0("Tsukamoto: ", .), -all_of(cols)) %>%
+  rename_with(~ gsub("sacy1AID_eft3pTIR1", "SACY-1 somatic depletion", .)) %>%
+  rename_with(~ gsub("sacy1AID_gld1pTIR1", "SACY-1 germline depletion", .)) %>%
+  rename_with(~ gsub("depletion.gld1pTIR1", "depletion.no degron", .)) %>%
+  rename_with(~ gsub("depletion.eft3pTIR1", "depletion.no degron", .))
+
+#Zhaler dataset
+zhaler_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/Information_about_sacy-1/Zahler_lab/analysis_of_RNAseq/majiq/voila/heatmap.tsv", comment.char="#") %>%
+  rename_with(~ paste0("Osterhoudt: ", .), -all_of(cols)) %>%
+  rename_with(~ gsub("sacy1", "sacy-1(tn1385)", .)) %>%
+  rename_with(~ gsub("mog5", "mog-5(az192)", .)) %>%
+  select(- starts_with("Osterhoudt: mog"), - starts_with("Osterhoudt: N21"))
+
+
+
+#Ragle dataset
+#ragle_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/ragle_2015/majiq/voila/heatmap.tsv", comment.char="#") %>% rename_with(~ paste0("Ragle: ", .), -all_of(cols))
+
+#ragle_heatmap_filt <- ragle_heatmap %>% dplyr::select(-'Ragle: smg2_gonad_median_psi', -'Ragle: N2_gonad.glp4_wholeworm_median_dpsi', -'Ragle: glp4_wholeworm.N2_wholeworm_median_dpsi', -'Ragle: smg2_gonad.N2_gonad_median_dpsi')
+
+
+
+#Ortiz dataset
+#ortiz_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/ortize_sperm_vs_oocyte/majiq/voila/heatmap.tsv", comment.char="#") %>% rename_with(~ paste0("Ortiz: ", .), -all_of(cols))
+
+
+#Zhang dataset
+#zhang_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/Zhang_2022_daf-2_tissue_AID/majiq/voila/heatmap.tsv", comment.char="#") %>% rename_with(~ paste0("Zhang: ", .), -all_of(cols))
+
+#zhang_heatmap_filt <- zhang_heatmap %>% dplyr::select(gene_name, junction_coord, module_event_combination, ends_with("MQD2374_auxin_median_dpsi"), ends_with("wholeworm_auxin_median_dpsi"), -ends_with("ubiquitous_daf2_AID_wholeworm_auxin_median_dpsi"), -ends_with("noTIR_daf2_AID_wholeworm_auxin_median_dpsi"))
+
+#Turner dataset
+turner_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/turner_skn1/majiq/voila/heatmap.tsv", comment.char="#") %>%
+  rename_with(~ paste0("Turner: ", .), -all_of(cols)) %>%
+  rename_with(~ gsub("daf2LF", "daf-2(e1370)", .)) %>%
+  rename_with(~ gsub("daf2LG", "daf-2(e1370)", .)) %>%
+  rename_with(~ gsub("skn1GF", "skn-1(lax188 GF)", .)) %>%
+  dplyr::select(-29, -32)
+
+
+#Kovacs dataset
+#kovacs_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/kovacs_hsf1/majiq/voila/heatmap.tsv", comment.char="#") %>% rename_with(~ paste0("Kovacs: ", .), -all_of(cols))
+
+#Gracida TRAP
+#gracida_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/gracida_trap/majiq/voila/heatmap.tsv", comment.char="#") %>% rename_with(~ paste0("Gracida: ", .), -all_of(cols))
+```
+
+Combine and filter datasets
+
+```{r}
+cols <- c("gene_name", "junction_coord", "module_event_combination")
+
+combined <- full_join(MZ_heatmap, greenstein_heatmap, by = cols) %>%
+            #full_join(., ortiz_heatmap, by = cols) %>%
+            #full_join(., ragle_heatmap_filt, by = cols) %>%
+            #full_join(., zhang_heatmap_filt, by = cols) %>%
+            full_join(., turner_heatmap, by = cols) %>%
+            full_join(., zhaler_heatmap, by = cols) %>%
+            #full_join(., kovacs_heatmap, by = cols) %>%
+            #full_join(., gracida_heatmap, by = cols) %>%
+            dplyr::mutate(unique_id = paste0(gene_name, "_", junction_coord))
+
+
+```
+
+Prepare alternatively splice gene names
+
+```{r}
+combined_dpsi <- combined %>%
+  dplyr::filter(module_event_combination == "alt3^1") %>%
+  dplyr::select(unique_id, ends_with("_dpsi")) %>%
+  rename_with(~ gsub("\\..*", "", .))
+```
+
+```{r}
+# Extract columns ending with '_dpsi'
+dpsi_columns <- combined_dpsi %>% select(-unique_id) %>% colnames()
+
+# Prepare filtered gene lists for each column
+gene_lists <- lapply(dpsi_columns, function(column) {
+  combined_dpsi %>%
+    filter(abs(.data[[column]]) > 0.15) %>%  # Filter rows where the absolute value of dpsi is greater than 0.15
+    pull(unique_id) %>%  # Extract the unique_id column for filtered rows
+    unique()  # Keep only unique values
+})
+names(gene_lists) <- dpsi_columns  # Name each list element with its respective column name
+
+# Generate all possible combinations of strain pairs
+strain_pairs <- combn(dpsi_columns, 2, simplify = FALSE)  # Create all possible pairs of dpsi columns for overlap analysis
+
+# Initialize empty list to store results
+results_list <- list()
+
+# Loop through each pair and calculate overlap using GeneOverlap
+for (pair in strain_pairs) {
+  strain1 <- pair[1]  # First strain in the pair
+  strain2 <- pair[2]  # Second strain in the pair
+  
+  # Determine the universe size as the total number of rows where at least one of the two columns is not NA
+  universe_size <- combined_dpsi %>%
+    filter(!(is.na(.data[[strain1]]) & is.na(.data[[strain2]]))) %>%
+    nrow()  # Count the number of rows where there are no NA values in both columns
+  
+  # Create GeneOverlap object
+  go.obj <- newGeneOverlap(gene_lists[[strain1]], gene_lists[[strain2]], genome.size = universe_size)
+  # The GeneOverlap object is created using the gene lists from the two strains and the combined total number of unique splicing events
+  
+  # Test overlap
+  go.obj <- testGeneOverlap(go.obj)  # Perform statistical test to assess significance of overlap
+  
+  # Store the result
+  results_list[[paste(strain1, strain2, sep = "_")]] <- go.obj  # Store the GeneOverlap object in the results list with a descriptive name
+}
+
+# Extract results into a dataframe
+results_df <- do.call(rbind, lapply(names(results_list), function(pair_name) {
+  go.obj <- results_list[[pair_name]]  # Retrieve the GeneOverlap object for the current pair
+  data.frame(
+    pair = pair_name,  # Pair name (e.g., 'strain1_strain2')
+    universe = go.obj@genome.size,  # Total number of unique splicing events (genome size)
+    overlap = length(go.obj@intersection),  # Number of overlapping genes between the two strains
+    m = length(go.obj@listA),  # Size of gene list A
+    k = length(go.obj@listB),  # Size of gene list B
+    pvalue = go.obj@pval,  # P-value indicating the significance of the overlap
+    oddsratio = go.obj@odds.ratio,
+    jaccard = go.obj@Jaccard
+  )
+}))
+
+results_df <- results_df %>%
+  separate(pair, into = c("dataset1", "dataset2"), sep = "_", extra = "merge", remove = FALSE) %>%   mutate(
+    overlap_coefficient = overlap / pmin(m, k),
+    precision = overlap / m, 
+    recall = overlap / k, 
+    f1_score = 2 * (precision * recall) / (precision + recall)
+  )
+```
+
+```{r}
+results_df$log_pvalue <- -log10(results_df$pvalue)
+
+# Prepare data for bar plot
+bar_data <- results_df %>%
+  pivot_longer(cols = c(m, k), names_to = "metric", values_to = "value")
+
+# Prepare data for bar plot
+bar_data <- results_df %>%
+  pivot_longer(cols = c(m, k), names_to = "metric", values_to = "value")
+
+# Update the combined plot
+combined_plot <- ggplot() +
+  # Add dataset labels on the left
+  geom_text(data = results_df, aes(x = -50, y = reorder(pair, overlap_coefficient), 
+            label = dataset1), color = "skyblue", hjust = 1, size = 5) +
+  geom_text(data = results_df, aes(x = -25, y = reorder(pair, overlap_coefficient), 
+            label = dataset2), color = "salmon", hjust = 1, size = 5) +
+  
+  # Bar plot for m and k
+  geom_bar(data = bar_data, aes(x = value, y = reorder(pair, overlap_coefficient), fill = metric), 
+           stat = "identity", position = position_dodge(width = 0.8), alpha = 0.7, show.legend = FALSE) +
+  scale_fill_manual(values = c("skyblue", "salmon")) +
+  
+  # Lollipop segments
+  geom_segment(data = results_df, aes(x = 0, xend = overlap, y = reorder(pair, f1_score), 
+              yend = reorder(pair, overlap_coefficient), color = f1_score), linewidth = 2) +
+  scale_color_gradient(low = "lightgreen", high = "darkgreen", name = "Overlap Coefficient (Szymkiewicz–Simpson)") +
+  
+  # Text labels for odds ratio and Jaccard index
+  geom_text(data = results_df, aes(x = max(bar_data$value) + 10, 
+            y = reorder(pair, f1_score), 
+            label = paste0("p = ", round(log_pvalue, 2))), 
+            color = "grey40", hjust = 0) +
+  
+  # Aesthetic adjustments
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 15) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    legend.position = "right",
+    panel.grid = element_blank()
+  ) +
+  
+  # X-axis scaling
+  scale_x_continuous(
+    limits = c(-60, max(bar_data$value) * 1.2),
+    breaks = seq(0, max(bar_data$value), by = 50),
+    expand = c(0, 0.01)
+  )
+
+# Display the updated plot
+combined_plot
+```

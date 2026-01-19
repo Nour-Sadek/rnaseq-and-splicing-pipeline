@@ -1,0 +1,53 @@
+## load libraries
+  ##library(dplyr)
+  #library(ggplot2)
+  #install.packages("ggVennDiagram")
+  #library(ggVennDiagram)
+
+# import heatmaps from voila modulize output
+    #MZ_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/heatmap.tsv", comment.char="#")
+    #turner_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Singalling_mutant_meta-analysis/turner_skn1/majiq/voila/heatmap.tsv", comment.char="#") %>%select(- daf2LF.N2_median_dpsi, -daf2LG_skn1GF.N2_median_dpsi, -daf2LG_skn1GF.daf2LF_median_dpsi, -daf2LG_skn1GF.skn1GF_median_dpsi)
+    #zhaler_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/Information_about_sacy-1/Zahler_lab/analysis_of_RNAseq/majiq/voila/heatmap.tsv", comment.char="#") %>% select(-ends_with("dpsi"), sacy1.N22_median_dpsi)
+
+# If comparing multiple datasets then join by "junction_coord", "complex", "module_event_combination"
+    #combined <- full_join(MZ_heatmap, zhaler_heatmap, c("junction_coord", "complex", "module_event_combination"))
+
+## ggvenndiagram requires a list as input so the following function creates a list of the junction coordinates of the significantly spliced events for each deltaPSI comparison in the input file
+
+# initialize empty list to place vectors of junction coordinates
+sig_list <- list()
+
+# create a function that adds the vector of junction coordinates of significant splicing events for each dpsi comparison
+sig_funct <- function(x, y){
+  # identify the names of columns containing dpsi data
+  dpsi_cols <- x %>%
+                select(ends_with("median_dpsi")) %>% 
+                names()
+  
+  # filter dataset to remove complex events and only include rows for alt3s
+  x <- x %>%
+    filter(complex == "False", module_event_combination == "alt3^1")
+  
+  # create for loop that iterates through
+  for(i in dpsi_cols){
+    z <- x %>%
+            filter(abs(.data[[i]]) > y) %>% #filter dpsi column by y cutoff value
+            pull(junction_coord) # get vector of filtered junction coordinates
+        
+    sig_list[[i]] <- z #save filtered junction coordinate vector in list
+  }
+
+return(sig_list)
+}
+
+## Use function on imported heatmap and input the deltaPSI cutoff as the second argument
+MZ_sig_list <- sig_funct(MZ_heatmap, 0.15)
+
+## create venn diagram of 
+venn <- ggVennDiagram(combined_sig_list, label = "count", label_size = 8) + 
+  
+  scale_fill_gradient(low = "lightgreen", high = "darkgreen") +
+  
+  theme(legend.position = "none")
+
+venn # display venn diagram

@@ -1,0 +1,113 @@
+import libraries
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+# Distribution of splicing event types
+
+Import dataset
+
+```{r}
+MZ_heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/heatmap.tsv", comment.char="#") %>% 
+  mutate(unique_id = paste0(gene_name, "_", junction_coord)) %>%
+  filter(complex == "False", !module_event_combination == "afe^1", !grepl("_", module_event_combination)) %>%
+  select(unique_id, module_event_combination, daf2.N2_median_dpsi, daf7.N2_median_dpsi)
+
+```
+
+```{r}
+#find percentage of total splicing events for each splicing event type
+daf2_dist <- MZ_heatmap %>% 
+  filter(abs(daf2.N2_median_dpsi)>0.15) %>% 
+  group_by(module_event_combination) %>% 
+  summarise(count = n()) %>%
+  mutate("daf2" = (count/sum(count))*100) %>%
+  rename("daf2_count" = "count")
+
+daf7_dist <- MZ_heatmap %>% 
+  filter(abs(daf7.N2_median_dpsi)>0.15) %>% 
+  group_by(module_event_combination) %>% 
+  summarise(count = n()) %>%
+  mutate("daf7" = (count/sum(count))*100) %>%
+  rename("daf7_count" = "count")
+
+all_dist <- MZ_heatmap %>% 
+  group_by(module_event_combination) %>% 
+  summarise(count = n()) %>%
+  mutate("all" = (count/sum(count))*100) %>%
+  rename("all_count" = "count")
+
+# combine datasets
+combined_dist <- full_join(all_dist, daf2_dist, by = "module_event_combination") %>%
+  full_join(., daf7_dist, by = "module_event_combination") %>% 
+  replace_na(list(daf2 = 0, daf7 = 0, all = 0)) %>% 
+  mutate(module_event_combination = gsub("\\^1$", "", module_event_combination))
+```
+
+```{r}
+dist_long <- combined_dist %>%
+  select(module_event_combination, !ends_with("count")) %>% 
+  pivot_longer(cols = -1, names_to = "strain", values_to = "percentage")
+
+dist_plot <- ggplot(dist_long, aes(x = module_event_combination, y = percentage, fill = strain)) + 
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), color = "black") +
+  scale_fill_manual(
+    values = c("all" = "#FDE725FF", "daf2" = "#1F968BFF", "daf7" = "#482677FF"),
+    labels = c(
+                "all" = "All detected events", 
+                "daf2" = expression(italic("daf-2(e1370)") ~ "|ΔPSI > 15%|"), 
+                "daf7" = expression(italic("daf-7(e1372)") ~ "|ΔPSI > 15%|"))
+                  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  theme_minimal() +
+  theme(legend.title = element_blank()) +
+  labs(x = "Splicing event type", y = "Percentage of total splicing events")
+
+dist_plot
+```
+
+```{r}
+# Prepare long-format data for stacked bar chart
+stacked_long <- combined_dist %>%
+  select(module_event_combination, daf2, daf7, all) %>%
+  pivot_longer(cols = -module_event_combination, names_to = "strain", values_to = "percentage")
+
+# Sort splicing event types in reverse (most common at top of stack)
+event_order <- stacked_long %>%
+  group_by(module_event_combination) %>%
+  summarise(total = sum(percentage, na.rm = TRUE)) %>%
+  arrange(total) %>%  # ascending order (least common at bottom)
+  pull(module_event_combination)
+
+# Apply as factor levels
+stacked_long$module_event_combination <- factor(stacked_long$module_event_combination, levels = event_order)
+
+```
+
+```{r}
+event_colors <- c(
+  "cassette" = "#1E968B",     # Exon skipping
+  "ir" = "#36693E",     # Intron retention
+  "alt5" = "#482677",   # Alternative 5' splice site
+  "alt3" = "#FCE723",   # Alternative 3' splice site
+  "mxe" = "#C33E34",    # Mutually exclusive exons
+  "ale" = "#4605FE"      # Skipped exon 
+)
+
+stacked_plot <- ggplot(stacked_long, aes(x = strain, y = percentage, fill = module_event_combination)) +
+  geom_bar(stat = "identity", color = "black", width = 0.6) +  # Adjust bar width here (e.g., 0.6)
+  scale_y_continuous(labels = function(x) paste0(x, "%"), limits = c(0, 100)) +
+  scale_fill_manual(values = event_colors, name = "") +
+  labs(
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(panel.grid = element_blank()) +
+  coord_flip()
+
+stacked_plot
+```

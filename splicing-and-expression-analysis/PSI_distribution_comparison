@@ -1,0 +1,149 @@
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(rstatix)
+library(coin)
+```
+
+import voila heatmap file
+
+```{r}
+heatmap <- read.delim("~/Documents/Graduate_School/Thesis/Projects/Mutant_whole_transcriptome_sequencing/voila/heatmap.tsv", comment.char="#")
+```
+
+Select columns
+
+```{r}
+psi_comparison <- heatmap %>% select(gene_name, complex, module_event_combination, N2_median_psi, daf2_median_psi, daf7_median_psi)
+
+deltapsi_comparison <- heatmap %>% select(gene_name, complex, module_event_combination, daf2.N2_median_dpsi, daf7.N2_median_dpsi)
+```
+
+filter for alt3 events
+
+```{r}
+alt3_psi_comparison <- psi_comparison %>% filter(module_event_combination == "alt3^1")
+alt3_deltapsi_comparison <- deltapsi_comparison %>% filter(module_event_combination == "alt3^1")
+```
+
+create new column showing which strain has the higher PSI for each gene
+
+```{r}
+alt3_psi_comparison$N2_vs_daf2 <- ifelse(alt3_psi_comparison$N2_median_psi > alt3_psi_comparison$daf2_median_psi, "N2 higher psi", "daf-2(e1370) higher psi")
+
+alt3_psi_comparison$N2_vs_daf7 <- ifelse(alt3_psi_comparison$N2_median_psi > alt3_psi_comparison$daf7_median_psi, "N2 higher psi", "daf-7(e1372) higher psi")
+
+alt3_psi_comparison$daf2_vs_daf7 <- ifelse(alt3_psi_comparison$daf2_median_psi > alt3_psi_comparison$daf7_median_psi, "daf-2(e1370) higher psi", "daf-7(e1372) higher psi")
+
+```
+
+Plot results
+
+```{r}
+plot_N2_vs_daf2_alt3_psi <-
+ggplot(alt3_psi_comparison, aes(x = N2_median_psi, y = daf2_median_psi, colour = N2_vs_daf2)) + 
+  geom_point() +
+  theme_minimal() +
+  labs(x = "N2 median PSI", y = "daf-2 median PSI") +
+  #ggtitle("N2 vs. daf-2 alt3 median PSI") +
+  scale_color_manual(values = c("N2 higher psi" = "red", "daf-2(e1370) higher psi" = "blue"), na.translate = FALSE) +
+  guides(color = guide_legend(title = NULL))
+
+plot_N2_vs_daf7_alt3_psi <-
+ggplot(alt3_psi_comparison, aes(x = N2_median_psi, y = daf7_median_psi, colour = N2_vs_daf7)) + 
+  geom_point() +
+  theme_minimal() +
+  labs(x = "N2 median PSI", y = "daf-7 median PSI") +
+  #ggtitle("N2 vs. daf-7 alt3 median PSI") +
+  scale_color_manual(values = c("N2 higher psi" = "red", "daf-7(e1372) higher psi" = "blue"), na.translate = FALSE) +
+  guides(color = guide_legend(title = NULL))
+
+plot_daf2_vs_daf7_alt3_psi <-
+ggplot(alt3_psi_comparison, aes(x = daf2_median_psi, y = daf7_median_psi, colour = daf2_vs_daf7)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "daf-2 median PSI", y = "daf-7 median PSI") +
+  #ggtitle("daf2 vs. daf-7 alt3 median PSI") +
+  scale_color_manual(values = c("daf-2(e1370) higher psi" = "red", "daf-7(e1372) higher psi" = "blue"), na.translate = FALSE) +
+  guides(color = guide_legend(title = NULL))
+
+plot_daf2_vs_daf7_deltapsi <-
+  ggplot(alt3_deltapsi_comparison, aes(x = daf2.N2_median_dpsi, y = daf7.N2_median_dpsi)) +
+  geom_point() + 
+  theme_minimal() +
+  labs(x = "N2 vs. daf-2 deltaPSI", y = "N2 vs. daf-7 deltaPSI") +
+  ggtitle("Comparison of daf-2 and daf-7 deltaPSI from N2") +
+  geom_smooth(method=lm , color="red")
+
+```
+
+```{r}
+plot_N2_vs_daf2_alt3_psi
+plot_N2_vs_daf7_alt3_psi
+plot_daf2_vs_daf7_alt3_psi
+plot_daf2_vs_daf7_deltapsi
+```
+
+
+# Test statistical significance of differences in PSI
+
+First need to test normality of the data to decide which test to use
+
+```{r}
+#plot histograms to visually inspect
+hist(alt3_psi_comparison$N2_median_psi, main = "Histogram of N2 PSI values", xlab = "PSI", col = "skyblue")
+hist(alt3_psi_comparison$daf2_median_psi, main = "Histogram of daf-2 PSI values", xlab = "PSI", col = "skyblue")
+hist(alt3_psi_comparison$daf7_median_psi, main = "Histogram of daf-7 PSI values", xlab = "PSI", col = "skyblue")
+
+
+#Q-Q Plots
+qqnorm(alt3_psi_comparison$N2_median_psi)
+qqline(alt3_psi_comparison$N2_median_psi, col = "red")
+
+qqnorm(alt3_psi_comparison$daf2_median_psi)
+qqline(alt3_psi_comparison$daf2_median_psi, col = "red")
+
+qqnorm(alt3_psi_comparison$daf7_median_psi)
+qqline(alt3_psi_comparison$daf7_median_psi, col = "red")
+
+#Boxplots
+boxplot(alt3_psi_comparison$N2_median_psi, main = "Box Plot of N2 PSI values", ylab = "PSI")
+boxplot(alt3_psi_comparison$daf2_median_psi, main = "Box Plot of daf-2 PSI values", ylab = "PSI")
+boxplot(alt3_psi_comparison$daf7_median_psi, main = "Box Plot of daf-7 PSI values", ylab = "PSI")
+
+#Shapiro-Wilk Test
+shapiro.test(alt3_psi_comparison$N2_median_psi)
+shapiro.test(alt3_psi_comparison$daf2_median_psi)
+shapiro.test(alt3_psi_comparison$daf7_median_psi)
+
+
+
+```
+
+Run tests to see if differences are significant
+
+```{r}
+#Wilcoxon test
+wilcox.test(alt3_psi_comparison$N2_median_psi, alt3_psi_comparison$daf2_median_psi, paired = TRUE)
+wilcox.test(alt3_psi_comparison$N2_median_psi, alt3_psi_comparison$daf7_median_psi, paired = TRUE)
+wilcox.test(alt3_psi_comparison$daf2_median_psi, alt3_psi_comparison$daf7_median_psi, paired = TRUE)
+
+#Effect size for Wilcoxon test
+alt3_N2_daf2_long <- alt3_psi_comparison %>%
+  pivot_longer(cols = c(N2_median_psi, daf2_median_psi), names_to = "Condition", values_to = "PSI")
+effsize_result_N2_daf2 <- wilcox_effsize(alt3_N2_daf2_long, PSI ~ Condition, paired = TRUE)
+print(effsize_result_N2_daf2)
+
+alt3_N2_daf7_long <- alt3_psi_comparison %>%
+  pivot_longer(cols = c(N2_median_psi, daf7_median_psi), names_to = "Condition", values_to = "PSI")
+effsize_result_N2_daf7 <- wilcox_effsize(alt3_N2_daf7_long, PSI ~ Condition, paired = TRUE)
+print(effsize_result_N2_daf7)
+
+alt3_daf2_daf7_long <- alt3_psi_comparison %>%
+  pivot_longer(cols = c(daf2_median_psi, daf7_median_psi), names_to = "Condition", values_to = "PSI")
+effsize_result_daf2_daf7 <- wilcox_effsize(alt3_daf2_daf7_long, PSI ~ Condition, paired = TRUE)
+print(effsize_result_daf2_daf7)
+
+
+```

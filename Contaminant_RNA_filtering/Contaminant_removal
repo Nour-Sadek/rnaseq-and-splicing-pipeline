@@ -1,0 +1,45 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --job-name=bowtie2_filter
+#SBATCH --output=/path/to/output_directory/cleaned_fastq.out
+#SBATCH --error=/path/to/output_directory/cleaned_fastq.err
+#SBATCH --array=0-number_of_array_elements
+#SBATCH --time=
+#SBATCH --cpus-per-task=4
+
+# Load modules
+module load CCEnv
+module load StdEnv
+module load bowtie2
+
+FASTQ_DIR=/pathway_to_imported_fastq_files
+OUT_DIR=/pathway_to_output_folder
+
+# Define list of SRA IDs
+SRA_IDS=(space_separated_list_of_SRA_IDs)
+
+# Get current SRA ID based on SLURM_ARRAY_TASK_ID
+SRA_ID=${SRA_IDS[$SLURM_ARRAY_TASK_ID]}
+
+# Define input and output file names
+READ1=${FASTQ_DIR}/${SRA_ID}_1_paired.fastq
+READ2=${FASTQ_DIR}/${SRA_ID}_2_paired.fastq
+
+# Output files for clean reads
+OUT1=${OUT_DIR}/${SRA_ID}_clean_1.fastq
+OUT2=${OUT_DIR}/${SRA_ID}_clean_2.fastq
+
+# Path to Bowtie2 contaminant index
+CONTAM_INDEX=/pathway_to_contamination_index
+
+# Run Bowtie2 to filter out contaminant reads
+bowtie2 -x $CONTAM_INDEX \
+  -1 $READ1 -2 $READ2 \
+  --very-sensitive \
+  -p $SLURM_CPUS_PER_TASK \
+  --un-conc ${SRA_ID}_clean.fastq \
+  -S /dev/null
+
+# Rename output files from bowtie2 (which outputs *_clean.fastq.1 and .2)
+mv ${SRA_ID}_clean.fastq.1 $OUT1
+mv ${SRA_ID}_clean.fastq.2 $OUT2
