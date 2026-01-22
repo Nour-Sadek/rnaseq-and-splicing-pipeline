@@ -8,8 +8,8 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
 trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: 'hisat2'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'featureCounts'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
+quantifier: 'salmon-quasi-mapping-mode'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
@@ -364,8 +364,74 @@ rng_seed: null
 non_deterministic: false
 
 
-# SALMON parameters
+#--------------------------- SALMON QUASI MAPPING MODE parameters ---------------------------#
+# Used with making the reference index
 kmer_size: 31
+# Basic options
+seqBias: false
+gcBias: false
+posBias: false
+incompatPrior: null
+meta: false
+discardOrphansQuasi: false
+consensusSlack: null  # 0.349999994
+preMergeChainSubThresh: null  # 0.75
+postMergeChainSubThresh: null  # 0.90000000000000002
+orphanChainSubThresh: null  # 0.94999999999999996
+scoreExp: null  # 1
+minScoreFraction: null
+mismatchSeedSkip: null
+disableChainingHeuristic: false
+match_score: null  # 2
+mismatch_score: null  # -4
+gap_open_score: null  # 6
+gap_extension_score: null  # 2
+bandwidth: null  # 15
+allowDovetail: false
+recoverOrphans: false
+miminBT2: false
+mimicStrictBT2: false
+softclip: false
+softclipOverhangs: false
+fullLengthAlignment: false
+hardFilter: false
+minAlnProb: null
+writeQualities: false
+hitFilterPolicy: null
+# Advanced options
+alternativeInitMode: false
+skipQuant: false
+dumpEq: false
+dumpEqWeights: false
+minAssignedFrags: null
+reduceGCMemory: false
+biasSpeedSamp: null  # 5
+fldMax: null  # 1000
+fldMean: null  # important for single-end reads, sets the expected mean fragment length (as it can't be estimated with single-end reads)
+fldSD: null  # same with fldMean, but this specifies the expected standard deviation of the fragment length
+maxOccsPerHit: null
+maxReadOcc: null
+noLengthCorrection: false
+noEffectiveLengthCorrection: false
+noSingleFragProb: false
+noFragLengthDist: false
+noBiasLengthThreshold: false
+numBiasSamples: null
+numAuxModelSamples: null
+numPreAuxModelSamples: null
+useEM: false
+useVBOpt: true
+rangeFactorizationBins: null
+numGibbsSamples: null
+noGammaDraw: false
+numBootstraps: null
+bootstrapReproject: false
+thinningFactor: null
+perTranscriptPrior: false
+perNucleotidePrior: false
+sigDigits: null
+vbPrior: null
+
 
 # KALLISTO parameters
 num_bootstrap_samples: 0

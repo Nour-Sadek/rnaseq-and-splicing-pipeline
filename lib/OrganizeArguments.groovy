@@ -418,7 +418,6 @@ class OrganizeArguments {
         htseqCountArgs = htseqCountArgs.join(" ")
 
         return htseqCountArgs
-
     }
 
     static String makeFeatureCountsArgs(paired_end, requireBothEndsMapped, countChimericFragments, checkFragLength, countReadPairs, autosort, minFragLength, maxfragLength, useMetaFeatures, 
@@ -472,11 +471,86 @@ class OrganizeArguments {
         featureCountsArgs = featureCountsArgs.join(" ")
 
         return featureCountsArgs
-
     }
 
-    
+    static String makeSalmonMappingArgs(seqBias, gcBias, posBias, incompatPrior, meta, discardOrphansQuasi, consensusSlack, preMergeChainSubThresh, postMergeChainSubThresh, orphanChainSubThresh, 
+    scoreExp, minScoreFraction, mismatchSeedSkip, disableChainingHeuristic, match_score, mismatch_score, gap_open_score, gap_extension_score, bandwidth, allowDovetail, recoverOrphans, miminBT2, 
+    mimicStrictBT2, softclip, softclipOverhangs, fullLengthAlignment, hardFilter, minAlnProb, writeQualities, hitFilterPolicy, alternativeInitMode, skipQuant, dumpEq, dumpEqWeights, minAssignedFrags, 
+    reduceGCMemory, biasSpeedSamp, fldMax, fldMean, fldSD, maxOccsPerHit, maxReadOcc, noLengthCorrection, noEffectiveLengthCorrection, noSingleFragProb, noFragLengthDist, noBiasLengthThreshold, 
+    numBiasSamples, numAuxModelSamples, numPreAuxModelSamples, useEM, useVBOpt, rangeFactorizationBins, numGibbsSamples, noGammaDraw, numBootstraps, bootstrapReproject, thinningFactor, perTranscriptPrior, 
+    perNucleotidePrior, sigDigits, vbPrior) {
 
+        def salmonMappingArgs = []
 
+        // Add all the salmon quant arguments required into the <salmonMappingArgs> variable
+        if (seqBias) salmonMappingArgs << "--seqBias"
+        if (gcBias) salmonMappingArgs << "--gcBias"
+        if (posBias) salmonMappingArgs << "--posBias"
+        if (incompatPrior) salmonMappingArgs << "--incompatPrior ${incompatPrior}"
+        if (meta) salmonMappingArgs << "--meta"
+        if (discardOrphansQuasi) salmonMappingArgs << "--discardOrphansQuasi"
+        if (consensusSlack) salmonMappingArgs << "--consensusSlack ${consensusSlack}"
+        if (preMergeChainSubThresh) salmonMappingArgs << "--preMergeChainSubThresh ${preMergeChainSubThresh}"
+        if (postMergeChainSubThresh) salmonMappingArgs << "--postMergeChainSubThresh ${postMergeChainSubThresh}"
+        if (orphanChainSubThresh) salmonMappingArgs << "--orphanChainSubThresh ${orphanChainSubThresh}"
+        if (scoreExp) salmonMappingArgs << "--scoreExp ${scoreExp}"
+        if (minScoreFraction) salmonMappingArgs << "--minScoreFraction ${minScoreFraction}"
+        if (mismatchSeedSkip) salmonMappingArgs << "--mismatchSeedSkip ${mismatchSeedSkip}"
+        if (disableChainingHeuristic) salmonMappingArgs << "--disableChainingHeuristic ${disableChainingHeuristic}"
+        if (match_score) salmonMappingArgs << "--ma ${}"
+        if (mismatch_score) salmonMappingArgs << "--mp ${}"
+        if (gap_open_score) salmonMappingArgs << "--go ${}"
+        if (gap_extension_score) salmonMappingArgs << "--ge ${}"
+        if (bandwidth) salmonMappingArgs << "--bandwidth ${bandwidth}"
+        if (allowDovetail) salmonMappingArgs << "--allowDovetail"
+        if (recoverOrphans) salmonMappingArgs << "--recoverOrphans"
+        if (miminBT2) salmonMappingArgs << "--mimicBT2"
+        if (mimicStrictBT2) salmonMappingArgs << "--mimicStrictBT2"
+        if (softclip) salmonMappingArgs << "--softclip"
+        if (softclipOverhangs) salmonMappingArgs << "--softclipOverhangs"
+        if (fullLengthAlignment) salmonMappingArgs << "--fullLengthAlignment"
+        if (hardFilter) salmonMappingArgs << "--hardFilter"
+        if (minAlnProb) salmonMappingArgs << "--minAlnProb ${minAlnProb}"
+        if (writeQualities) salmonMappingArgs << "--writeQualities"
+        if (hitFilterPolicy) salmonMappingArgs << "--hitFilterPolicy ${hitFilterPolicy}"
+        if (alternativeInitMode) salmonMappingArgs << "--alternativeInitMode"
+        if (skipQuant) salmonMappingArgs << "--skipQuant"
+        if (dumpEq) salmonMappingArgs << "--dumpEq"
+        if (dumpEqWeights) salmonMappingArgs << "--dumpEqWeights"
+        if (minAssignedFrags) salmonMappingArgs << "--minAssignedFrags ${minAssignedFrags}"
+        if (reduceGCMemory) salmonMappingArgs << "--reduceGCMemory"
+        if (biasSpeedSamp) salmonMappingArgs << "--biasSpeedSamp ${biasSpeedSamp}"
+        if (fldMax) salmonMappingArgs << "--fldMax ${fldMax}"
+        if (fldMean) salmonMappingArgs << "--fldMean ${fldMean}"
+        if (fldSD) salmonMappingArgs << "--fldSD ${fldSD}"
+        if (maxOccsPerHit) salmonMappingArgs << "--maxOccsPerHit ${maxOccsPerHit}"
+        if (maxReadOcc) salmonMappingArgs << "--maxReadOcc ${maxReadOcc}"
+        if (noLengthCorrection) salmonMappingArgs << "--noLengthCorrection"
+        if (noEffectiveLengthCorrection) salmonMappingArgs << "--noEffectiveLengthCorrection"
+        if (noSingleFragProb) salmonMappingArgs << "--noSingleFragProb"
+        if (noFragLengthDist) salmonMappingArgs << "--noFragLengthDist"
+        if (noBiasLengthThreshold) salmonMappingArgs << "--noBiasLengthThreshold" 
+        if (numBiasSamples) salmonMappingArgs << "--numBiasSamples ${numBiasSamples}"
+        if (numAuxModelSamples) salmonMappingArgs << "--numAuxModelSamples ${numAuxModelSamples}"
+        if (numPreAuxModelSamples) salmonMappingArgs << "--numPreAuxModelSamples ${numPreAuxModelSamples}"
+        if (useEM) salmonMappingArgs << "--useEM"
+        if (useVBOpt) salmonMappingArgs << "--useVBOpt"
+        if (rangeFactorizationBins) salmonMappingArgs << "--rangeFactorizationBins ${rangeFactorizationBins}"
+        if (numGibbsSamples) salmonMappingArgs << "--numGibbsSamples ${numGibbsSamples}"
+        if (noGammaDraw) salmonMappingArgs << "--noGammaDraw"
+        if (numBootstraps) salmonMappingArgs << "--numBootstraps ${numBootstraps}"
+        if (bootstrapReproject) salmonMappingArgs << "--bootstrapReproject"
+        if (thinningFactor) salmonMappingArgs << "--thinningFactor ${thinningFactor}"
+        if (perTranscriptPrior) salmonMappingArgs << "--perTranscriptPrior"
+        if (perNucleotidePrior) salmonMappingArgs << "--perNucleotidePrior"
+        if (sigDigits) salmonMappingArgs << "--sigDigits ${sigDigits}"
+        if (vbPrior) salmonMappingArgs << "--vbPrior ${vbPrior}"
+
+        salmonMappingArgs = salmonMappingArgs.join(" ")
+
+        return salmonMappingArgs
+    }
+ 
 
 }
+

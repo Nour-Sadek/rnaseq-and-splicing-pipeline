@@ -269,15 +269,25 @@ workflow {
 
     } else {  // use quantifiers that don't need prior alignment
         if (params.quantifier && params.quantifier == 'salmon-quasi-mapping-mode') {
+            
             // Create the reference genome index
             SALMON_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), params.kmer_size)
 
             // Run the SALMON_QUASSI_MAPPING_MODE reads quantification process
-            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, SALMON_REFERENCE_INDEX.out.reference_index)
+            salmonMappingArgs = OrganizeArguments.makeSalmonMappingArgs(params.seqBias, params.gcBias, params.posBias, params.incompatPrior, params.meta, params.discardOrphansQuasi, params.consensusSlack, params.preMergeChainSubThresh, 
+                params.postMergeChainSubThresh, params.orphanChainSubThresh, params.scoreExp, params.minScoreFraction, params.mismatchSeedSkip, params.disableChainingHeuristic, params.match_score, params.mismatch_score, params.gap_open_score, 
+                params.gap_extension_score, params.bandwidth, params.allowDovetail, params.recoverOrphans, params.miminBT2, params.mimicStrictBT2, params.softclip, params.softclipOverhangs, params.fullLengthAlignment, params.hardFilter, 
+                params.minAlnProb, params.writeQualities, params.hitFilterPolicy, params.alternativeInitMode, params.skipQuant, params.dumpEq, params.dumpEqWeights, params.minAssignedFrags, params.reduceGCMemory, params.biasSpeedSamp, 
+                params.fldMax, params.fldMean, params.fldSD, params.maxOccsPerHit, params.maxReadOcc, params.noLengthCorrection, params.noEffectiveLengthCorrection, params.noSingleFragProb, params.noFragLengthDist, params.noBiasLengthThreshold, 
+                params.numBiasSamples, params.numAuxModelSamples, params.numPreAuxModelSamples, params.useEM, params.useVBOpt, params.rangeFactorizationBins, params.numGibbsSamples, params.noGammaDraw, params.numBootstraps, params.bootstrapReproject, 
+                params.thinningFactor, params.perTranscriptPrior, params.perNucleotidePrior, params.sigDigits, params.vbPrior)
+            SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, SALMON_REFERENCE_INDEX.out.reference_index, salmonMappingArgs)
             tpm_column = 4
             
             quantifier_output_channel = SALMON_QUASI_MAPPING_MODE.out.quants_file
+
         } else if (params.quantifier && params.quantifier == 'kallisto') {
+            
             // Create the reference genome index
             KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
 
@@ -286,12 +296,15 @@ workflow {
             tpm_column = 5
 
             quantifier_output_channel = KALLISTO.out.quants_file
+
         } else if (params.quantifier && params.quantifier == 'rsem') {
+            
             // Create the reference genome index
             RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
 
             // Run the RSEM alignment and quantification process
             RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
+
         }
 
         if (params.splicingAnalyzer && params.splicingAnalyzer == 'suppa2') {
@@ -299,9 +312,9 @@ workflow {
             SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
-                all_salmon_samples = quantifier_output_channel.collect(flat: false)
-                all_sample_ids = all_salmon_samples.map { it*.get(0) }
-                all_sample_quants = all_salmon_samples.map { it*.get(2) }
+                all_samples = quantifier_output_channel.collect(flat: false)
+                all_sample_ids = all_samples.map { it*.get(0) }
+                all_sample_quants = all_samples.map { it*.get(2) }
 
                 SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, tpm_column, outputDir)
             }

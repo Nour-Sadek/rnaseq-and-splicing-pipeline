@@ -87,6 +87,7 @@ process SALMON_QUASI_MAPPING_MODE {
         tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_index
+        val salmonArgs
 
 	output:
         tuple val(sample_id), val(sample_group), path("${sample_id}/quant.sf"), emit: quants_file
@@ -95,17 +96,19 @@ process SALMON_QUASI_MAPPING_MODE {
         path "${sample_id}/logs", emit: logs
         path "${sample_id}/cmd_info.json", emit: cmd_info
         path "${sample_id}/lib_format_counts.json", emit: lib_format_counts
+        path "${sample_id}/mapping_info.txt", emit: mapping_info
+        path "${sample_id}/eq_classes.txt", emit: equivalence_class_file, optional: true
 	
     script:
     if (params.paired_end) {
         """
         mkdir $sample_id
-        salmon quant -i $reference_index -l A -1 ${reads[0]} -2 ${reads[1]} -p $task.cpus --validateMappings --gcBias -o $sample_id
+        salmon quant -i $reference_index -l A -1 ${reads[0]} -2 ${reads[1]} -p $task.cpus -o $sample_id --writeMappings=${sample_id}/mapping_info.txt --writeUnmappedNames $salmonArgs
         """
     } else {
         """
         mkdir $sample_id
-        salmon quant -i $reference_index -l A -r ${reads[0]} -p $task.cpus --validateMappings --gcBias -o $sample_id
+        salmon quant -i $reference_index -l A -r ${reads[0]} -p $task.cpus -o $sample_id --writeMappings=${sample_id}/mapping_info.txt --writeUnmappedNames $salmonArgs
         """
     }
 }
