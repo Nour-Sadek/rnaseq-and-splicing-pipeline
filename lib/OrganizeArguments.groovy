@@ -6,7 +6,8 @@ class OrganizeArguments {
     min_count, max_count, leading, trailing, headcrop, tailcrop, crop, minlen, maxlen, avgqual) {
 
         // Add all the trimmomatic arguments required into the <trimmomaticArgs> variable
-        def trimmomaticArgs = ["-${base_quality_encoding}"]
+        def trimmomaticArgs = []
+        if (base_quality_encoding) trimmomaticArgs << "-${base_quality_encoding}"
 
         // Specifying the parameters for ILLUMINACLIP
         if (seed_mismatches && palindrome_clip_threshold && simple_clip_threshold) {
@@ -56,20 +57,52 @@ class OrganizeArguments {
     trimpairsevenly, forcetrimleft, forcetrimright, forcetrimright2, forcetrimmod, restrictleft, restrictright, mingc, maxgc, tossjunk) {
     
         // Add all the bbduk arguments required into the <bbdukArgs> variable
-        def bbdukArgs = [
-            "qin=${qin}", "reads=${reads}", "samplerate=${samplerate}", "k=${k}", "rcomp=${rcomp}", "maskmiddle=${maskmiddle}", 
-            "minkmerhits=${minkmerhits}", "minkmerfraction=${minkmerfraction}", "mincovfraction=${mincovfraction}", "hammingdistance=${hammingdistance}", 
-            "qhdist=${qhdist}", "editdistance=${editdistance}", "hammingdistance2=${hammingdistance2}", "qhdist2=${qhdist2}", 
-            "editdistance2=${editdistance2}", "forbidn=${forbidn}", "ktrim=${ktrim}", "ktrimtips=${ktrimtips}", "maskfullycovered=${maskfullycovered}", 
-            "mink=${mink}", "qtrim=${qtrim}", "trimq=${trimq}", "minlength=${minlength}", "minlengthfraction=${minlengthfraction}", 
-            "minavgquality=${minavgquality}", "minbasequality=${minbasequality}", "maxns=${maxns}", "minconsecutivebases=${minconsecutivebases}", 
-            "trimpad=${trimpad}", "trimbyoverlap=${trimbyoverlap}", "strictoverlap=${strictoverlap}", "minoverlap=${minoverlap}", 
-            "mininsert=${mininsert}", "trimpairsevenly=${trimpairsevenly}", "forcetrimleft=${forcetrimleft}", "forcetrimright=${forcetrimright}", 
-            "forcetrimright2=${forcetrimright2}", "forcetrimmod=${forcetrimmod}", "restrictleft=${restrictleft}", "restrictright=${restrictright}", 
-            "mingc=${mingc}", "maxgc=${maxgc}", "tossjunk=${tossjunk}"
-        ]
+        def bbdukArgs = []
 
-        if (mink == 0) bbdukArgs.remove("mink=${mink}")
+        if (qin) bbdukArgs << "qin=${qin}"
+        if (reads) bbdukArgs << "reads=${reads}"
+        if (samplerate) bbdukArgs << "samplerate=${samplerate}"
+        if (k) bbdukArgs << "k=${k}"
+        if (rcomp) bbdukArgs << "rcomp=${rcomp}"
+        if (maskmiddle) bbdukArgs << "maskmiddle=${maskmiddle}"
+        if (minkmerhits) bbdukArgs << "minkmerhits=${minkmerhits}"
+        if (minkmerfraction) bbdukArgs << "minkmerfraction=${minkmerfraction}"
+        if (mincovfraction) bbdukArgs << "mincovfraction=${mincovfraction}"
+        if (hammingdistance) bbdukArgs << "hammingdistance=${hammingdistance}"
+        if (qhdist) bbdukArgs << "qhdist=${qhdist}"
+        if (editdistance) bbdukArgs << "editdistance=${editdistance}"
+        if (hammingdistance2) bbdukArgs << "hammingdistance2=${hammingdistance2}"
+        if (qhdist2) bbdukArgs << "qhdist2=${qhdist2}"
+        if (editdistance2) bbdukArgs << "editdistance2=${editdistance2}"
+        if (forbidn) bbdukArgs << "forbidn=${forbidn}"
+        if (ktrim) bbdukArgs << "ktrim=${ktrim}"
+        if (ktrimtips) bbdukArgs << "ktrimtips=${ktrimtips}"
+        if (maskfullycovered) bbdukArgs << "maskfullycovered=${maskfullycovered}"
+        if (mink && mink != 0) bbdukArgs << "mink=${mink}"
+        if (qtrim) bbdukArgs << "qtrim=${qtrim}"
+        if (trimq) bbdukArgs << "trimq=${trimq}"
+        if (minlength) bbdukArgs << "minlength=${minlength}"
+        if (minlengthfraction) bbdukArgs << "minlengthfraction=${minlengthfraction}"
+        if (minavgquality) bbdukArgs << "minavgquality=${minavgquality}"
+        if (minbasequality) bbdukArgs << "minbasequality=${minbasequality}"
+        if (maxns) bbdukArgs << "maxns=${maxns}"
+        if (minconsecutivebases) bbdukArgs << "minconsecutivebases=${minconsecutivebases}"
+        if (trimpad) bbdukArgs << "trimpad=${trimpad}"
+        if (trimbyoverlap) bbdukArgs << "trimbyoverlap=${trimbyoverlap}"
+        if (strictoverlap) bbdukArgs << "strictoverlap=${strictoverlap}"
+        if (minoverlap) bbdukArgs << "minoverlap=${minoverlap}"
+        if (mininsert) bbdukArgs << "mininsert=${mininsert}"
+        if (trimpairsevenly) bbdukArgs << "trimpairsevenly=${trimpairsevenly}"
+        if (forcetrimleft) bbdukArgs << "forcetrimleft=${forcetrimleft}"
+        if (forcetrimright) bbdukArgs << "forcetrimright=${forcetrimright}"
+        if (forcetrimright2) bbdukArgs << "forcetrimright2=${forcetrimright2}"
+        if (forcetrimmod) bbdukArgs << "forcetrimmod=${forcetrimmod}"
+        if (restrictleft) bbdukArgs << "restrictleft=${restrictleft}"
+        if (restrictright) bbdukArgs << "restrictright=${restrictright}"
+        if (mingc) bbdukArgs << "mingc=${mingc}"
+        if (maxgc) bbdukArgs << "maxgc=${maxgc}"
+        if (tossjunk) bbdukArgs << "tossjunk=${tossjunk}"
+
         bbdukArgs = bbdukArgs.join(" ")
 
         return bbdukArgs
@@ -100,7 +133,7 @@ class OrganizeArguments {
 
         // Specify the quality
         if (nextseq_quality) trimGaloreArgs << "--nextseq ${nextseq_quality}"
-        else trimGaloreArgs << "--quality ${quality}"
+        if (quality) trimGaloreArgs << "--quality ${quality}"
 
         // Specify the trimming parameters
         if (max_length) trimGaloreArgs << "--max_length ${max_length}"
@@ -125,10 +158,20 @@ class OrganizeArguments {
     sjdbGTFtagExonParentTranscript, sjdbGTFtagExonParentGene, sjdbGTFtagExonParentGeneName, sjdbGTFtagExonParentGeneType, sjdbOverhang, sjdbScore, sjdbInsertSave) {
 
         // Add all the STAR reference index arguments required into the <starReferenceIndexArgs> variable
-        def starReferenceIndexArgs = ["--runRNGseed ${runRNGseed}", "--genomeChrBinNbits ${genomeChrBinNbits}", "--genomeSAindexNbases ${genomeSAindexNbases}", "--genomeSAsparseD ${genomeSAsparseD}", 
-            "--genomeSuffixLengthMax ${genomeSuffixLengthMax}", "--sjdbGTFfeatureExon ${sjdbGTFfeatureExon}", "--sjdbGTFtagExonParentTranscript ${sjdbGTFtagExonParentTranscript}", 
-            "--sjdbGTFtagExonParentGene ${sjdbGTFtagExonParentGene}", "--sjdbGTFtagExonParentGeneName ${sjdbGTFtagExonParentGeneName}", "--sjdbGTFtagExonParentGeneType ${sjdbGTFtagExonParentGeneType}", 
-            "--sjdbOverhang ${sjdbOverhang}", "--sjdbScore ${sjdbScore}", "--sjdbInsertSave ${sjdbInsertSave}"]
+        def starReferenceIndexArgs = []
+        if (runRNGseed) starReferenceIndexArgs << "--runRNGseed ${runRNGseed}"
+        if (genomeChrBinNbits) starReferenceIndexArgs << "--genomeChrBinNbits ${genomeChrBinNbits}"
+        if (genomeSAindexNbases) starReferenceIndexArgs << "--genomeSAindexNbases ${genomeSAindexNbases}"
+        if (genomeSAsparseD) starReferenceIndexArgs << "--genomeSAsparseD ${genomeSAsparseD}"
+        if (genomeSuffixLengthMax) starReferenceIndexArgs << "--genomeSuffixLengthMax ${genomeSuffixLengthMax}"
+        if (sjdbGTFfeatureExon) starReferenceIndexArgs << "--sjdbGTFfeatureExon ${sjdbGTFfeatureExon}"
+        if (sjdbGTFtagExonParentTranscript) starReferenceIndexArgs << "--sjdbGTFtagExonParentTranscript ${sjdbGTFtagExonParentTranscript}"
+        if (sjdbGTFtagExonParentGene) starReferenceIndexArgs << "--sjdbGTFtagExonParentGene ${sjdbGTFtagExonParentGene}"
+        if (sjdbGTFtagExonParentGeneName) starReferenceIndexArgs << "--sjdbGTFtagExonParentGeneName ${sjdbGTFtagExonParentGeneName}"
+        if (sjdbGTFtagExonParentGeneType) starReferenceIndexArgs << "--sjdbGTFtagExonParentGeneType ${sjdbGTFtagExonParentGeneType}"
+        if (sjdbOverhang) starReferenceIndexArgs << "--sjdbOverhang ${sjdbOverhang}"
+        if (sjdbScore) starReferenceIndexArgs << "--sjdbScore ${sjdbScore}"
+        if (sjdbInsertSave) starReferenceIndexArgs << "--sjdbInsertSave ${sjdbInsertSave}"
 
         starReferenceIndexArgs = starReferenceIndexArgs.join(" ")
 
@@ -149,34 +192,99 @@ class OrganizeArguments {
     quantTranscriptomeBAMcompression, quantTranscriptomeSAMoutput) {
 
         // Add all the STAR arguments required into the <starArgs> variable
-        def starArgs = ["--runRNGseed ${runRNGseed}", "--readMapNumber ${readMapNumber}", "--readMatesLengthsIn ${readMatesLengthsIn}", "--readQualityScoreBase ${readQualityScoreBase}", "--clipAdapterType ${clipAdapterType}", "--clip3pNbases ${clip3pNbases}", 
-            "--clip3pAdapterMMp ${clip3pAdapterMMp}", "--clip3pAfterAdapterNbases ${clip3pAfterAdapterNbases}", "--clip5pNbases ${clip5pNbases}", "--outReadsUnmapped ${outReadsUnmapped}", "--outQSconversionAdd ${outQSconversionAdd}", 
-            "--outMultimapperOrder ${outMultimapperOrder}", "--outSAMmode ${outSAMmode}", "--outSAMstrandField ${outSAMstrandField}", "--outSAMattributes ${outSAMattributes}", "--outSAMattrIHstart ${outSAMattrIHstart}", 
-            "--outSAMunmapped ${outSAMunmapped}", "--outSAMprimaryFlag ${outSAMprimaryFlag}", "--outSAMreadID ${outSAMreadID}", "--outSAMmapqUnique ${outSAMmapqUnique}", "--outSAMflagOR ${outSAMflagOR}", 
-            "--outSAMflagAND ${outSAMflagAND}", "--outSAMmultNmax ${outSAMmultNmax}", "--outSAMtlen ${outSAMtlen}", "--outBAMcompression ${outBAMcompression}", "--outFilterType ${outFilterType}", 
-            "--outFilterMultimapScoreRange ${outFilterMultimapScoreRange}", "--outFilterMultimapNmax ${outFilterMultimapNmax}", "--outFilterMismatchNmax ${outFilterMismatchNmax}", "--outFilterMismatchNoverLmax ${outFilterMismatchNoverLmax}", 
-            "--outFilterMismatchNoverReadLmax ${outFilterMismatchNoverReadLmax}", "--outFilterScoreMin ${outFilterScoreMin}", "--outFilterScoreMinOverLread ${outFilterScoreMinOverLread}", "--outFilterMatchNmin ${outFilterMatchNmin}", 
-            "--outFilterMatchNminOverLread ${outFilterMatchNminOverLread}", "--outFilterIntronMotifs ${outFilterIntronMotifs}", "--outFilterIntronStrands ${outFilterIntronStrands}", "--outSJfilterReads ${outSJfilterReads}", 
-            "--outSJfilterOverhangMin ${outSJfilterOverhangMin}", "--outSJfilterCountUniqueMin ${outSJfilterCountUniqueMin}", "--outSJfilterCountTotalMin ${outSJfilterCountTotalMin}", "--outSJfilterDistToOtherSJmin ${outSJfilterDistToOtherSJmin}", 
-            "--outSJfilterIntronMaxVsReadN ${outSJfilterIntronMaxVsReadN}", "--scoreGap ${scoreGap}", "--scoreGapNoncan ${scoreGapNoncan}", "--scoreGapGCAG ${scoreGapGCAG}", "--scoreGapATAC ${scoreGapATAC}", 
-            "--scoreGenomicLengthLog2scale ${scoreGenomicLengthLog2scale}", "--scoreDelOpen ${scoreDelOpen}", "--scoreDelBase ${scoreDelBase}", "--scoreInsOpen ${scoreInsOpen}", "--scoreInsBase ${scoreInsBase}", 
-            "--scoreStitchSJshift ${scoreStitchSJshift}", "--seedSearchStartLmax ${seedSearchStartLmax}", "--seedSearchStartLmaxOverLread ${seedSearchStartLmaxOverLread}", "--seedSearchLmax ${seedSearchLmax}", 
-            "--seedMultimapNmax ${seedMultimapNmax}", "--seedPerReadNmax ${seedPerReadNmax}", "--seedPerWindowNmax ${seedPerWindowNmax}", "--seedNoneLociPerWindow ${seedNoneLociPerWindow}", "--seedSplitMin ${seedSplitMin}", 
-            "--seedMapMin ${seedMapMin}", "--alignIntronMin ${alignIntronMin}", "--alignIntronMax ${alignIntronMax}", "--alignMatesGapMax ${alignMatesGapMax}", "--alignSJoverhangMin ${alignSJoverhangMin}", 
-            "--alignSJstitchMismatchNmax ${alignSJstitchMismatchNmax}", "--alignSJDBoverhangMin ${alignSJDBoverhangMin}", "--alignSplicedMateMapLmin ${alignSplicedMateMapLmin}", "--alignSplicedMateMapLminOverLmate ${alignSplicedMateMapLminOverLmate}", 
-            "--alignWindowsPerReadNmax ${alignWindowsPerReadNmax}", "--alignTranscriptsPerWindowNmax ${alignTranscriptsPerWindowNmax}", "--alignTranscriptsPerReadNmax ${alignTranscriptsPerReadNmax}", "--alignEndsType ${alignEndsType}", 
-            "--alignEndsProtrude ${alignEndsProtrude}", "--alignSoftClipAtReferenceEnds ${alignSoftClipAtReferenceEnds}", "--alignInsertionFlush ${alignInsertionFlush}", "--winAnchorMultimapNmax ${winAnchorMultimapNmax}", 
-            "--winBinNbits ${winBinNbits}", "--winAnchorDistNbins ${winAnchorDistNbins}", "--winFlankNbins ${winFlankNbins}", "--winReadCoverageRelativeMin ${winReadCoverageRelativeMin}", "--winReadCoverageBasesMin ${winReadCoverageBasesMin}", 
-            "--quantTranscriptomeBAMcompression ${quantTranscriptomeBAMcompression}", "--quantTranscriptomeSAMoutput ${quantTranscriptomeSAMoutput}"]
-        
-        // Add the optional parameters
+        def starArgs = []
+        if (runRNGseed) starArgs << "--runRNGseed ${runRNGseed}"
+        if (readMapNumber) starArgs << "-readMapNumber ${readMapNumber}"
+        if (readMatesLengthsIn) starArgs << "--readMatesLengthsIn ${readMatesLengthsIn}"
+        if (readQualityScoreBase) starArgs << "--readQualityScoreBase ${readQualityScoreBase}"
+        if (clipAdapterType) starArgs << "--clipAdapterType ${clipAdapterType}"
+        if (clip3pNbases) starArgs << "--clip3pNbases ${clip3pNbases}"
+        if (clip3pAdapterMMp) starArgs << "--clip3pAdapterMMp ${clip3pAdapterMMp}"
+        if (clip3pAfterAdapterNbases) starArgs << "--clip3pAfterAdapterNbases ${clip3pAfterAdapterNbases}"
+        if (clip5pNbases) starArgs << "--clip5pNbases ${clip5pNbases}"
+        if (outReadsUnmapped) starArgs << "--outReadsUnmapped ${outReadsUnmapped}"
+        if (outQSconversionAdd) starArgs << "--outQSconversionAdd ${outQSconversionAdd}"
+        if (outMultimapperOrder) starArgs << "--outMultimapperOrder ${outMultimapperOrder}"
+        if (outSAMmode) starArgs << "--outSAMmode ${outSAMmode}"
+        if (outSAMstrandField) starArgs << "--outSAMstrandField ${outSAMstrandField}"
+        if (outSAMattributes) starArgs << "--outSAMattributes ${outSAMattributes}"
+        if (outSAMattrIHstart) starArgs << "--outSAMattrIHstart ${outSAMattrIHstart}"
+        if (outSAMunmapped) starArgs << "--outSAMunmapped ${outSAMunmapped}"
+        if (outSAMprimaryFlag) starArgs << "--outSAMprimaryFlag ${outSAMprimaryFlag}"
+        if (outSAMreadID) starArgs << "--outSAMreadID ${outSAMreadID}"
+        if (outSAMmapqUnique) starArgs << "--outSAMmapqUnique ${outSAMmapqUnique}"
+        if (outSAMflagOR) starArgs << "--outSAMflagOR ${outSAMflagOR}"
+        if (outSAMflagAND) starArgs << "--outSAMflagAND ${outSAMflagAND}"
+        if (outSAMmultNmax) starArgs << "--outSAMmultNmax ${outSAMmultNmax}"
+        if (outSAMtlen) starArgs << "--outSAMtlen ${outSAMtlen}"
+        if (outBAMcompression) starArgs << "--outBAMcompression ${outBAMcompression}"
+        if (outFilterType) starArgs << "--outFilterType ${outFilterType}"
+        if (outFilterMultimapScoreRange) starArgs << "--outFilterMultimapScoreRange ${outFilterMultimapScoreRange}"
+        if (outFilterMultimapNmax) starArgs << "--outFilterMultimapNmax ${outFilterMultimapNmax}"
+        if (outFilterMismatchNmax) starArgs << "--outFilterMismatchNmax ${outFilterMismatchNmax}"
+        if (outFilterMismatchNoverLmax) starArgs << "--outFilterMismatchNoverLmax ${outFilterMismatchNoverLmax}"
+        if (outFilterMismatchNoverReadLmax) starArgs << "--outFilterMismatchNoverReadLmax ${outFilterMismatchNoverReadLmax}"
+        if (outFilterScoreMin) starArgs << "--outFilterScoreMin ${outFilterScoreMin}"
+        if (outFilterScoreMinOverLread) starArgs << "--outFilterScoreMinOverLread ${outFilterScoreMinOverLread}"
+        if (outFilterMatchNmin) starArgs << "--outFilterMatchNmin ${outFilterMatchNmin}"
+        if (outFilterMatchNminOverLread) starArgs << "--outFilterMatchNminOverLread ${outFilterMatchNminOverLread}"
+        if (outFilterIntronMotifs) starArgs << "--outFilterIntronMotifs ${outFilterIntronMotifs}"
+        if (outFilterIntronStrands) starArgs << "--outFilterIntronStrands ${outFilterIntronStrands}"
+        if (outSJfilterReads) starArgs << "--outSJfilterReads ${outSJfilterReads}"
+        if (outSJfilterOverhangMin) starArgs << "--outSJfilterOverhangMin ${outSJfilterOverhangMin}"
+        if (outSJfilterCountUniqueMin) starArgs << "--outSJfilterCountUniqueMin ${outSJfilterCountUniqueMin}"
+        if (outSJfilterCountTotalMin) starArgs << "--outSJfilterCountTotalMin ${outSJfilterCountTotalMin}"
+        if (outSJfilterDistToOtherSJmin) starArgs << "--outSJfilterDistToOtherSJmin ${outSJfilterDistToOtherSJmin}"
+        if (outSJfilterIntronMaxVsReadN) starArgs << "--outSJfilterIntronMaxVsReadN ${outSJfilterIntronMaxVsReadN}"
+        if (scoreGap) starArgs << "--scoreGap ${scoreGap}"
+        if (scoreGapNoncan) starArgs << "--scoreGapNoncan ${scoreGapNoncan}"
+        if (scoreGapGCAG) starArgs << "--scoreGapGCAG ${scoreGapGCAG}"
+        if (scoreGapATAC) starArgs << "--scoreGapATAC ${scoreGapATAC}"
+        if (scoreGenomicLengthLog2scale) starArgs << "--scoreGenomicLengthLog2scale ${scoreGenomicLengthLog2scale}"
+        if (scoreDelOpen) starArgs << "--scoreDelOpen ${scoreDelOpen}"
+        if (scoreDelBase) starArgs << "--scoreDelBase ${scoreDelBase}"
+        if (scoreInsOpen) starArgs << "--scoreInsOpen ${scoreInsOpen}"
+        if (scoreInsBase) starArgs << "--scoreInsBase ${scoreInsBase}"
+        if (scoreStitchSJshift) starArgs << "--scoreStitchSJshift ${scoreStitchSJshift}"
+        if (seedSearchStartLmax) starArgs << "--seedSearchStartLmax ${seedSearchStartLmax}"
+        if (seedSearchStartLmaxOverLread) starArgs << "--seedSearchStartLmaxOverLread ${seedSearchStartLmaxOverLread}"
+        if (seedSearchLmax) starArgs << "--seedSearchLmax ${seedSearchLmax}"
+        if (seedMultimapNmax) starArgs << "--seedMultimapNmax ${seedMultimapNmax}"
+        if (seedPerReadNmax) starArgs << "--seedPerReadNmax ${seedPerReadNmax}"
+        if (seedPerWindowNmax) starArgs << "--seedPerWindowNmax ${seedPerWindowNmax}"
+        if (seedNoneLociPerWindow) starArgs << "--seedNoneLociPerWindow ${seedNoneLociPerWindow}"
+        if (seedSplitMin) starArgs << "--seedSplitMin ${seedSplitMin}"
+        if (seedMapMin) starArgs << "--seedMapMin ${seedMapMin}"
+        if (alignIntronMin) starArgs << "--alignIntronMin ${alignIntronMin}"
+        if (alignIntronMax) starArgs << "--alignIntronMax ${alignIntronMax}"
+        if (alignMatesGapMax) starArgs << "--alignMatesGapMax ${alignMatesGapMax}"
+        if (alignSJoverhangMin) starArgs << "--alignSJoverhangMin ${alignSJoverhangMin}"
+        if (alignSJstitchMismatchNmax) starArgs << "--alignSJstitchMismatchNmax ${alignSJstitchMismatchNmax}"
+        if (alignSJDBoverhangMin) starArgs << "--alignSJDBoverhangMin ${alignSJDBoverhangMin}"
+        if (alignSplicedMateMapLmin) starArgs << "--alignSplicedMateMapLmin ${alignSplicedMateMapLmin}"
+        if (alignSplicedMateMapLminOverLmate) starArgs << "--alignSplicedMateMapLminOverLmate ${alignSplicedMateMapLminOverLmate}"
+        if (alignWindowsPerReadNmax) starArgs << "--alignWindowsPerReadNmax ${alignWindowsPerReadNmax}"
+        if (alignTranscriptsPerWindowNmax) starArgs << "--alignTranscriptsPerWindowNmax ${alignTranscriptsPerWindowNmax}"
+        if (alignTranscriptsPerReadNmax) starArgs << "--alignTranscriptsPerReadNmax ${alignTranscriptsPerReadNmax}"
+        if (alignEndsType) starArgs << "--alignEndsType ${alignEndsType}"
+        if (alignEndsProtrude) starArgs << "--alignEndsProtrude ${alignEndsProtrude}"
+        if (alignSoftClipAtReferenceEnds) starArgs << "--alignSoftClipAtReferenceEnds ${alignSoftClipAtReferenceEnds}"
+        if (alignInsertionFlush) starArgs << "--alignInsertionFlush ${alignInsertionFlush}"
+        if (winAnchorMultimapNmax) starArgs << "--winAnchorMultimapNmax ${winAnchorMultimapNmax}"
+        if (winBinNbits) starArgs << "--winBinNbits ${winBinNbits}"
+        if (winAnchorDistNbins) starArgs << "--winAnchorDistNbins ${winAnchorDistNbins}"
+        if (winFlankNbins) starArgs << "--winFlankNbins ${winFlankNbins}"
+        if (winReadCoverageRelativeMin) starArgs << "--winReadCoverageRelativeMin ${winReadCoverageRelativeMin}"
+        if (winReadCoverageBasesMin) starArgs << "--winReadCoverageBasesMin ${winReadCoverageBasesMin}"
+        if (quantTranscriptomeBAMcompression) starArgs << "--quantTranscriptomeBAMcompression ${quantTranscriptomeBAMcompression}"
+        if (quantTranscriptomeSAMoutput) starArgs << "--quantTranscriptomeSAMoutput ${quantTranscriptomeSAMoutput}"
         if (clip3pAdapterSeq) starArgs << "--clip3pAdapterSeq ${clip3pAdapterSeq}"
         if (quantMode) starArgs << "--quantMode ${quantMode}"
 
         // Add the parameters for paired-end mode
         if (paired_end) {
-            starArgs << "--peOverlapNbasesMin ${peOverlapNbasesMin}"
-            starArgs << "--peOverlapMMp ${peOverlapMMp}"
+            if (peOverlapNbasesMin) starArgs << "--peOverlapNbasesMin ${peOverlapNbasesMin}"
+            if (peOverlapMMp) starArgs << "--peOverlapMMp ${peOverlapMMp}"
         }
 
         starArgs = starArgs.join(" ")
@@ -289,17 +397,23 @@ class OrganizeArguments {
     add_chromosome_info) {
 
         // Add all the HTseq arguments required into the <htseqCountArgs> variable
-        def htseqCountArgs = ["--max-reads-in-buffer=${max_reads_in_buffer}", "--stranded=${stranded}", "-a ${minaqual}", "--type=${feature_type}", "--idattr=${id_attribute}", "--mode=${mode}", 
-            "--nonunique=${nonunique_mode}", "--secondary-alignments=${secondary_alignments}", "--supplementary-alignments=${supplementary_alignments}"]
+        def htseqCountArgs = []
+        if (add_chromosome_info) htseqCountArgs << "--add-chromosome-info"
+        if (max_reads_in_buffer) htseqCountArgs << "--max-reads-in-buffer=${max_reads_in_buffer}"
+        if (stranded) htseqCountArgs << "--stranded=${stranded}"
+        if (minaqual) htseqCountArgs << "-a ${minaqual}"
+        if (feature_type) htseqCountArgs << "--type=${feature_type}"
+        if (id_attribute) htseqCountArgs << "--idattr=${id_attribute}"
+        if (mode) htseqCountArgs << "--mode=${mode}"
+        if (nonunique_mode) htseqCountArgs << "--nonunique=${nonunique_mode}"
+        if (secondary_alignments) htseqCountArgs << "--secondary-alignments=${secondary_alignments}"
+        if (supplementary_alignments) htseqCountArgs << "--supplementary-alignments=${supplementary_alignments}"
         
         // Add additional attributes if specified as a list
         if (additional_attributes) {
             if (!(additional_attributes instanceof List)) throw new IllegalArgumentException("Expected a List for the additional_attributes parameter for htseq-count process, but got ${additional_attributes.getClass().name}")
             else htseqCountArgs << additional_attributes.collect { "--additional-attr=${it}" }.join(" ")
         }
-
-        // Check other parameters
-        if (add_chromosome_info) htseqCountArgs << "--add-chromosome-info"
 
         htseqCountArgs = htseqCountArgs.join(" ")
 
@@ -327,7 +441,7 @@ class OrganizeArguments {
         if (minFragLength) featureCountsArgs << "-d ${minFragLength}"
         if (maxfragLength) featureCountsArgs << "-D ${maxfragLength}"
         if (useMetaFeatures) featureCountsArgs << "-f"
-        if (isGTFAnnotationFile) featureCountsArgs << "-F"
+        if (isGTFAnnotationFile) featureCountsArgs << "-F GTF"
         if (attrType_GTF) featureCountsArgs << "-g ${attrType_GTF}"
         if (juncCounts) featureCountsArgs << "-J"
         if (isLongRead) featureCountsArgs << "-L"
