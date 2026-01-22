@@ -77,13 +77,14 @@ process KALLISTO_REFERENCE_INDEX {
 	input:
         val outputDir
         path transcripts_file
+        val kallistoIndexArgs
 
 	output:
         path "kallisto_index.idx", emit: kallisto_reference_index
 	
     script:
     """
-    kallisto index -i kallisto_index.idx $transcripts_file
+    kallisto index -i kallisto_index.idx $transcripts_file $kallistoIndexArgs
     """
 }
 

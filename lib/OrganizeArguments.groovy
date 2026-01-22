@@ -550,6 +550,50 @@ class OrganizeArguments {
 
         return salmonMappingArgs
     }
+
+    static String makeKallistoIndexArgs(kmer_length, make_unique, fasta_contains_aa, distinguish, minimizers_length, ec_max_size) {
+
+        def kallistoIndexArgs = []
+        
+        // Add all the kallisto index arguments required into the <kallistoIndexArgs> variable
+        if (kmer_length) kallistoIndexArgs << "--kmer-size=${kmer_length}"
+        if (make_unique) kallistoIndexArgs << "--make-unique"
+        if (fasta_contains_aa) kallistoIndexArgs << "--aa"
+        if (distinguish) kallistoIndexArgs << "--distinguish"
+        if (minimizers_length) kallistoIndexArgs << "--min-size=${minimizers_length}"
+        if (ec_max_size) kallistoIndexArgs << "--ec-max-size=${ec_max_size}"
+
+        kallistoIndexArgs = kallistoIndexArgs.join(" ")
+
+        return kallistoIndexArgs
+    }
+
+    static String makeKallistoQuantArgs(paired_end, num_bootstrap_samples, bootstrap_seed, plaintext, single_overhang, fr_stranded, rf_stranded, mean_fragment_length, sd_fragment_length) {
+
+        def kallistoQuantArgs = []
+
+        // Check whether <mean_fragment_length> and <sd_fragment_length> were specified for single-end reads, and throw an error otherwise
+        if (!paired_end) {
+            if (!mean_fragment_length || !sd_fragment_length) throw new IllegalArgumentException("Expected values for the <mean_fragment_length> and <sd_fragment_length> parameters when running kallisto quant with single-end reads.")
+            else {
+                kallistoQuantArgs << "--fragment-length=${mean_fragment_length}"
+                kallistoQuantArgs << "--sd=${sd_fragment_length}"
+            }
+        }
+        
+        // Add all the kallisto quant arguments required into the <kallistoQuantArgs> variable
+        if (num_bootstrap_samples) kallistoQuantArgs << "--bootstrap-samples=${num_bootstrap_samples}"
+        if (bootstrap_seed) kallistoQuantArgs << "--seed=${bootstrap_seed}"
+        if (plaintext) kallistoQuantArgs << "--plaintext"
+        if (single_overhang) kallistoQuantArgs << "--single-overhang"
+        if (fr_stranded) kallistoQuantArgs << "--fr-stranded"
+        if (rf_stranded) kallistoQuantArgs << "--rf-stranded"
+
+        kallistoQuantArgs = kallistoQuantArgs.join(" ")
+
+        return kallistoQuantArgs
+
+    }
  
 
 }

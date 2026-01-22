@@ -9,7 +9,7 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 # which tools to use for each process
 trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'salmon-quasi-mapping-mode'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+quantifier: 'kallisto'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
@@ -433,10 +433,25 @@ sigDigits: null
 vbPrior: null
 
 
-# KALLISTO parameters
-num_bootstrap_samples: 0
-mean_fragment_length: 200  # estimated for paired-end reads, used only for single-end reads
-sd_fragment_length: 70  # estimated for single-end reads, used only for single-end reads
+#--------------------------- KALLISTO index parameters ---------------------------#
+kmer_length: null
+make_unique: false
+fasta_contains_aa: false
+distinguish: false
+minimizers_length: null
+ec_max_size: null
+
+
+#--------------------------- KALLISTO quant parameters ---------------------------#
+num_bootstrap_samples: null
+bootstrap_seed: null
+plaintext: false
+single_overhang: false
+fr_stranded: false
+rf_stranded: false
+mean_fragment_length: 200  # estimated for paired-end reads, must be used for single-end reads (200)
+sd_fragment_length: 70  # estimated for paired-end reads, must be used for single-end reads (70)
+
 
 # General Splicing parameters
 individualSplicingAnalysis: true

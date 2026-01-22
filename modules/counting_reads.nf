@@ -125,21 +125,21 @@ process KALLISTO {
         tuple val(sample_id), val(sample_group), path(reads)
         val outputDir
         path reference_index
-        val num_bootstrap_samples
+        val kallistoQuantArgs
 
 	output:
         tuple val(sample_id), val(sample_group), path("${sample_id}/abundance.tsv"), emit: quants_file
-        path "${sample_id}/abundance.h5", emit: h5_file
+        path "${sample_id}/abundance.h5", emit: h5_output, optional: true
         path "${sample_id}/run_info.json", emit: run_info
 	
     script:
     if (params.paired_end) {
         """
-        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples ${reads[0]} ${reads[1]}
+        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus ${reads[0]} ${reads[1]} $kallistoQuantArgs
         """
     } else {
         """
-        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus -b $num_bootstrap_samples --single -l $params.mean_fragment_length -s $params.sd_fragment_length ${reads[0]}
+        kallisto quant -i $reference_index -o ${sample_id} -t $task.cpus --single ${reads[0]} $kallistoQuantArgs
         """
     }
 }

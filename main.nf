@@ -289,10 +289,13 @@ workflow {
         } else if (params.quantifier && params.quantifier == 'kallisto') {
             
             // Create the reference genome index
-            KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile))
+            kallistoIndexArgs = OrganizeArguments.makeKallistoIndexArgs(params.kmer_length, params.make_unique, params.fasta_contains_aa, params.distinguish, params.minimizers_length, params.ec_max_size)
+            KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), kallistoIndexArgs)
 
             // Run the KALLISTO reads quantification process
-            KALLISTO(trimming_output_channel, outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, params.num_bootstrap_samples)
+            kallistoQuantArgs = OrganizeArguments.makeKallistoQuantArgs(params.paired_end, params.num_bootstrap_samples, params.bootstrap_seed, params.plaintext, params.single_overhang, params.fr_stranded, params.rf_stranded, 
+                params.mean_fragment_length, params.sd_fragment_length)
+            KALLISTO(trimming_output_channel, outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, kallistoQuantArgs)
             tpm_column = 5
 
             quantifier_output_channel = KALLISTO.out.quants_file
