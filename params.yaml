@@ -7,9 +7,9 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: null  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: null  # available options are: 'star', 'hisat2', 'none'
-quantifier: null  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+aligner: 'hisat2'  # available options are: 'star', 'hisat2', 'none'
+quantifier: 'featureCounts'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
 splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
@@ -252,8 +252,117 @@ supplementary_alignments: 'score'
 add_chromosome_info: false
 
 
-# HISAT2 parameters
-hisat2_index_prefix: 'genome'
+#--------------------------- featureCounts parameters ---------------------------#
+requireBothEndsMapped: false  # paired-end
+countChimericFragments: false  # paired-end
+minFragLength: 50
+maxfragLength: 600
+useMetaFeatures: false
+isGTFAnnotationFile: true
+attrType_GTF: 'gene_id'
+juncCounts: false
+isLongRead: false
+countMultiMappingReads: false
+allowMultiOverlap: false
+checkFragLength: false  # only specify if <minFragLength> and <maxFragLength> are specified, paired-end
+minMQS: 0
+isStrandSpecific: 0
+featureType_GTF: 'exon'  # If more than one feature type is provided, they should be separated by ',' (no space)
+byReadGroup: false
+countReadPairs: false  # paired-end
+autosort: false  # paired-end
+attrType_GTF_extra: null  # If more than one feature type is provided, they should be separated by ',' (no space)
+fraction: false  # must be specified with <countMultiMappingReads> or <alloqMultiOverlap> or both
+fracOverlap: 0
+fracOverlapFeature: 0
+ignoreDup: false
+largestOverlap: false
+minOverlap: 1
+nonOverlap: null
+nonOverlapFeature: null
+nonSplitOnly: false
+primaryOnly: false
+read2pos: null
+readExtension3: 0
+readExtension5: 0
+readShiftSize: 0
+readShiftType: 'upstream'
+splitOnly: false
+
+
+#--------------------------- HISAT2-build parameters ---------------------------#
+hisat2_index_prefix: 'genome'  # if not specified, the default 'genome' will be used
+large_index: false
+noauto: false  # If specified as true, must specify values for <bmax>/<bamxdivn> and <dcv> parameters
+bmax: null
+bmaxdivn: null  # if both <bmax> and <bmaxdivn> are specified, the value for <bmaxdivn> will override the value specified for <bmax>
+dcv: null  # must be a power of 2 no greater than 4096
+nodc: false
+noref: false
+justref: false
+offrate: null
+ftabchars: null
+localoffrate: null
+localftabchars: null
+seed: null
+cutoff: null
+
+
+#--------------------------- HISAT2 parameters ---------------------------#
+# Input options
+skip: null
+upto: null
+trim5: null
+trim3: null
+phred_quality: 'phred33'  # options are: phred33 or phred64. If not specified, default is phred33
+solexa_quals: false
+int_quals: false
+# Alignment options
+n_ceil_func: null
+ignore_quals: false
+norc: false
+nofw: false
+# Scoring options
+mismatch_penalties: null  # if specified, should be integers separated by a comma ',' no spaces
+soft_clipping: null  # if specified, should be integers separated by a comma ',' no spaces
+no_softclip: false
+n_penalty: null
+read_gap_penalty: null
+reference_gap_penalty: null
+score_min_func: null
+# Spliced alignment options
+pen_cansplice: null
+pen_noncansplice: null
+pen_canintronlen: null
+pen_noncanintronlen: null
+min_intronlen: null
+max_intronlen: null
+no_temp_splicesite: false
+no_spliced_alignment: false
+rna_strandness: null
+transcriptome_mapping_only: false
+downstream_transcriptome_assembly: false
+dta_cufflinks: false
+avoid_pseudogene: false
+no_templatelen_adjustment: false
+# Reporting options
+num_alignments_per_read: null
+max_seeds: null
+report_all_alignments: false
+report_secondary_alignments: false
+# Paired-end options
+min_fragment_length: null
+max_fragment_length: null
+mate_orientations: null  # options are: fr, rf, or ff
+no_mixed: false
+no_discordant: false
+# Performance options
+index_offrate: null
+reorder: false
+# Other options
+rng_seed: null
+non_deterministic: false
+
 
 # SALMON parameters
 kmer_size: 31
@@ -267,7 +376,7 @@ sd_fragment_length: 70  # estimated for single-end reads, used only for single-e
 individualSplicingAnalysis: true
 differentialSplicingAnalysis: true
 
-#RSEM parameters
+# RSEM parameters
 rsem_index_prefix: 'rsem_reference'
 strandedness: 'none'
 fragment_length_mean: -1  # used only for single-end reads, change the value if you know it

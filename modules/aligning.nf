@@ -52,6 +52,7 @@ process HISAT2 {
         val outputDir
         val hisat2_prefix_index
         path hisat2_index_files
+        val hisat2Args
 
 	output:
         tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
@@ -59,11 +60,11 @@ process HISAT2 {
     script:
     if (params.paired_end) {
         """
-        hisat2 -q -x $hisat2_prefix_index -1 ${reads[0]} -2 ${reads[1]} -S ${sample_id}_Aligned.out.sam
+        hisat2 -q -p $task.cpus -x $hisat2_prefix_index -1 ${reads[0]} -2 ${reads[1]} -S ${sample_id}_Aligned.out.sam $hisat2Args
         """
     } else {
         """
-        hisat2 -q -x $hisat2_prefix_index -U ${reads[0]} -S ${sample_id}_Aligned.out.sam
+        hisat2 -q -p $task.cpus -x $hisat2_prefix_index -U ${reads[0]} -S ${sample_id}_Aligned.out.sam $hisat2Args
         """
     }
 }

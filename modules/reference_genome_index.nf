@@ -33,15 +33,15 @@ process HISAT2_REFERENCE_INDEX {
 	input:
         val outputDir
         val hisat2_index_prefix
-		path genome_fasta_files
+        path genome_fasta_files
+        val hisat2ReferenceIndexArgs
 
 	output:
         path "${hisat2_index_prefix}*", emit: hisat2_index_files
-        val "$hisat2_index_prefix", emit: hisat2_prefix_index
 	
     script:
     """
-    hisat2-build $genome_fasta_files $hisat2_index_prefix
+    hisat2-build $genome_fasta_files $hisat2_index_prefix -p $task.cpus $hisat2ReferenceIndexArgs
     """
 }
 

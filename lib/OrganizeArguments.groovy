@@ -184,6 +184,106 @@ class OrganizeArguments {
         return starArgs  
     }
 
+    static String makeHisat2ReferenceIndexArgs(large_index, noauto, bmax, bmaxdivn, dcv, nodc, noref, justref, offrate, ftabchars, localoffrate, localftabchars, seed, cutoff) {
+        
+        def hisat2ReferenceIndexArgs = []
+
+        // Add the parameters specific to memory usage
+        if (noauto) {
+            hisat2ReferenceIndexArgs << "--noauto"
+            if (bmax) hisat2ReferenceIndexArgs << "--bmax ${bmax}"
+            if (bmaxdivn) hisat2ReferenceIndexArgs << "--bmaxdivn ${bmaxdivn}"
+            if (dcv) hisat2ReferenceIndexArgs << "--dcv ${dcv}"
+        }
+
+        // Add all other parameters
+        if (large_index) hisat2ReferenceIndexArgs << "--large-index"
+        if (nodc) hisat2ReferenceIndexArgs << "--nodc"
+        if (noref) hisat2ReferenceIndexArgs << "--noref"
+        if (justref) hisat2ReferenceIndexArgs << "--justref"
+        if (offrate) hisat2ReferenceIndexArgs << "--offrate"
+        if (ftabchars) hisat2ReferenceIndexArgs << "--ftabchars ${ftabchars}"
+        if (localoffrate) hisat2ReferenceIndexArgs << "--localoffrate ${localoffrate}"
+        if (localftabchars) hisat2ReferenceIndexArgs << "localftabchars ${localftabchars}"
+        if (seed) hisat2ReferenceIndexArgs << "--seed ${seed}"
+        if (cutoff) hisat2ReferenceIndexArgs << "--cutoff ${cutoff}"
+
+        hisat2ReferenceIndexArgs = hisat2ReferenceIndexArgs.join(" ")
+
+        return hisat2ReferenceIndexArgs
+    }
+
+    static String makeHisat2Args(paired_end, skip, upto, trim5, trim3, phred_quality, solexa_quals, int_quals, n_ceil_func, ignore_quals, norc, nofw, mismatch_penalties, soft_clipping, 
+    no_softclip, n_penalty, read_gap_penalty, reference_gap_penalty, score_min_func, pen_cansplice, pen_noncansplice, pen_canintronlen, pen_noncanintronlen, min_intronlen, 
+    max_intronlen, no_temp_splicesite, no_spliced_alignment, rna_strandness, transcriptome_mapping_only, downstream_transcriptome_assembly, dta_cufflinks, avoid_pseudogene, 
+    no_templatelen_adjustment, num_alignments_per_read, max_seeds, report_all_alignments, report_secondary_alignments, min_fragment_length, max_fragment_length, mate_orientations, 
+    no_mixed, no_discordant, index_offrate, reorder, rng_seed, non_deterministic) {
+        
+        def hisat2Args = []
+
+        // Add the parameters for paired-end mode
+        if (paired_end) {
+            if (min_fragment_length) hisat2Args << "--minins ${min_fragment_length}"
+            if (max_fragment_length) hisat2Args << "--maxins ${max_fragment_length}"
+            if (mate_orientations) hisat2Args << "--${mate_orientations}"
+            if (no_mixed) hisat2Args << "--no-mixed"
+            if (no_discordant) hisat2Args << "--no-discordant"          
+        }
+
+         // Add all other parameters
+         // Input options
+        if (skip) hisat2Args << "--skip ${skip}"
+        if (upto) hisat2Args << "--upto ${upto}"
+        if (trim5) hisat2Args << "--trim5 ${trim5}"
+        if (trim3) hisat2Args << "--trim3 ${trim3}"
+        if (phred_quality) hisat2Args << "--${phred_quality}"
+        if (solexa_quals) hisat2Args << "--solexa-quals"
+        if (int_quals) hisat2Args << "--int-quals"
+        // Alignment options
+        if (n_ceil_func) hisat2Args << "--n-ceil ${n_ceil_func}"
+        if (ignore_quals) hisat2Args << "--ignore-quals"
+        if (norc) hisat2Args << "--norc"
+        if (nofw) hisat2Args << "--nofw"
+        // Scoring options
+        if (mismatch_penalties) hisat2Args << "--mp ${mismatch_penalties}"
+        if (soft_clipping) hisat2Args << "--sp ${soft_clipping}"
+        if (no_softclip) hisat2Args << "--no-softclip"
+        if (n_penalty) hisat2Args << "--np ${n_penalty}"
+        if (read_gap_penalty) hisat2Args << "--rdg ${read_gap_penalty}"
+        if (reference_gap_penalty) hisat2Args << "--rfg ${reference_gap_penalty}"
+        if (score_min_func) hisat2Args << "--score-min ${score_min_func}"
+        // Spliced alignment options
+        if (pen_cansplice) hisat2Args << "--pen-cansplice ${pen_cansplice}"
+        if (pen_noncansplice) hisat2Args << "--pen-noncansplice ${pen_noncansplice}"
+        if (pen_canintronlen) hisat2Args << "--pen-canintronlen ${pen_canintronlen}"
+        if (pen_noncanintronlen) hisat2Args << "--pen-noncanintronlen ${pen_noncanintronlen}"
+        if (min_intronlen) hisat2Args << "--min-intronlen ${min_intronlen}"
+        if (max_intronlen) hisat2Args << "--max-intronlen ${max_intronlen}"
+        if (no_temp_splicesite) hisat2Args << "--no-temp-splicesite"
+        if (no_spliced_alignment) hisat2Args << "--no-spliced-alignment"
+        if (rna_strandness) hisat2Args << "--rna-strandness ${rna_strandness}"
+        if (transcriptome_mapping_only) hisat2Args << "--transcriptome-mapping-only"
+        if (downstream_transcriptome_assembly) hisat2Args << "--downstream-transcriptome-assembly"
+        if (dta_cufflinks) hisat2Args << "--dta-cufflinks"
+        if (avoid_pseudogene) hisat2Args << "--avoid-pseudogene"
+        if (no_templatelen_adjustment) hisat2Args << "--no-templatelen-adjustment"
+        // Reporting options
+        if (num_alignments_per_read) hisat2Args << "-k ${num_alignments_per_read}"
+        if (max_seeds) hisat2Args << "--max-seeds ${max_seeds}"
+        if (report_all_alignments) hisat2Args << "--all"
+        if (report_secondary_alignments) hisat2Args << "--secondary"
+        // Performance options
+        if (index_offrate) hisat2Args << "--offrate ${index_offrate}"
+        if (reorder) hisat2Args << "--reorder"
+        // Other options
+        if (rng_seed) hisat2Args << "--seed ${rng_seed}"
+        if (non_deterministic) hisat2Args << "--non-deterministic"
+
+        hisat2Args = hisat2Args.join(" ")
+
+        return hisat2Args
+    }
+
     /* Making arguments for the counting reads tools */
     static String makeHtseqCountArgs(max_reads_in_buffer, stranded, minaqual, feature_type, id_attribute, additional_attributes, mode, nonunique_mode, secondary_alignments, supplementary_alignments, 
     add_chromosome_info) {
@@ -206,6 +306,62 @@ class OrganizeArguments {
         return htseqCountArgs
 
     }
+
+    static String makeFeatureCountsArgs(paired_end, requireBothEndsMapped, countChimericFragments, checkFragLength, countReadPairs, autosort, minFragLength, maxfragLength, useMetaFeatures, 
+    isGTFAnnotationFile, attrType_GTF, juncCounts, isLongRead, countMultiMappingReads, allowMultiOverlap, minMQS, isStrandSpecific, featureType_GTF, byReadGroup, attrType_GTF_extra, 
+    fraction, fracOverlap, fracOverlapFeature, ignoreDup, largestOverlap, minOverlap, nonOverlap, nonOverlapFeature, nonSplitOnly, primaryOnly, read2pos, readExtension3, readExtension5, 
+    readShiftSize, readShiftType, splitOnly) {
+
+        def featureCountsArgs = []
+
+        // Add the parameters for paired-end mode
+        if (paired_end) {
+            if (requireBothEndsMapped) featureCountsArgs << "-B"
+            if (countChimericFragments) featureCountsArgs << "-C"
+            if (checkFragLength) featureCountsArgs << "-P"
+            if (countReadPairs) featureCountsArgs << "--countReadPairs"
+            if (autosort) featureCountsArgs << "--donotsort"
+        }
+
+        // Add the other parameters
+        if (minFragLength) featureCountsArgs << "-d ${minFragLength}"
+        if (maxfragLength) featureCountsArgs << "-D ${maxfragLength}"
+        if (useMetaFeatures) featureCountsArgs << "-f"
+        if (isGTFAnnotationFile) featureCountsArgs << "-F"
+        if (attrType_GTF) featureCountsArgs << "-g ${attrType_GTF}"
+        if (juncCounts) featureCountsArgs << "-J"
+        if (isLongRead) featureCountsArgs << "-L"
+        if (countMultiMappingReads) featureCountsArgs << "-M"
+        if (allowMultiOverlap) featureCountsArgs << "-O"
+        if (minMQS) featureCountsArgs << "-Q ${minMQS}"
+        if (isStrandSpecific) featureCountsArgs << "-s ${isStrandSpecific}"
+        if (featureType_GTF) featureCountsArgs << "-t ${featureType_GTF}"
+        if (byReadGroup) featureCountsArgs << "--byReadGroup"
+        if (attrType_GTF_extra) featureCountsArgs << "--extraAttributes ${attrType_GTF_extra}"
+        if (fraction) featureCountsArgs << "--fraction"
+        if (fracOverlap) featureCountsArgs << "--fracOverlap ${fracOverlap}"
+        if (fracOverlapFeature) featureCountsArgs << "--fracOverlapFeature ${fracOverlapFeature}"
+        if (ignoreDup) featureCountsArgs << "--ignoreDup"
+        if (largestOverlap) featureCountsArgs << "--largestOverlap"
+        if (minOverlap) featureCountsArgs << "--minOverlap ${minOverlap}"
+        if (nonOverlap) featureCountsArgs << "--nonOverlap ${nonOverlap}"
+        if (nonOverlapFeature) featureCountsArgs << "--nonOverlapFeature ${nonOverlapFeature}"
+        if (nonSplitOnly) featureCountsArgs << "--nonSplitOnly"
+        if (primaryOnly) featureCountsArgs << "--primary"
+        if (read2pos) featureCountsArgs << "--read2pos ${read2pos}"
+        if (readExtension3) featureCountsArgs << "--readExtension3 ${readExtension3}"
+        if (readExtension5) featureCountsArgs << "--readExtension5 ${readExtension5}"
+        if (readShiftSize) featureCountsArgs << "--readShiftSize ${readShiftSize}"
+        if (readShiftType) featureCountsArgs << "--readShiftType ${readShiftType}"
+        if (splitOnly) featureCountsArgs << "--splitOnly"
+
+        featureCountsArgs = featureCountsArgs.join(" ")
+
+        return featureCountsArgs
+
+    }
+
+    
 
 
 

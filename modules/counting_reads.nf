@@ -36,14 +36,21 @@ process FEATURE_COUNTS {
         tuple val(sample_id), val(sample_group), path(sorted_bam_file)
         val outputDir
         path gtf_file
+        val featureCountsArgs
 
 	output:
 		path "${sample_id}_feature.txt", emit: feature_file
 	
     script:
-    """
-    featureCounts -a $gtf_file -o ${sample_id}_feature.txt -t exon -g gene_id -s 0 -p -T $task.cpus $sorted_bam_file
-    """
+    if (params.paired_end) {
+        """
+        featureCounts -a $gtf_file -o ${sample_id}_feature.txt -p -T $task.cpus $featureCountsArgs $sorted_bam_file
+        """
+    } else {
+        """
+        featureCounts -a $gtf_file -o ${sample_id}_feature.txt -T $task.cpus $featureCountsArgs $sorted_bam_file
+        """
+    }
 }
 
 /* Outlining the SALMON_ALIGNMENT_MODE reads quantification process (requires previous alignment to transcripts rather than genome) */

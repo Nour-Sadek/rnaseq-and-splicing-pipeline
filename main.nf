@@ -120,11 +120,22 @@ workflow {
 
     } else if (params.aligner && params.aligner == 'hisat2') {
 
+        // Define the basename of the reference index
+        def hisat2_index_prefix = params.hisat2_index_prefix ?: 'genome'
+
         // Create the reference genome index
-        HISAT2_REFERENCE_INDEX(outputDir, params.hisat2_index_prefix, file(params.genomeFastaFile))
+        hisat2ReferenceIndexArgs = OrganizeArguments.makeHisat2ReferenceIndexArgs(params.large_index, params.noauto, params.bmax, params.bmaxdivn, params.dcv, params.nodc, params.noref, params.justref, params.offrate, 
+            params.ftabchars, params.localoffrate, params.localftabchars, params.seed, params.cutoff)
+        HISAT2_REFERENCE_INDEX(outputDir, hisat2_index_prefix, file(params.genomeFastaFile), hisat2ReferenceIndexArgs)
 
         // Run the HISAT2 alignment process
-        HISAT2(trimming_output_channel, outputDir, params.hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files)
+        hisat2Args = OrganizeArguments.makeHisat2Args(params.paired_end, params.skip, params.upto, params.trim5, params.trim3, params.phred_quality, params.solexa_quals, params.int_quals, params.n_ceil_func, 
+            params.ignore_quals, params.norc, params.nofw, params.mismatch_penalties, params.soft_clipping, params.no_softclip, params.n_penalty, params.read_gap_penalty, params.reference_gap_penalty, 
+            params.score_min_func, params.pen_cansplice, params.pen_noncansplice, params.pen_canintronlen, params.pen_noncanintronlen, params.min_intronlen, params.max_intronlen, params.no_temp_splicesite, 
+            params.no_spliced_alignment, params.rna_strandness, params.transcriptome_mapping_only, params.downstream_transcriptome_assembly, params.dta_cufflinks, params.avoid_pseudogene, params.no_templatelen_adjustment, 
+            params.num_alignments_per_read, params.max_seeds, params.report_all_alignments, params.report_secondary_alignments, params.min_fragment_length, params.max_fragment_length, params.mate_orientations, 
+            params.no_mixed, params.no_discordant, params.index_offrate, params.reorder, params.rng_seed, params.non_deterministic)
+        HISAT2(trimming_output_channel, outputDir, hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, hisat2Args)
 
         // Convert the sam_file to bam_file
         SAM_TO_BAM(outputDir, HISAT2.out.alignment_output)
@@ -148,8 +159,13 @@ workflow {
             HTSEQ_COUNT(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), htseqCountArgs)
 
         } else if (params.quantifier && params.quantifier == 'featureCounts') {
+            
             // Run the FEATURE_COUNTS reads quantification process
-            FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile))
+            featureCountsArgs = OrganizeArguments.makeFeatureCountsArgs(params.paired_end, params.requireBothEndsMapped, params.countChimericFragments, params.checkFragLength, params.countReadPairs, params.autosort, params.minFragLength, 
+                params.maxfragLength, params.useMetaFeatures, params.isGTFAnnotationFile, params.attrType_GTF, params.juncCounts, params.isLongRead, params.countMultiMappingReads, params.allowMultiOverlap, params.minMQS, params.isStrandSpecific, 
+                params.featureType_GTF, params.byReadGroup, params.attrType_GTF_extra, params.fraction, params.fracOverlap, params.fracOverlapFeature, params.ignoreDup, params.largestOverlap, params.minOverlap, params.nonOverlap, 
+                params.nonOverlapFeature, params.nonSplitOnly, params.primaryOnly, params.read2pos, params.readExtension3, params.readExtension5, params.readShiftSize, params.readShiftType, params.splitOnly)
+            FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), featureCountsArgs)
         }
 
         /* Perform splicing alignment analysis */
