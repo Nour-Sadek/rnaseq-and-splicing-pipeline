@@ -35,7 +35,7 @@ process MAJIQ_BUILD {
     label 'majiq_build'
     publishDir "${outputDir}/majiq/build", mode: "copy"
 
-    container 'mcfonsecalab/majiq'
+    container 'mcfonsecalab/majiq:2.5.1'
 
 	input:
         path config
@@ -62,7 +62,7 @@ process MAJIQ_PSI {
     tag "${grouped_file_names[0]}"
     publishDir "${outputDir}/majiq/majiq_psi/${grouped_file_names[0]}_psi", mode: "copy"
 
-    container 'mcfonsecalab/majiq'
+    container 'mcfonsecalab/majiq:2.5.1'
 
 	input:
         val grouped_file_names  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted]
@@ -90,7 +90,7 @@ process MAJIQ_DELTA_PSI {
     tag "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}"
     publishDir "${outputDir}/majiq/majiq_delta_psi/${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", mode: "copy"
 
-    container 'mcfonsecalab/majiq'
+    container 'mcfonsecalab/majiq:2.5.1'
 
 	input:
         val grouped_files_pairs  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]

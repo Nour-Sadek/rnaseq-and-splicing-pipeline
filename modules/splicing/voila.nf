@@ -7,7 +7,7 @@ process VOILA_PSI {
     tag "${sample_group}"
     publishDir "${outputDir}/voila/voila_psi/${sample_group}_psi", mode: "copy"
 
-    container 'mcfonsecalab/majiq'
+    container 'mcfonsecalab/majiq:2.5.1'
 
 	input:
         val sample_group
@@ -32,7 +32,7 @@ process VOILA_DELTA_PSI {
     tag "${paired_samples_name}"
     publishDir "${outputDir}/voila/voila_delta_psi/${paired_samples_name}", mode: "copy"
 
-    container 'mcfonsecalab/majiq'
+    container 'mcfonsecalab/majiq:2.5.1'
 
 	input:
         val paired_samples_name
