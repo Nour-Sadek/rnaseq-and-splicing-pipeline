@@ -7,10 +7,10 @@ annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
 annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: 'none'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'kallisto'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+aligner: 'hisat2'  # available options are: 'star', 'hisat2', 'none'
+quantifier: null  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+splicingAnalyzer: 'majiq'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
 paired_end: false
@@ -20,7 +20,7 @@ run_fastqc_before_trimming: false
 run_fastqc_after_trimming: false
 
 # Bowtie2 filtering parameters
-filter_contaminants: true
+filter_contaminants: false
 contaminants: ['./genome_files/Caenorhabditis_elegans.WBcel235.ncrna.fa.gz']  # provide as a list of paths for the contaminant files
 
 #--------------------------- Trimmomatic parameters ---------------------------#
@@ -456,6 +456,102 @@ sd_fragment_length: 70  # estimated for paired-end reads, must be used for singl
 # General Splicing parameters
 individualSplicingAnalysis: true
 differentialSplicingAnalysis: true
+
+
+#--------------------------- MAJIQ build parameters ---------------------------#
+min_experiments: null
+# Junction filters options
+junction_minreads: null
+junction_minpos: null
+# Denovo junctions options
+min_denovo_reads: null
+disable_denovo: false
+# Intron options
+intron_read_pos_bins: null
+min_intronic_cov: null
+disable_ir: false
+disable_denovo_ir: false
+annotated_ir_always: false
+# Simplifier options
+enable_simplifier: false
+simplify_psi: null
+simplify_min_experiments: null
+simplify_annotated: null
+simplify_denovo: null
+simplify_ir: null
+# Bootstrap coverage sampling options
+markstacks: null
+num_bootstrap_read_coverage: null
+# Advanced options
+permissive: false
+dump_constitutive: false
+dump_coverage: false
+
+
+#--------------------------- MAJIQ psi parameters ---------------------------#
+minreads_psi: null
+minpos_psi: null
+min_experiments_psi: null
+
+
+#--------------------------- MAJIQ deltapsi parameters ---------------------------#
+minreads_deltapsi: null
+minpos_deltapsi: null
+min_experiments_deltapsi: null
+psi_binsize: null
+default_prior: false
+prior_minreads: null
+prior_minnonzero: null
+prior_iter: null
+
+
+#--------------------------- Voila modulize parameters for majiq psi files ---------------------------#
+psi_ignore_inconsistent_group_errors: false
+psi_only_binary: false
+psi_untrimmed_exons: false
+psi_show_all: false
+# Limit the number of data processed to a specific target subset
+psi_gene_ids_to_process_only: null  # provide as a string of gene_ids separated by a space, e.g. "gene_1 gene_2 gene_3"
+psi_debug_num_genes: null
+# Alternative use cases / run modes for specialized applications of modulizer
+psi_output_mpe: false
+psi_putative_multi_gene_regions: false
+# Include or exclude junctions / modules based on structure or data availability
+psi_keep_constitutive: false
+psi_keep_no_lsvs_modules: false
+psi_keep_no_lsvs_junctions: false
+# Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
+decomplexify_psi_threshold: null
+psi_decomplexify_reads_threshold: null
+
+
+#--------------------------- Voila modulize parameters for majiq deltapsi files ---------------------------#
+deltapsi_ignore_inconsistent_group_errors: false
+deltapsi_only_binary: false
+deltapsi_untrimmed_exons: false
+deltapsi_show_all: false
+heatmap_selection: null  # Default is "shortest_junction", other option is "abs_dpsi"
+# Limit the number of data processed to a specific target subset
+deltapsi_gene_ids_to_process_only: null  # provide as a string of gene_ids separated by a space, e.g. "gene_1 gene_2 gene_3"
+deltapsi_debug_num_genes: null
+# Alternative use cases / run modes for specialized applications of modulizer
+deltapsi_output_mpe: false
+deltapsi_putative_multi_gene_regions: false
+# Include or exclude junctions / modules based on structure or data availability
+deltapsi_keep_constitutive: false
+deltapsi_keep_no_lsvs_modules: false
+deltapsi_keep_no_lsvs_junctions: false
+# Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
+decomplexify_deltapsi_threshold: null
+deltapsi_decomplexify_reads_threshold: null
+# Adjust the parameters used for determining whether a junction / module is changing or non-chnaging based on dpsi or heterogen file inputs
+changing_between_group_dpsi: null
+non_changing_between_group_dpsi: null
+changing_between_group_dpsi_secondary: null
+# Adjust the parameters used for determining whether a junction / module is changing or non-changing based on dpsi file inputs
+probability_changing_threshold: null
+probability_non_changing_threshold: null
+
 
 # RSEM parameters
 rsem_index_prefix: 'rsem_reference'

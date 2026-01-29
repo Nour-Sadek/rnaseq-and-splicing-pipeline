@@ -14,13 +14,14 @@ process VOILA_PSI {
         path majiq_psi_files_parent
         path splicegraph_file
         val outputDir
+        val voilaModulizePsiArgs
 
 	output:
         path "*"
     
     script:
     """
-    voila modulize -d . $splicegraph_file $majiq_psi_files_parent -j $task.cpus
+    voila modulize -d . $splicegraph_file $majiq_psi_files_parent -j $task.cpus $voilaModulizePsiArgs
     """
 }
 
@@ -38,12 +39,13 @@ process VOILA_DELTA_PSI {
         path majiq_delta_psi_files_parent
         path splicegraph_file
         val outputDir
+        val voilaModulizeDeltaPsiArgs
 
 	output:
         path "*"
     
     script:
     """
-    voila modulize -d . $splicegraph_file $majiq_delta_psi_files_parent -j $task.cpus
+    voila modulize -d . $splicegraph_file $majiq_delta_psi_files_parent -j $task.cpus $voilaModulizeDeltaPsiArgs
     """
 }

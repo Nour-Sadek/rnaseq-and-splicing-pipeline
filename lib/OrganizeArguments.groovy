@@ -592,9 +592,155 @@ class OrganizeArguments {
         kallistoQuantArgs = kallistoQuantArgs.join(" ")
 
         return kallistoQuantArgs
-
     }
- 
+
+    /* Making arguments for the splicing tools */
+    static String makeMajiqBuildArgs(min_experiments, junction_minreads, junction_minpos, min_denovo_reads, disable_denovo, intron_read_pos_bins, min_intronic_cov, disable_ir, disable_denovo_ir, 
+    annotated_ir_always, enable_simplifier, simplify_psi, simplify_min_experiments, simplify_annotated, simplify_denovo, simplify_ir, markstacks, num_bootstrap_read_coverage, permissive, 
+    dump_constitutive, dump_coverage) {
+        
+        def majiqBuildArgs = []
+
+        // Add all the majiq build arguments required into the <majiqBuildArgs> variable
+        if (min_experiments) majiqBuildArgs << "--min-experiments ${min_experiments}"
+        // Junction filters options
+        if (junction_minreads) majiqBuildArgs << "--minreads ${junction_minreads}"
+        if (junction_minpos) majiqBuildArgs << "--minpos ${junction_minpos}"
+        // Denovo junctions options
+        if (min_denovo_reads) majiqBuildArgs << "--min-denovo ${min_denovo_reads}"
+        if (disable_denovo) majiqBuildArgs << "--disable-denovo"
+        // Intron options
+        if (intron_read_pos_bins) majiqBuildArgs << "-irnbins ${intron_read_pos_bins}"
+        if (min_intronic_cov) majiqBuildArgs << "--min-intronic-conv ${min_intronic_cov}"
+        if (disable_ir) majiqBuildArgs << "--disable-ir"
+        if (disable_denovo_ir) majiqBuildArgs << "--disable-denovo-ir"
+        if (annotated_ir_always) majiqBuildArgs << "--annotated-ir-always"
+        // Bootstrap coverage sampling options
+        if (markstacks) majiqBuildArgs << "--markstacks ${markstacks}"
+        if (num_bootstrap_read_coverage) majiqBuildArgs << "--m ${num_bootstrap_read_coverage}"
+        // Advanced options
+        if (permissive) majiqBuildArgs << "--permissive"
+        if (dump_constitutive) majiqBuildArgs << "--dump-constitutive"
+        if (dump_coverage) majiqBuildArgs << "--dump-coverage"
+
+        // Simplifier options
+        if (enable_simplifier) {
+            if (simplify_psi) majiqBuildArgs << "--simplify ${simplify_psi}"
+            else majiqBuildArgs << "--simplify"
+            
+            if (simplify_min_experiments) majiqBuildArgs << "--simplify-min-experiments ${simplify_min_experiments}"
+            if (simplify_annotated) majiqBuildArgs << "--simplify-annotated ${simplify_annotated}"
+            if (simplify_denovo) majiqBuildArgs << "--simplify-denovo ${simplify_denovo}"
+            if (simplify_ir) majiqBuildArgs << "--simplify-ir ${simplify_ir}"
+        }
+
+        majiqBuildArgs = majiqBuildArgs.join(" ")
+
+        return majiqBuildArgs
+    }
+
+    static String makeMajiqPsiArgs(minreads_psi, minpos_psi, min_experiments_psi) {
+
+        def majiqPsiArgs = []
+
+        // Add all the majiq psi arguments required into the <majiqPsiArgs> variable
+        if (minreads_psi) majiqPsiArgs << "--minreads ${minreads_psi}"
+        if (minpos_psi) majiqPsiArgs << "--minpos ${minpos_psi}"
+        if (min_experiments_psi) majiqPsiArgs << "--min-experiments ${min_experiments_psi}"
+
+        majiqPsiArgs = majiqPsiArgs.join(" ")
+
+        return majiqPsiArgs
+    }
+
+    static String makeMajiqDeltaPsiArgs(minreads_deltapsi, minpos_deltapsi, min_experiments_deltapsi, psi_binsize, default_prior, prior_minreads, prior_minnonzero, prior_iter) {
+
+        def majiqDeltaPsiArgs = []
+
+        // Add all the majiq deltapsi arguments required into the <majiqDeltaPsiArgs> variable
+        if (minreads_deltapsi) majiqDeltaPsiArgs << "--minreads ${minreads_deltapsi}"
+        if (minpos_deltapsi) majiqDeltaPsiArgs << "--minpos ${minpos_deltapsi}"
+        if (min_experiments_deltapsi) majiqDeltaPsiArgs << "--min-experiments ${min_experiments_deltapsi}"
+        if (psi_binsize) majiqDeltaPsiArgs << "--binsize ${psi_binsize}"
+        if (default_prior) majiqDeltaPsiArgs << "--default-prior"
+        if (prior_minreads) majiqDeltaPsiArgs << "--prior-minreads ${prior_minreads}"
+        if (prior_minnonzero) majiqDeltaPsiArgs << "--prior-minnonzero ${prior_minnonzero}"
+        if (prior_iter) majiqDeltaPsiArgs << "--prior-iter ${prior_iter}"
+
+        majiqDeltaPsiArgs = majiqDeltaPsiArgs.join(" ")
+
+        return majiqDeltaPsiArgs
+    }
+
+    static String makeVoilaModulizePsiArgs(psi_ignore_inconsistent_group_errors, psi_only_binary, psi_untrimmed_exons, psi_show_all, psi_gene_ids_to_process_only, 
+    psi_debug_num_genes, psi_output_mpe, psi_putative_multi_gene_regions, psi_keep_constitutive, psi_keep_no_lsvs_modules, psi_keep_no_lsvs_junctions, decomplexify_psi_threshold, 
+    psi_decomplexify_reads_threshold) {
+
+        def voilaModulizePsiArgs = []
+
+        // Add all the voila modulize psi arguments required into the <voilaModulizePsiArgs> variable
+        if (psi_ignore_inconsistent_group_errors) voilaModulizePsiArgs << ""
+        if (psi_only_binary) voilaModulizePsiArgs << ""
+        if (psi_untrimmed_exons) voilaModulizePsiArgs << ""
+        if (psi_show_all) voilaModulizePsiArgs << ""
+        // Limit the number of data processed to a specific target subset
+        if (psi_gene_ids_to_process_only) voilaModulizePsiArgs << ""
+        if (psi_debug_num_genes) voilaModulizePsiArgs << ""
+        // Alternative use cases / run modes for specialized applications of modulizer
+        if (psi_output_mpe) voilaModulizePsiArgs << ""
+        if (psi_putative_multi_gene_regions) voilaModulizePsiArgs << ""
+        // Include or exclude junctions / modules based on structure or data availability
+        if (psi_keep_constitutive) voilaModulizePsiArgs << ""
+        if (psi_keep_no_lsvs_modules) voilaModulizePsiArgs << ""
+        if (psi_keep_no_lsvs_junctions) voilaModulizePsiArgs << ""
+        // Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
+        if (decomplexify_psi_threshold) voilaModulizePsiArgs << ""
+        if (psi_decomplexify_reads_threshold) voilaModulizePsiArgs << ""
+
+        voilaModulizePsiArgs = voilaModulizePsiArgs.join(" ")
+
+        return voilaModulizePsiArgs
+    }
+
+    static String makeVoilaModulizeDeltaPsi(deltapsi_ignore_inconsistent_group_errors, deltapsi_only_binary, deltapsi_untrimmed_exons, deltapsi_show_all, heatmap_selection, 
+    deltapsi_gene_ids_to_process_only, deltapsi_debug_num_genes, deltapsi_output_mpe, deltapsi_putative_multi_gene_regions, deltapsi_keep_constitutive, deltapsi_keep_no_lsvs_modules, 
+    deltapsi_keep_no_lsvs_junctions, decomplexify_deltapsi_threshold, deltapsi_decomplexify_reads_threshold, changing_between_group_dpsi, non_changing_between_group_dpsi, 
+    changing_between_group_dpsi_secondary, probability_changing_threshold, probability_non_changing_threshold) {
+
+        def voilaModulizeDeltaPsiArgs = []
+
+        // Add all the voila modulize deltapsi arguments required into the <voilaModulizeDeltaPsiArgs> variable
+        if (deltapsi_ignore_inconsistent_group_errors) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_only_binary) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_untrimmed_exons) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_show_all) voilaModulizeDeltaPsiArgs << ""
+        if (heatmap_selection) voilaModulizeDeltaPsiArgs << ""
+        // Limit the number of data processed to a specific target subset
+        if (deltapsi_gene_ids_to_process_only) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_debug_num_genes) voilaModulizeDeltaPsiArgs << ""
+        // Alternative use cases / run modes for specialized applications of modulizer
+        if (deltapsi_output_mpe) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_putative_multi_gene_regions) voilaModulizeDeltaPsiArgs << ""
+        // Include or exclude junctions / modules based on structure or data availability
+        if (deltapsi_keep_constitutive) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_keep_no_lsvs_modules) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_keep_no_lsvs_junctions) voilaModulizeDeltaPsiArgs << ""
+        // Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
+        if (decomplexify_deltapsi_threshold) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_decomplexify_reads_threshold) voilaModulizeDeltaPsiArgs << ""
+        // Adjust the parameters used for determining whether a junction / module is changing or non-chnaging based on dpsi or heterogen file inputs
+        if (changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << ""
+        if (non_changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << ""
+        if (changing_between_group_dpsi_secondary) voilaModulizeDeltaPsiArgs << ""
+        // Adjust the parameters used for determining whether a junction / module is changing or non-changing based on dpsi file inputs
+        if (probability_changing_threshold) voilaModulizeDeltaPsiArgs << ""
+        if (probability_non_changing_threshold) voilaModulizeDeltaPsiArgs << ""
+
+        voilaModulizeDeltaPsiArgs = voilaModulizeDeltaPsiArgs.join(" ")
+
+        return voilaModulizeDeltaPsiArgs
+    }
+
 
 }
 

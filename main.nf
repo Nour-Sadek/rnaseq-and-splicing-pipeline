@@ -186,7 +186,10 @@ workflow {
             MAJIQ_CONFIG(all_sample_bams, bam_dirs, outputDir)
 
             // Run majiq build
-            MAJIQ_BUILD(MAJIQ_CONFIG.out.config, file(params.annotationsGFF3File), outputDir)
+            majiqBuildArgs = OrganizeArguments.makeMajiqBuildArgs(params.min_experiments, params.junction_minreads, params.junction_minpos, params.min_denovo_reads, params.disable_denovo, params.intron_read_pos_bins, params.min_intronic_cov, 
+                params.disable_ir, params.disable_denovo_ir, params.annotated_ir_always, params.enable_simplifier, params.simplify_psi, params.simplify_min_experiments, params.simplify_annotated, params.simplify_denovo, params.simplify_ir, 
+                params.markstacks, params.num_bootstrap_read_coverage, params.permissive, params.dump_constitutive, params.dump_coverage)
+            MAJIQ_BUILD(MAJIQ_CONFIG.out.config, file(params.annotationsGFF3File), outputDir, majiqBuildArgs)
 
             if (params.individualSplicingAnalysis) {
                 // Create a channel that would return values such as [sample_group, [files names of replicates]]
@@ -195,13 +198,17 @@ workflow {
                     .map { samples, group, reads -> tuple(group, reads.simpleName) }
                 
                 // Run majiq psi
-                MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
+                majiqPsiArgs = OrganizeArguments.makeMajiqPsiArgs(params.minreads_psi, params.minpos_psi, params.min_experiments_psi)
+                MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out.samples_splice_graphs, outputDir, majiqPsiArgs)
 
                 // Get the work folder for the psi files
                 majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_tsv_file.map { it.parent }
 
                 // Run voila modulize psi
-                VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
+                voilaModulizePsiArgs = OrganizeArguments.makeVoilaModulizePsiArgs(params.psi_ignore_inconsistent_group_errors, params.psi_only_binary, params.psi_untrimmed_exons, params.psi_show_all, params.psi_gene_ids_to_process_only, 
+                    params.psi_debug_num_genes, params.psi_output_mpe, params.psi_putative_multi_gene_regions, params.psi_keep_constitutive, params.psi_keep_no_lsvs_modules, params.psi_keep_no_lsvs_junctions, params.decomplexify_psi_threshold, 
+                    params.psi_decomplexify_reads_threshold)
+                VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir, voilaModulizePsiArgs)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -222,13 +229,19 @@ workflow {
                     }
                 
                 // Run differential splicing analysis on each possible pair of samples
-                MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out.samples_splice_graphs, outputDir)
+                majiqDeltaPsiArgs = OrganizeArguments.makeMajiqDeltaPsiArgs(params.minreads_deltapsi, params.minpos_deltapsi, params.min_experiments_deltapsi, params.psi_binsize, params.default_prior, params.prior_minreads, 
+                    params.prior_minnonzero, params.prior_iter)
+                MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out.samples_splice_graphs, outputDir, majiqDeltaPsiArgs)
 
                 // Get the work folder for the delta psi files
                 majiq_delta_psi_parent_folder = MAJIQ_DELTA_PSI.out.majiq_tsv_file.map { it.parent }
 
                 // Run voila modulize delta psi
-                VOILA_DELTA_PSI(MAJIQ_DELTA_PSI.out.paired_samples_name, majiq_delta_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir)
+                voilaModulizeDeltaPsiArgs = OrganizeArguments.makeVoilaModulizeDeltaPsi(params.deltapsi_ignore_inconsistent_group_errors, params.deltapsi_only_binary, params.deltapsi_untrimmed_exons, params.deltapsi_show_all, 
+                    params.heatmap_selection, params.deltapsi_gene_ids_to_process_only, params.deltapsi_debug_num_genes, params.deltapsi_output_mpe, params.deltapsi_putative_multi_gene_regions, params.deltapsi_keep_constitutive, 
+                    params.deltapsi_keep_no_lsvs_modules, params.deltapsi_keep_no_lsvs_junctions, params.decomplexify_deltapsi_threshold, params.deltapsi_decomplexify_reads_threshold, params.changing_between_group_dpsi, 
+                    params.non_changing_between_group_dpsi, params.changing_between_group_dpsi_secondary, params.probability_changing_threshold, params.probability_non_changing_threshold)
+                VOILA_DELTA_PSI(MAJIQ_DELTA_PSI.out.paired_samples_name, majiq_delta_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir, voilaModulizeDeltaPsiArgs)
             }
 
         } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'rMats') {

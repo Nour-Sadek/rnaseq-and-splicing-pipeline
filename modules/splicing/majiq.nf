@@ -41,6 +41,7 @@ process MAJIQ_BUILD {
         path config
         path gff_file
         val outputDir
+        val majiqBuildArgs
 
 	output:
         path "*.majiq", emit: samples_splice_graphs
@@ -50,7 +51,7 @@ process MAJIQ_BUILD {
     
     script:
     """
-    majiq build -c $config $gff_file -o .
+    majiq build -c $config $gff_file -o . $majiqBuildArgs
     """
 }
 
@@ -67,6 +68,7 @@ process MAJIQ_PSI {
         val grouped_file_names  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted]
         path build  // this folder contains the majiq files for the samples
         val outputDir
+        val majiqPsiArgs
 
 	output:
         val "${grouped_file_names[0]}", emit: sample_group
@@ -77,7 +79,7 @@ process MAJIQ_PSI {
     script:
     majiq_file_names = grouped_file_names[1].collect { it + '.majiq' }.join(' ')
     """
-    majiq psi $majiq_file_names -o . -n ${grouped_file_names[0]} -j $task.cpus
+    majiq psi $majiq_file_names -o . -n ${grouped_file_names[0]} -j $task.cpus $majiqPsiArgs
     """
 }
 
@@ -94,6 +96,7 @@ process MAJIQ_DELTA_PSI {
         val grouped_files_pairs  // e.g.: "AIY", [AIY_1_sorted, AIY_2_sorted], "ASK", [ASK_1_sorted, ASK_2_sorted]
         path samples_splice_graphs  // this folder contains the majiq files for the samples
         val outputDir
+        val majiqDeltaPsiArgs
 
 	output:
         val "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", emit: paired_samples_name
@@ -105,6 +108,6 @@ process MAJIQ_DELTA_PSI {
     majiq_file_names_1 = grouped_files_pairs[1].collect { it + '.majiq' }.join(' ')
     majiq_file_names_2 = grouped_files_pairs[3].collect { it + '.majiq' }.join(' ')
     """
-    majiq deltapsi -grp1 $majiq_file_names_1 -grp2 $majiq_file_names_2 -o . -n ${grouped_files_pairs[0]} ${grouped_files_pairs[2]} -j $task.cpus
+    majiq deltapsi -grp1 $majiq_file_names_1 -grp2 $majiq_file_names_2 -o . -n ${grouped_files_pairs[0]} ${grouped_files_pairs[2]} -j $task.cpus $majiqDeltaPsiArgs
     """
 }
