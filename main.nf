@@ -254,7 +254,9 @@ workflow {
                     .map { samples, group, reads -> [group, reads] }
                 
                 // Run splicing analysis on each sample group
-                rMATS_INDIVIDUAL(sample_bams, params.read_length, file(params.annotationsGTFFile), outputDir)
+                rmatsIndividualArgs = OrganizeArguments.makeRmatsIndividualArgs(params.paired_end, params.libType, params.readLength, params.ind_variable_read_length, params.ind_anchorLength, params.ind_tophatAnchor, params.ind_cstat, 
+                    params.ind_task, params.ind_statoff, params.ind_paired_stats, params.ind_novelSS, params.ind_mil, params.ind_mel)
+                rMATS_INDIVIDUAL(sample_bams, file(params.annotationsGTFFile), outputDir, rmatsIndividualArgs)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -275,12 +277,15 @@ workflow {
                     }
             
                 // Run differential splicing analysis on each possible pair of samples
-                rMATS_DIFFERENTIAL(grouped_bams_pairs, params.read_length, file(params.annotationsGTFFile), outputDir)
+                rmatsDifferentialArgs = OrganizeArguments.makeRmatsDifferentialArgs(params.paired_end, params.libType, params.readLength, params.diff_variable_read_length, params.diff_anchorLength, params.diff_tophatAnchor, params.diff_cstat, 
+                    params.diff_task, params.diff_statoff, params.diff_paired_stats, params.diff_novelSS, params.diff_mil, params.diff_mel)
+                rMATS_DIFFERENTIAL(grouped_bams_pairs, file(params.annotationsGTFFile), outputDir, rmatsDifferentialArgs)
             }
 
         }
 
     } else {  // use quantifiers that don't need prior alignment
+        
         if (params.quantifier && params.quantifier == 'salmon-quasi-mapping-mode') {
             
             // Create the reference genome index
@@ -324,6 +329,7 @@ workflow {
         }
 
         if (params.splicingAnalyzer && params.splicingAnalyzer == 'suppa2') {
+            
             // Generate the event annotations (ioe) file
             SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
 
@@ -336,6 +342,7 @@ workflow {
             }
 
             if (params.differentialSplicingAnalysis) {
+                
                 // Create a channel that would return values such as [sample_group, [files names of replicates]]
                 groups_file_names_quant = quantifier_output_channel
                     .groupTuple(by: 1)  
@@ -363,7 +370,9 @@ workflow {
                 SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
                 
             }
+
         } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'whippet') {
+            
             // Build the index for Whippet
             WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir)
 
@@ -372,6 +381,7 @@ workflow {
             }
 
             if (params.differentialSplicingAnalysis) {
+                
                 // Get the pairs of psi files between each sample group
                 // The output of the channel would be [group_1, [group_1's replicates psi files], group_2 [group_2's replicates psu files]]
                 grouped_files_pairs = WHIPPET_QUANT.out.sample_psi_file
@@ -393,7 +403,9 @@ workflow {
                     .map { sample_id, group, psi_file -> psi_file }.collect()
                 WHIPPET_DELTA(grouped_files_pairs, all_samples_psi_files, outputDir)
             }
+
         }
+
     }
 
 }

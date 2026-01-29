@@ -679,23 +679,23 @@ class OrganizeArguments {
         def voilaModulizePsiArgs = []
 
         // Add all the voila modulize psi arguments required into the <voilaModulizePsiArgs> variable
-        if (psi_ignore_inconsistent_group_errors) voilaModulizePsiArgs << ""
-        if (psi_only_binary) voilaModulizePsiArgs << ""
-        if (psi_untrimmed_exons) voilaModulizePsiArgs << ""
-        if (psi_show_all) voilaModulizePsiArgs << ""
+        if (psi_ignore_inconsistent_group_errors) voilaModulizePsiArgs << "--ignore-inconsistent-group-errors"
+        if (psi_only_binary) voilaModulizePsiArgs << "--only-binary"
+        if (psi_untrimmed_exons) voilaModulizePsiArgs << "--untrimmed-exons"
+        if (psi_show_all) voilaModulizePsiArgs << "--show-all"
         // Limit the number of data processed to a specific target subset
-        if (psi_gene_ids_to_process_only) voilaModulizePsiArgs << ""
-        if (psi_debug_num_genes) voilaModulizePsiArgs << ""
+        if (psi_gene_ids_to_process_only) voilaModulizePsiArgs << "--gene-ids ${psi_gene_ids_to_process_only}"
+        if (psi_debug_num_genes) voilaModulizePsiArgs << "--debug-num-genes ${psi_debug_num_genes}"
         // Alternative use cases / run modes for specialized applications of modulizer
-        if (psi_output_mpe) voilaModulizePsiArgs << ""
-        if (psi_putative_multi_gene_regions) voilaModulizePsiArgs << ""
+        if (psi_output_mpe) voilaModulizePsiArgs << "--output-mpe ${psi_output_mpe}"
+        if (psi_putative_multi_gene_regions) voilaModulizePsiArgs << "--putative-multi-gene-regions ${psi_putative_multi_gene_regions}"
         // Include or exclude junctions / modules based on structure or data availability
-        if (psi_keep_constitutive) voilaModulizePsiArgs << ""
-        if (psi_keep_no_lsvs_modules) voilaModulizePsiArgs << ""
-        if (psi_keep_no_lsvs_junctions) voilaModulizePsiArgs << ""
+        if (psi_keep_constitutive) voilaModulizePsiArgs << "--keep-constitutive"
+        if (psi_keep_no_lsvs_modules) voilaModulizePsiArgs << "--keep-no-lsvs-modules ${psi_keep_no_lsvs_modules}"
+        if (psi_keep_no_lsvs_junctions) voilaModulizePsiArgs << "--keep-no-lsvs-junctions ${psi_keep_no_lsvs_junctions}"
         // Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
-        if (decomplexify_psi_threshold) voilaModulizePsiArgs << ""
-        if (psi_decomplexify_reads_threshold) voilaModulizePsiArgs << ""
+        if (decomplexify_psi_threshold) voilaModulizePsiArgs << "--decomplexify-psi-threshold ${decomplexify_psi_threshold}"
+        if (psi_decomplexify_reads_threshold) voilaModulizePsiArgs << "--decomplexify-reads-threshold ${psi_decomplexify_reads_threshold}"
 
         voilaModulizePsiArgs = voilaModulizePsiArgs.join(" ")
 
@@ -710,35 +710,89 @@ class OrganizeArguments {
         def voilaModulizeDeltaPsiArgs = []
 
         // Add all the voila modulize deltapsi arguments required into the <voilaModulizeDeltaPsiArgs> variable
-        if (deltapsi_ignore_inconsistent_group_errors) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_only_binary) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_untrimmed_exons) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_show_all) voilaModulizeDeltaPsiArgs << ""
-        if (heatmap_selection) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_ignore_inconsistent_group_errors) voilaModulizeDeltaPsiArgs << "--ignore-inconsistent-group-errors"
+        if (deltapsi_only_binary) voilaModulizeDeltaPsiArgs << "--only-binary"
+        if (deltapsi_untrimmed_exons) voilaModulizeDeltaPsiArgs << "--untrimmed-exons"
+        if (deltapsi_show_all) voilaModulizeDeltaPsiArgs << "--show-all"
+        if (heatmap_selection) voilaModulizeDeltaPsiArgs << "--heatmap-selection ${heatmap_selection}"
         // Limit the number of data processed to a specific target subset
-        if (deltapsi_gene_ids_to_process_only) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_debug_num_genes) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_gene_ids_to_process_only) voilaModulizeDeltaPsiArgs << "--gene-ids ${deltapsi_gene_ids_to_process_only}"
+        if (deltapsi_debug_num_genes) voilaModulizeDeltaPsiArgs << "--debug-num-genes ${deltapsi_debug_num_genes}"
         // Alternative use cases / run modes for specialized applications of modulizer
-        if (deltapsi_output_mpe) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_putative_multi_gene_regions) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_output_mpe) voilaModulizeDeltaPsiArgs << "--output-mpe"
+        if (deltapsi_putative_multi_gene_regions) voilaModulizeDeltaPsiArgs << "--putative-multi-gene-regions"
         // Include or exclude junctions / modules based on structure or data availability
-        if (deltapsi_keep_constitutive) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_keep_no_lsvs_modules) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_keep_no_lsvs_junctions) voilaModulizeDeltaPsiArgs << ""
+        if (deltapsi_keep_constitutive) voilaModulizeDeltaPsiArgs << "--keep-constitutive"
+        if (deltapsi_keep_no_lsvs_modules) voilaModulizeDeltaPsiArgs << "--keep-no-lsvs-modules"
+        if (deltapsi_keep_no_lsvs_junctions) voilaModulizeDeltaPsiArgs << "--keep-no-lsvs-junctions"
         // Options for 'decomplexifier': removing junctions based on simple criteria prior to creating modules
-        if (decomplexify_deltapsi_threshold) voilaModulizeDeltaPsiArgs << ""
-        if (deltapsi_decomplexify_reads_threshold) voilaModulizeDeltaPsiArgs << ""
+        if (decomplexify_deltapsi_threshold) voilaModulizeDeltaPsiArgs << "--decomplexify-deltapsi-threshold ${decomplexify_deltapsi_threshold}"
+        if (deltapsi_decomplexify_reads_threshold) voilaModulizeDeltaPsiArgs << "--decomplexify-reads-threshold ${deltapsi_decomplexify_reads_threshold}"
         // Adjust the parameters used for determining whether a junction / module is changing or non-chnaging based on dpsi or heterogen file inputs
-        if (changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << ""
-        if (non_changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << ""
-        if (changing_between_group_dpsi_secondary) voilaModulizeDeltaPsiArgs << ""
+        if (changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << "--changing-between-group-dpsi ${changing_between_group_dpsi}"
+        if (non_changing_between_group_dpsi) voilaModulizeDeltaPsiArgs << "--non-changing-between-group-dpsi ${non_changing_between_group_dpsi}"
+        if (changing_between_group_dpsi_secondary) voilaModulizeDeltaPsiArgs << "--changing-between-group-dpsi-secondary ${changing_between_group_dpsi_secondary}"
         // Adjust the parameters used for determining whether a junction / module is changing or non-changing based on dpsi file inputs
-        if (probability_changing_threshold) voilaModulizeDeltaPsiArgs << ""
-        if (probability_non_changing_threshold) voilaModulizeDeltaPsiArgs << ""
+        if (probability_changing_threshold) voilaModulizeDeltaPsiArgs << "--probability-changing-threshold ${probability_changing_threshold}"
+        if (probability_non_changing_threshold) voilaModulizeDeltaPsiArgs << "--probability-non-changing-threshold ${probability_non_changing_threshold}"
 
         voilaModulizeDeltaPsiArgs = voilaModulizeDeltaPsiArgs.join(" ")
 
         return voilaModulizeDeltaPsiArgs
+    }
+
+    static String makeRmatsIndividualArgs(paired_end, libType, readLength, ind_variable_read_length, ind_anchorLength, ind_tophatAnchor, ind_cstat, ind_task, ind_statoff, ind_paired_stats, ind_novelSS, ind_mil, ind_mel) {
+
+        def rmatsIndividualArgs = []
+
+        // Specify type of read used in the analysis
+        if (paired_end) rmatsIndividualArgs << "-t paired"
+        else rmatsIndividualArgs << "-t single"
+
+        // Add all the other parameters
+        if (libType) rmatsIndividualArgs << "--libType ${libType}"
+        if (readLength) rmatsIndividualArgs << "--readLength ${readLength}"
+        if (ind_variable_read_length) rmatsIndividualArgs << "--variable-read-length"
+        if (ind_anchorLength) rmatsIndividualArgs << "--anchorLength ${ind_anchorLength}"
+        if (ind_tophatAnchor) rmatsIndividualArgs << "--tophatAnchor ${ind_tophatAnchor}"
+        if (ind_cstat) rmatsIndividualArgs << "--cstat ${ind_cstat}"
+        if (ind_task) rmatsIndividualArgs << "--task ${ind_task}"
+        if (ind_statoff) rmatsIndividualArgs << "--statoff"
+        if (ind_paired_stats) rmatsIndividualArgs << "--paired-stats"
+        if (ind_novelSS) rmatsIndividualArgs << "--novelSS"
+        if (ind_mil) rmatsIndividualArgs << "--mil ${ind_mil}"
+        if (ind_mel) rmatsIndividualArgs << "--mel ${ind_mel}"
+
+        rmatsIndividualArgs = rmatsIndividualArgs.join(" ")
+
+        return rmatsIndividualArgs
+    }
+
+    static String makeRmatsDifferentialArgs(paired_end, libType, readLength, diff_variable_read_length, diff_anchorLength, diff_tophatAnchor, diff_cstat, diff_task, diff_statoff, diff_paired_stats, diff_novelSS, diff_mil, diff_mel) {
+
+        def rmatsDifferentialArgs = []
+
+        // Specify type of read used in the analysis
+        if (paired_end) rmatsDifferentialArgs << "-t paired"
+        else rmatsDifferentialArgs << "-t single"
+
+        // Add all the other parameters
+        if (libType) rmatsDifferentialArgs << "--libType ${libType}"
+        if (readLength) rmatsDifferentialArgs << "--readLength ${readLength}"
+        if (diff_variable_read_length) rmatsDifferentialArgs << "--variable-read-length"
+        if (diff_anchorLength) rmatsDifferentialArgs << "--anchorLength ${diff_anchorLength}"
+        if (diff_tophatAnchor) rmatsDifferentialArgs << "--tophatAnchor${diff_tophatAnchor}"
+        if (diff_cstat) rmatsDifferentialArgs << "--cstat ${diff_cstat}"
+        if (diff_task) rmatsDifferentialArgs << "--task ${diff_task}"
+        if (diff_statoff) rmatsDifferentialArgs << "--statoff"
+        if (diff_paired_stats) rmatsDifferentialArgs << "--paired-stats"
+        if (diff_novelSS) rmatsDifferentialArgs << "--novelSS"
+        if (diff_mil) rmatsDifferentialArgs << "--mil ${diff_mil}"
+        if (diff_mel) rmatsDifferentialArgs << "--mel ${diff_mel}"
+
+        rmatsDifferentialArgs = rmatsDifferentialArgs.join(" ")
+
+        return rmatsDifferentialArgs
     }
 
 

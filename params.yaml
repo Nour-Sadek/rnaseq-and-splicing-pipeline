@@ -10,7 +10,7 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
 aligner: 'hisat2'  # available options are: 'star', 'hisat2', 'none'
 quantifier: null  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-splicingAnalyzer: 'majiq'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+splicingAnalyzer: 'rMats'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
 
 # Specify whether reads are paired or single end
 paired_end: false
@@ -553,11 +553,35 @@ probability_changing_threshold: null
 probability_non_changing_threshold: null
 
 
+#--------------------------- rMats parameters ---------------------------#
+libType: null
+readLength: 100  # required parameter
+#--------------------------- rMats individual parameters ---------------------------#
+ind_variable_read_length: true
+ind_anchorLength: null
+ind_tophatAnchor: null
+ind_cstat: null
+ind_task: null
+ind_statoff: false
+ind_paired_stats: false
+ind_novelSS: false
+ind_mil: null
+ind_mel: null
+#--------------------------- rMats differential parameters ---------------------------#
+diff_variable_read_length: false
+diff_anchorLength: null
+diff_tophatAnchor: null
+diff_cstat: null
+diff_task: null
+diff_statoff: false
+diff_paired_stats: false
+diff_novelSS: false
+diff_mil: null
+diff_mel: null
+
+
 # RSEM parameters
 rsem_index_prefix: 'rsem_reference'
 strandedness: 'none'
 fragment_length_mean: -1  # used only for single-end reads, change the value if you know it
 fragment_length_sd: 0  # used only for single-end reads, change the value if you know it
-
-# rMats parameters
-read_length: 100
