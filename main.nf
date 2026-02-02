@@ -331,14 +331,16 @@ workflow {
         if (params.splicingAnalyzer && params.splicingAnalyzer == 'suppa2') {
             
             // Generate the event annotations (ioe) file
-            SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir)
+            suppa2GenerateEventsArgs = OrganizeArguments.makeSuppa2GenerateEventsArgs(params.boundary, params.variability_threshold, params.pool_genes, params.exon_length)
+            SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir, suppa2GenerateEventsArgs)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
                 all_samples = quantifier_output_channel.collect(flat: false)
                 all_sample_ids = all_samples.map { it*.get(0) }
                 all_sample_quants = all_samples.map { it*.get(2) }
 
-                SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, tpm_column, outputDir)
+                suppa2PsiPerEventArgs = OrganizeArguments.makeSuppa2PsiPerEventArgs(params.total_filter, params.save_tpm_events_psi)
+                SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, tpm_column, outputDir, suppa2PsiPerEventArgs)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -354,7 +356,7 @@ workflow {
 
                 // Return a channel were each output is of the format:
                 // [sample_group_1, sample_group_1_psi_file, sample_group_1_tpm_file, sample_group_2, sample_group_2_psi_file, sample_group_2_tpm_file]
-                all_suppa2_files = SUPPA2_SPLIT_FILES.out.individual_sample_files.collect(flat: false)
+                all_suppa2_files = SUPPA2_SPLIT_FILES.out.individual_sample_files.collect(flat: false, sort: true)
                 paired_suppa2 = all_suppa2_files
                     .flatMap { grouped_list ->
                         def pairs = []
@@ -367,17 +369,22 @@ workflow {
                     }
                 
                 // Perform differential splicing analysis
-                SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir)
+                suppa2DiffSPliceArgs = OrganizeArguments.makeSuppa2DiffSPliceArgs(params.method, params.area, params.lower_bound, params.paired_replicates, params.gene_correction, params.alpha, params.save_tpm_events_diff, 
+                    params.use_median, params.tpm_threshold)
+                SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir, suppa2DiffSPliceArgs)
                 
             }
 
         } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'whippet') {
             
             // Build the index for Whippet
-            WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir)
+            whipperIndexArgs = OrganizeArguments.makeWhippetIndexArgs(params.kmer_size_ee_junc, params.suppress_low_tsl)
+            WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir, whipperIndexArgs)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
-                WHIPPET_QUANT(trimming_output_channel, WHIPPET_INDEX.out.whippet_index, outputDir)
+                whippetQuantArgs = OrganizeArguments.makeWhippetQuantArgs(params.paired_end, params.seed_len, params.seed_try, params.seed_tol, params.seed_buf, params.seed_inc, params.pair_range, params.mismatches_aln, 
+                    params.score_min, params.biascorrect, params.strand_specific, params.pair_same_strand, params.qual_string_encoded, params.circ)
+                WHIPPET_QUANT(trimming_output_channel, WHIPPET_INDEX.out.whippet_index, outputDir, whippetQuantArgs)
             }
 
             if (params.differentialSplicingAnalysis) {
@@ -401,7 +408,8 @@ workflow {
                 // Run the delta psi process
                 all_samples_psi_files = WHIPPET_QUANT.out.sample_psi_file 
                     .map { sample_id, group, psi_file -> psi_file }.collect()
-                WHIPPET_DELTA(grouped_files_pairs, all_samples_psi_files, outputDir)
+                whippetDeltaArgs = OrganizeArguments.makeWhippetDeltaArgs(params.min_reads, params.min_samples, params.empirical_size, params.seed_rng)
+                WHIPPET_DELTA(grouped_files_pairs, all_samples_psi_files, outputDir, whippetDeltaArgs)
             }
 
         }

@@ -14,6 +14,7 @@ process WHIPPET_INDEX {
         path genome_fasta_file
         path gtf_file
         val outputDir
+        val whipperIndexArgs
 
 	output:
         path "whippet_index.exons.tab.gz", emit: exons
@@ -21,7 +22,7 @@ process WHIPPET_INDEX {
     
     script:
     """
-    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-index.jl --fasta $genome_fasta_file --gtf $gtf_file --index whippet_index
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-index.jl --fasta $genome_fasta_file --gtf $gtf_file --index whippet_index $whipperIndexArgs
     """
 }
 
@@ -40,6 +41,7 @@ process WHIPPET_QUANT {
         tuple val(sample_id), val(sample_group), path(reads)
         path whippet_index
         val outputDir
+        val whippetQuantArgs
 
 	output:
         tuple val(sample_id), val(sample_group), path("${sample_id}.psi.gz"), emit: sample_psi_file
@@ -56,13 +58,13 @@ process WHIPPET_QUANT {
         # Fix the fatsq files by letting them follow the standard 4 line format
         awk 'NR % 4 == 3 { print "+"; next } { print }' "$read_1" > fixed_R1.fastq
         awk 'NR % 4 == 3 { print "+"; next } { print }' "$read_2" > fixed_R2.fastq
-        /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl fixed_R1.fastq fixed_R2.fastq -x $whippet_index -o $sample_id
+        /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl fixed_R1.fastq fixed_R2.fastq -x $whippet_index -o $sample_id $whippetQuantArgs
         """
     } else {
         """
         # Fix the fatsq files by letting them follow the standard 4 line format
         awk 'NR % 4 == 3 { print "+"; next } { print }' "$read_1" > fixed_R1.fastq
-        /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl fixed_R1.fastq -x $whippet_index -o $sample_id
+        /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-quant.jl fixed_R1.fastq -x $whippet_index -o $sample_id $whippetQuantArgs
         """
     }
 }
@@ -82,6 +84,7 @@ process WHIPPET_DELTA {
         val grouped_files_pairs  // e.g.: "AIY", [AIY_1.psi.gz, AIY_2.psi.gz], "ASK", [ASK_1.psi.gz, ASK_2.psi.gz]
         path psi_files
         val outputDir
+        val whippetDeltaArgs
 
 	output:
         path "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}.diff.gz"
@@ -90,6 +93,6 @@ process WHIPPET_DELTA {
     group_one = grouped_files_pairs[1].join(',')
     group_two = grouped_files_pairs[3].join(',')
     """
-    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-delta.jl -a $group_one -b $group_two -o ${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}
+    /usr/local/julia/bin/julia /Whippet.jl/bin/whippet-delta.jl -a $group_one -b $group_two -o ${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]} $whippetDeltaArgs
     """
 }

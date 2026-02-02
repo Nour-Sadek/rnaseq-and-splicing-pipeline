@@ -795,6 +795,109 @@ class OrganizeArguments {
         return rmatsDifferentialArgs
     }
 
+    static String makeWhippetIndexArgs(kmer_size_ee_junc, suppress_low_tsl) {
+
+        def whipperIndexArgs = []
+
+        // Add all the whippet-index arguments required into the <whipperIndexArgs> variable
+        if (kmer_size_ee_junc) whipperIndexArgs << "--kmer ${kmer_size_ee_junc}"
+        if (suppress_low_tsl) whipperIndexArgs << "--suppress-low-tsl"
+
+        whipperIndexArgs = whipperIndexArgs.join(" ")
+
+        return whipperIndexArgs
+    }
+
+    static String makeWhippetQuantArgs(paired_end, seed_len, seed_try, seed_tol, seed_buf, seed_inc, pair_range, mismatches_aln, score_min, biascorrect, strand_specific, pair_same_strand, qual_string_encoded, circ) {
+        
+        def whippetQuantArgs = []
+
+        // Add the parameters for paired-end mode
+        if (paired_end) {
+            if (pair_range) whippetQuantArgs << "--pair-range ${pair_range}"
+            if (pair_same_strand) whippetQuantArgs << "--pair-same-strand"
+        }
+
+        // Add all the other parameters
+        if (seed_len) whippetQuantArgs << "--seed-len ${seed_len}"
+        if (seed_try) whippetQuantArgs << "--seed-try ${seed_try}"
+        if (seed_tol) whippetQuantArgs << "--seed-tol ${seed_tol}"
+        if (seed_buf) whippetQuantArgs << "--seed-buf ${seed_buf}"
+        if (seed_inc) whippetQuantArgs << "--seed-inc ${seed_inc}"
+        if (mismatches_aln) whippetQuantArgs << "--mismatches ${mismatches_aln}"
+        if (score_min) whippetQuantArgs << "--score-min ${score_min}"
+        if (biascorrect) whippetQuantArgs << "--biascorrect"
+        if (strand_specific) whippetQuantArgs << "--stranded"
+        if (qual_string_encoded) whippetQuantArgs << "--${qual_string_encoded}"
+        if (circ) whippetQuantArgs << "--circ"
+
+        whippetQuantArgs = whippetQuantArgs.join(" ")
+
+        return whippetQuantArgs
+    }
+
+    static String makeWhippetDeltaArgs(min_reads, min_samples, empirical_size, seed_rng) {
+
+        def whippetDeltaArgs = []
+
+        // Add all the whippet-delta arguments required into the <whippetDeltaArgs> variable
+        if (min_reads) whippetDeltaArgs << "--min-reads ${min_reads}"
+        if (min_samples) whippetDeltaArgs << "--min-samples ${min_samples}"
+        if (empirical_size) whippetDeltaArgs << "--empirical-size ${empirical_size}"
+        if (seed_rng) whippetDeltaArgs << "--seed ${seed_rng}"
+
+        whippetDeltaArgs = whippetDeltaArgs.join(" ")
+
+        return whippetDeltaArgs
+    }
+
+    static String makeSuppa2GenerateEventsArgs(boundary, variability_threshold, pool_genes, exon_length) {
+
+        def suppa2GenerateEventsArgs = []
+
+        // Add all the suppa2 generateEvents arguments required into the <suppa2GenerateEvents> variable
+        if (boundary) suppa2GenerateEventsArgs << "--boundary ${boundary}"
+        if (variability_threshold) suppa2GenerateEventsArgs << "--threshold ${variability_threshold}"
+        if (pool_genes) suppa2GenerateEventsArgs << "--pool-genes ${pool_genes}"
+        if (exon_length) suppa2GenerateEventsArgs << "--exon-length ${exon_length}"
+
+        suppa2GenerateEventsArgs = suppa2GenerateEventsArgs.join(" ")
+
+        return suppa2GenerateEventsArgs
+    }
+
+    static String makeSuppa2PsiPerEventArgs(total_filter, save_tpm_events_psi) {
+
+        def suppa2PsiPerEventArgs = []
+
+        // Add all the suppa2 psiPerEvents arguments required into the <suppa2PsiPerEventArgs> variable
+        if (total_filter) suppa2PsiPerEventArgs << "--total-filter ${total_filter}"
+        if (save_tpm_events_psi) suppa2PsiPerEventArgs << "--save_tpm_events"
+
+        suppa2PsiPerEventArgs = suppa2PsiPerEventArgs.join(" ")
+
+        return suppa2PsiPerEventArgs
+    }
+
+    static String makeSuppa2DiffSPliceArgs(method, area, lower_bound, paired_replicates, gene_correction, alpha, save_tpm_events_diff, use_median, tpm_threshold) {
+
+        def suppa2DiffSPliceArgs = []
+
+        // Add all the suppa2 diffSplice arguments required into the <suppa2DiffSPliceArgs> variable
+        if (method) suppa2DiffSPliceArgs << "--method ${method}"
+        if (area) suppa2DiffSPliceArgs << "--area ${area}"
+        if (lower_bound) suppa2DiffSPliceArgs << "--lower-bound ${lower_bound}"
+        if (paired_replicates) suppa2DiffSPliceArgs << "--paired"
+        if (gene_correction) suppa2DiffSPliceArgs << "--gene-correction"
+        if (alpha) suppa2DiffSPliceArgs << "--alpha ${alpha}"
+        if (save_tpm_events_diff) suppa2DiffSPliceArgs << "--save_tpm_events"
+        if (use_median) suppa2DiffSPliceArgs << "--median"
+        if (tpm_threshold) suppa2DiffSPliceArgs << "--tpm-threshold ${tpm_threshold}"
+
+        suppa2DiffSPliceArgs = suppa2DiffSPliceArgs.join(" ")
+
+        return suppa2DiffSPliceArgs
+    }
 
 }
 

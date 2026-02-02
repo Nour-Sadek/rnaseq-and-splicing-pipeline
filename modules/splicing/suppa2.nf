@@ -13,6 +13,7 @@ process SUPPA2_GENERATE_EVENT_ANNOTATIONS {
 	input:
         path gtf_file
         val outputDir
+        val suppa2GenerateEventsArgs
 
 	output:
         path "*.gtf", emit: gtf_files
@@ -21,7 +22,7 @@ process SUPPA2_GENERATE_EVENT_ANNOTATIONS {
     
     script:
     """
-    python /SUPPA-2.3/suppa.py generateEvents -i $gtf_file -p -f ioe -e SE SS MX RI FL -o IOE
+    python /SUPPA-2.3/suppa.py generateEvents -i $gtf_file -f ioe -e SE SS MX RI FL -o IOE $suppa2GenerateEventsArgs
     # Put all the ioe events in the same file
     awk '
         FNR==1 && NR!=1 { while (/^<header>/) getline; }
@@ -46,10 +47,12 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
         path all_ioe_events_file
         val tpm_column
         val outputDir
+        val suppa2PsiPerEventArgs
 
 	output:
         path "samples_tpm.txt", emit: tpm_file
         path "all_samples.psi", emit: psi_file
+        path "all_samples.tpm", emit: tpm_events_file, optional: true
     
     script:
     quant_files = quants_files_list.join(' ')
@@ -57,7 +60,7 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
     # Extract the TPM values from the 4th column of the salmon output
     python /SUPPA-2.3/multipleFieldSelection.py -i $quant_files -k 1 -f $tpm_column -o samples_tpm.txt
     # Get the psi values
-    python /SUPPA-2.3/suppa.py psiPerEvent -i $all_ioe_events_file -e samples_tpm.txt -o all_samples
+    python /SUPPA-2.3/suppa.py psiPerEvent -i $all_ioe_events_file -e samples_tpm.txt -o all_samples $suppa2PsiPerEventArgs
     """
 }
 
@@ -103,13 +106,16 @@ process SUPPA2_CALCULATE_EVENTS_DELTA_PSI {
         val paired_files  // e.g. ["AIY", "AIY_events.psi", "AIY.tpm", "ASK", "ASK_events.psi", "ASK.tpm"]
         path all_ioe_events_file
         val outputDir
+        val suppa2DiffSPliceArgs
 
 	output:
         path "${paired_files[0]}_v_${paired_files[3]}_diffsplice.dpsi"
         path "${paired_files[0]}_v_${paired_files[3]}_diffsplice.psivec"
+        path "${paired_files[0]}_v_${paired_files[3]}_diffsplice_avglogtpm.tab", optional: true
+
     
     script:
     """
-    python /SUPPA-2.3/suppa.py diffSplice -m empirical -gc -i $all_ioe_events_file -p ${paired_files[1]} ${paired_files[4]} -e ${paired_files[2]} ${paired_files[5]} -o ${paired_files[0]}_v_${paired_files[3]}_diffsplice
+    python /SUPPA-2.3/suppa.py diffSplice -i $all_ioe_events_file -p ${paired_files[1]} ${paired_files[4]} -e ${paired_files[2]} ${paired_files[5]} -o ${paired_files[0]}_v_${paired_files[3]}_diffsplice $suppa2DiffSPliceArgs
     """
 }
