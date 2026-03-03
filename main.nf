@@ -1,6 +1,8 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
+// TODO: IMPLEMENT TWO-PASS MAPPING FOR STAR
+
 // Specifying outputDir
 def outputDir = params.outputDir ?: './results'
 
@@ -15,6 +17,7 @@ include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI } from './modules/splicing/majiq.nf'
 include { VOILA_PSI; VOILA_DELTA_PSI } from './modules/splicing/voila.nf'
 include { rMATS_DIFFERENTIAL; rMATS_INDIVIDUAL } from './modules/splicing/rMATS.nf'
+include { JUM_A; R_SCRIPT_JUM } from './modules/splicing/jum.nf'
 include { SUPPA2_GENERATE_EVENT_ANNOTATIONS; SUPPA2_CALCULATE_EVENTS_PSI; SUPPA2_SPLIT_FILES; SUPPA2_CALCULATE_EVENTS_DELTA_PSI } from './modules/splicing/suppa2.nf'
 include { WHIPPET_INDEX; WHIPPET_QUANT; WHIPPET_DELTA } from './modules/splicing/whippet.nf'
 
@@ -77,12 +80,14 @@ workflow {
         
         // Run the TRIM_GALORE process
         trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
-                params.max_length, params.stringency, params.error_rate, params.length, params.maxn, params.trim_n, params.trim_1, params.clip_R1, params.clip_R2, params.three_prime_clip_R1, params.three_prime_clip_R2, 
+                params.max_length, params.stringency, params.error_rate, params.length, params.maxn, params.trim_n, params.clip_R1, params.clip_R2, params.three_prime_clip_R1, params.three_prime_clip_R2, 
                 params.nextseq_quality, params.hardtrim5, params.hardtrim3)
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = TRIM_GALORE.out.trimmed_samples
+    } else {  // No trimming is done
+        trimming_output_channel = reads_channel
     }
 
     /* Run fastqc after trimming */
@@ -115,8 +120,8 @@ workflow {
             params.winReadCoverageBasesMin, params.quantMode, params.quantTranscriptomeBAMcompression, params.quantTranscriptomeSAMoutput)
         STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, starArgs)
 
-        // Extract the sample_id and bam_file outputs
-        alignment_output_channel = STAR.out.alignment_output
+        // Extract the sample_id and sam_file outputs
+        sam_alignment_output_channel = STAR.out.alignment_output
 
     } else if (params.aligner && params.aligner == 'hisat2') {
 
@@ -137,17 +142,20 @@ workflow {
             params.no_mixed, params.no_discordant, params.index_offrate, params.reorder, params.rng_seed, params.non_deterministic)
         HISAT2(trimming_output_channel, outputDir, hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, hisat2Args)
 
-        // Convert the sam_file to bam_file
-        SAM_TO_BAM(outputDir, HISAT2.out.alignment_output)
-
-        // Extract the sample_id and bam_file outputs
-        alignment_output_channel = SAM_TO_BAM.out.bam_output
+        // Extract the sample_id and sam_file outputs
+        sam_alignment_output_channel = SAM_TO_BAM.out.bam_output
+        
     }
 
     /* Quantify the reads of the genes */
     if (params.aligner && params.aligner != 'none') {  // use quantifiers that need prior alignment
+        
+        /* Convert sam to bam files */
+        SAM_TO_BAM(outputDir, sam_alignment_output_channel)
+        bam_alignment_output_channel = SAM_TO_BAM.out.bam_output
+
         /* Sort then index the bam files */
-        SORT_AND_INDEX_BAM(alignment_output_channel, outputDir)
+        SORT_AND_INDEX_BAM(bam_alignment_output_channel, outputDir)
         sorted_bam_output_channel = SORT_AND_INDEX_BAM.out.sorted_bam_output
 
         /* Count number of reads for features (genes) using the sorted alignment bam files */
@@ -162,7 +170,7 @@ workflow {
             
             // Run the FEATURE_COUNTS reads quantification process
             featureCountsArgs = OrganizeArguments.makeFeatureCountsArgs(params.paired_end, params.requireBothEndsMapped, params.countChimericFragments, params.checkFragLength, params.countReadPairs, params.autosort, params.minFragLength, 
-                params.maxfragLength, params.useMetaFeatures, params.isGTFAnnotationFile, params.attrType_GTF, params.juncCounts, params.isLongRead, params.countMultiMappingReads, params.allowMultiOverlap, params.minMQS, params.isStrandSpecific, 
+                params.maxfragLength, params.useMetaFeatures, params.attrType_GTF, params.juncCounts, params.isLongRead, params.countMultiMappingReads, params.allowMultiOverlap, params.minMQS, params.isStrandSpecific, 
                 params.featureType_GTF, params.byReadGroup, params.attrType_GTF_extra, params.fraction, params.fracOverlap, params.fracOverlapFeature, params.ignoreDup, params.largestOverlap, params.minOverlap, params.nonOverlap, 
                 params.nonOverlapFeature, params.nonSplitOnly, params.primaryOnly, params.read2pos, params.readExtension3, params.readExtension5, params.readShiftSize, params.readShiftType, params.splitOnly)
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), featureCountsArgs)
@@ -282,6 +290,28 @@ workflow {
                 rMATS_DIFFERENTIAL(grouped_bams_pairs, file(params.annotationsGTFFile), outputDir, rmatsDifferentialArgs)
             }
 
+        } else if (params.aligner == 'star' && params.splicingAnalyzer && params.splicingAnalyzer == 'jum') {
+            // Return a channel were each output is of the format:
+            // [sample_group_1, [sample_group_1's replicates file names], sample_group_2, [sample_group_2's replicates file names]]
+            grouped_sam_files_pairs = sam_alignment_output_channel
+                .groupTuple(by: 1, sort: true)  
+                .map { samples, group, sam_files -> [group, sam_files] }
+                .toList()
+                .flatMap { grouped_list ->
+                    def pairs = []
+                    for (i in 0..<grouped_list.size()) {
+                        for (j in i+1..<grouped_list.size()) {
+                            pairs << [grouped_list[i][0], grouped_list[i][1], grouped_list[j][0], grouped_list[j][1]]
+                        }
+                    }
+                    return pairs
+                }
+            
+            // Run JUM_A process that runs JUM_A.sh file
+            JUM_A(grouped_sam_files_pairs, outputDir, STAR.out.sam_output.collect(), STAR.out.splicing_junctions.collect(), SORT_AND_INDEX_BAM.out.sorted_bam_file.collect())
+
+            // Create the experiment design file
+            R_SCRIPT_JUM(grouped_sam_files_pairs, outputDir)
         }
 
     } else {  // use quantifiers that don't need prior alignment

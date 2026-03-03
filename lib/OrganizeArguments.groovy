@@ -109,7 +109,7 @@ class OrganizeArguments {
     }
 
     static String makeTrimGaloreArgs(paired_end, quality, quality_encoding, adapter_sequence_1, adapter_sequence_2, specific_adapters, max_length, 
-    stringency, error_rate, length, maxn, trim_n, trim_1, clip_R1, clip_R2, three_prime_clip_R1, three_prime_clip_R2, nextseq_quality, hardtrim5, hardtrim3) {
+    stringency, error_rate, length, maxn, trim_n, clip_R1, clip_R2, three_prime_clip_R1, three_prime_clip_R2, nextseq_quality, hardtrim5, hardtrim3) {
         
         // If hard trimming is intended, only consider the hard trimming parameters then quit
         if (hardtrim5) {
@@ -142,7 +142,6 @@ class OrganizeArguments {
         if (length) trimGaloreArgs << "--length ${length}"
         if (maxn) trimGaloreArgs << "--max_n ${maxn}"
         if (trim_n) trimGaloreArgs << "--trim-n"
-        if (paired_end && trim_1) trimGaloreArgs << "--trim1"
         if (clip_R1) trimGaloreArgs << "--clip_R1 ${clip_R1}"
         if (paired_end && clip_R2) trimGaloreArgs << "--clip_R2 ${clip_R2}"
         if (three_prime_clip_R1) trimGaloreArgs << "--three_prime_clip_R1 ${three_prime_clip_R1}"
@@ -421,11 +420,12 @@ class OrganizeArguments {
     }
 
     static String makeFeatureCountsArgs(paired_end, requireBothEndsMapped, countChimericFragments, checkFragLength, countReadPairs, autosort, minFragLength, maxfragLength, useMetaFeatures, 
-    isGTFAnnotationFile, attrType_GTF, juncCounts, isLongRead, countMultiMappingReads, allowMultiOverlap, minMQS, isStrandSpecific, featureType_GTF, byReadGroup, attrType_GTF_extra, 
+    attrType_GTF, juncCounts, isLongRead, countMultiMappingReads, allowMultiOverlap, minMQS, isStrandSpecific, featureType_GTF, byReadGroup, attrType_GTF_extra, 
     fraction, fracOverlap, fracOverlapFeature, ignoreDup, largestOverlap, minOverlap, nonOverlap, nonOverlapFeature, nonSplitOnly, primaryOnly, read2pos, readExtension3, readExtension5, 
     readShiftSize, readShiftType, splitOnly) {
 
         def featureCountsArgs = []
+        featureCountsArgs << "-F GTF"
 
         // Add the parameters for paired-end mode
         if (paired_end) {
@@ -440,7 +440,6 @@ class OrganizeArguments {
         if (minFragLength) featureCountsArgs << "-d ${minFragLength}"
         if (maxfragLength) featureCountsArgs << "-D ${maxfragLength}"
         if (useMetaFeatures) featureCountsArgs << "-f"
-        if (isGTFAnnotationFile) featureCountsArgs << "-F GTF"
         if (attrType_GTF) featureCountsArgs << "-g ${attrType_GTF}"
         if (juncCounts) featureCountsArgs << "-J"
         if (isLongRead) featureCountsArgs << "-L"

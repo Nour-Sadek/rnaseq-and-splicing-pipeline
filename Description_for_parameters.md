@@ -236,6 +236,10 @@ Windows, Anchors, Binning:
 - `quantTranscriptomeBAMcompression`: Default: 1. Transcriptome BAM compression level. Options are values between -2 to 10.
 - `quantTranscriptomeSAMoutput`: Default: BanSingleEnd_BanIndels_ExtendSoftclip. Alignment filtering for TranscriptomeSAM output. Options are: BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd_BanIndels_ExtendSoftclip, BanSingleEnd, or BanSingleEnd_ExtendSoftclip.
 
+## HISAT2
+
+Please refer to the official website for more information: https://daehwankimlab.github.io/hisat2/manual/
+
 ## HTSeq
 
 Please refer to the official website for more information: https://htseq.readthedocs.io/en/latest/htseqcount.html#htseqcount
@@ -251,3 +255,37 @@ Please refer to the official website for more information: https://htseq.readthe
 - `secondary_alignments`: Default: 'score'. Mode to handle secondary alignments (SAM flag 0x100). Options are: score or ignore.
 - `supplementary_alignments`: Default: 'score'. Mode to handle supplementary/chimeric alignments (SAM flag 0x800). Options are: score or ignore.
 - `add_chromosome_info`: Default: false. Store information about the chromosome of each feature as an additional attribute (e.g. column in the TSV output file).
+
+## featureCounts
+
+Please refer to the official user guide for more information: https://subread.sourceforge.net/SubreadUsersGuide.pdf
+
+## salmon
+
+Please refer to the official website for more information: https://salmon.readthedocs.io/en/latest/salmon.html#
+
+## Kallisto
+
+Please refer to the official manual for more information: https://pachterlab.github.io/kallisto/manual
+
+## Majiq
+
+Please refer to the official website for more information: https://biociphers.bitbucket.io/majiq/MAJIQ.html
+
+## Voila
+
+Please refer to the official website for more information: https://biociphers.bitbucket.io/majiq/VOILA_modulize.html
+
+## rMats
+
+Please refer to the official documentation for more information: https://github.com/Xinglab/rmats-turbo/blob/v4.1.0/README.md
+
+## Whippet
+
+Please refer to the official github repository for more information: https://github.com/timbitz/Whippet.jl
+
+## Suppa2
+
+Please refer to the official github repository for more information: https://github.com/comprna/SUPPA/tree/master
+
+

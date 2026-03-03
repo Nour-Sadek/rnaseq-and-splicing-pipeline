@@ -1,5 +1,5 @@
 # files parameters
-csv_reads: './test_data_single/test_csv_single.txt'  # './test_data/test_csv.txt' './test_data_single/test_csv_single.txt'
+csv_reads: './test_data/test_csv.txt'  # './test_data/test_csv.txt' './test_data_single/test_csv_single.txt'
 outputDir: './results'
 genomeFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
 transcriptFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
@@ -8,42 +8,42 @@ annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
 trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: null  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'kallisto'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-splicingAnalyzer: 'suppa2'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet'
+aligner: 'star'  # available options are: 'star', 'hisat2', 'none'
+quantifier: 'htseq-count'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
+splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet', 'jum'
 
 # Specify whether reads are paired or single end
-paired_end: false
+paired_end: true
 
 # Choose whether to run Fastqc before and/or after trimming
-run_fastqc_before_trimming: false
+run_fastqc_before_trimming: true
 run_fastqc_after_trimming: false
 
 # Bowtie2 filtering parameters
-filter_contaminants: false
+filter_contaminants: true
 contaminants: ['./genome_files/Caenorhabditis_elegans.WBcel235.ncrna.fa.gz']  # provide as a list of paths for the contaminant files
 
 #--------------------------- Trimmomatic parameters ---------------------------#
 # Change the value for any trimming step (from none) for it to be included. Make sure to have at least one trimming option active, otherwise there will be an error.
-# If you want to use ILLUMINACLIP command, then at least these three parameters need to have values: <seed_mismatches>, <palindrome_clip_threshold>, <simple_clip_threshold>
-# If you want to use SLIDINGWINDOW command, then both <window_size> and <required_quality> need ot have values.
-base_quality_encoding: 'phred33'
+# If you want to use ILLUMINACLIP command, then at least these four parameters need to have values: <adapters_file>, <seed_mismatches>, <palindrome_clip_threshold>, <simple_clip_threshold>
+# If you want to use SLIDINGWINDOW command, then both <window_size> and <required_quality> need to have values.
+base_quality_encoding: null
 adapters_file: 'TruSeq3-SE.fa'
 seed_mismatches: 2
 palindrome_clip_threshold: 30
 simple_clip_threshold: 10
 min_adapter_length_palindrome: null
 keepbothreads: null
-window_size: 4
-required_quality: 15
-leading: 3
-trailing: 3
+window_size: null
+required_quality: null
+leading: null
+trailing: null
 headcrop: null
 tailcrop: null
 crop: null
 target_length: null
 strictness: null
-minlen: 36
+minlen: null
 maxlen: null
 avgqual: null
 bases: null
@@ -53,240 +53,238 @@ max_count: null
 
 #--------------------------- Bbduk parameters ---------------------------#
 # Input parameters
-qin: 'auto'
-reads: -1
-samplerate: 1
+qin: null
+reads: null
+samplerate: null
 # Processing parameters
-k: 27
-rcomp: 't'
-maskmiddle: 't'
-minkmerhits: 1
-minkmerfraction: 0.0
-mincovfraction: 0.0
-hammingdistance: 0
-qhdist: 0
-editdistance: 0
-hammingdistance2: 0
-qhdist2: 0
-editdistance2: 0
-forbidn: 'f'
+k: null
+rcomp: null
+maskmiddle: null
+minkmerhits: null
+minkmerfraction: null
+mincovfraction: null
+hammingdistance: null
+qhdist: null
+editdistance: null
+hammingdistance2: null
+qhdist2: null
+editdistance2: null
+forbidn: null
 # Trimming/filtering/masking parameters
-ktrim: 'f'
-ktrimtips: 0
-maskfullycovered: 'f'
-mink: 0
-qtrim: 'f'
-trimq: 6
-minlength: 10
-minlengthfraction: 0
-minavgquality: 0
-minbasequality: 0
-maxns: -1
-minconsecutivebases: 0
-trimpad: 0
-trimbyoverlap: 'f'
-strictoverlap: 't'
-minoverlap: 14
-mininsert: 40
-trimpairsevenly: 'f'
-forcetrimleft: 0
-forcetrimright: 0
-forcetrimright2: 0
-forcetrimmod: 0
-restrictleft: 0
-restrictright: 0
-mingc: 0
-maxgc: 1
-tossjunk: 'f'
+ktrim: null
+ktrimtips: null
+maskfullycovered: null
+mink: null
+qtrim: null
+trimq: null
+minlength: null
+minlengthfraction: null
+minavgquality: null
+minbasequality: null
+maxns: null
+minconsecutivebases: null
+trimpad: null
+trimbyoverlap: null
+strictoverlap: null
+minoverlap: null
+mininsert: null
+trimpairsevenly: null
+forcetrimleft: null
+forcetrimright: null
+forcetrimright2: null
+forcetrimmod: null
+restrictleft: null
+restrictright: null
+mingc: null
+maxgc: null
+tossjunk: null
 
 
 #--------------------------- Trim-Galore parameters ---------------------------#
-quality: 20
-quality_encoding: 'phred33'  # options: phred33 or phred64
+quality: null
+quality_encoding: null  # options: phred33 or phred64
 adapter_sequence_1: null  # Or specify the sequence, for example 'GATCGTCGGACT'
 adapter_sequence_2: null  # This is ignored in single-end reads. If not specified for paired-end reads, <adapter_sequence_1> will be applied on both reads.
-specific_adapters: 'illumina'  # options are: 'illumina', 'stranded_illumina', 'nextera', 'small_rna', 'bgiseq'. Can only be none if adapter_sequence_1 and/or adapter_sequence_2 are specified
+specific_adapters: 'illumina'  # options are: 'illumina', 'stranded_illumina', 'nextera', 'small_rna', 'bgiseq'. Can only be null if adapter_sequence_1 and/or adapter_sequence_2 are specified
 max_length: null
-stringency: 1
-error_rate: 0.1
-length: 20
+stringency: null
+error_rate: null
+length: null
 maxn: null
 trim_n: false  # either true or false
-trim_1: false  # either true or false
 clip_R1: null
 clip_R2: null
 three_prime_clip_R1: null
 three_prime_clip_R2: null
-nextseq_quality: null  # only specify the qualty with nextseq and novaseq reads (replaces <quality> parameter)
+nextseq_quality: null  # only specify the qualty with nextseq and novaseq reads (replaces <quality> parameter), to remove G-tails
 hardtrim5: null
 hardtrim3: null
 
 
 #--------------------------- STAR parameters ---------------------------#
 # Run parameters
-runRNGseed: 777
+runRNGseed: null
 # Genome Indexing Parameters - only used with –runMode genomeGenerate
-genomeChrBinNbits: 18
-genomeSAindexNbases: 12
-genomeSAsparseD: 1
-genomeSuffixLengthMax: -1
+genomeChrBinNbits: null
+genomeSAindexNbases: null
+genomeSAsparseD: null
+genomeSuffixLengthMax: null
 # Splice Junctions Database
-sjdbGTFfeatureExon: 'exon'
-sjdbGTFtagExonParentTranscript: 'transcript_id'
-sjdbGTFtagExonParentGene: 'gene_id'
-sjdbGTFtagExonParentGeneName: 'gene_name'
-sjdbGTFtagExonParentGeneType: 'gene_type gene_biotype'
-sjdbOverhang: 100
-sjdbScore: 2
-sjdbInsertSave: 'Basic'
-readMapNumber: -1
-readMatesLengthsIn: 'NotEqual'
-readQualityScoreBase: 33
+sjdbGTFfeatureExon: null
+sjdbGTFtagExonParentTranscript: null
+sjdbGTFtagExonParentGene: null
+sjdbGTFtagExonParentGeneName: null
+sjdbGTFtagExonParentGeneType: null
+sjdbOverhang: null  # max(ReadLength) - 1
+sjdbScore: null
+sjdbInsertSave: null
+readMapNumber: null
+readMatesLengthsIn: null
+readQualityScoreBase: null
 # Read Clipping
-clipAdapterType: 'Hamming'
-clip3pNbases: 0
+clipAdapterType: null
+clip3pNbases: null
 clip3pAdapterSeq: null
-clip3pAdapterMMp: 0.1
-clip3pAfterAdapterNbases: 0
-clip5pNbases: 0
+clip3pAdapterMMp: null
+clip3pAfterAdapterNbases: null
+clip5pNbases: null
 # Output: General
-outReadsUnmapped: 'None'
-outQSconversionAdd: 0
-outMultimapperOrder: 'Old_2.4'
+outReadsUnmapped: null
+outQSconversionAdd: null
+outMultimapperOrder: null
 # Output: SAM and BAM
-outSAMmode: 'Full'
-outSAMstrandField: 'None'
-outSAMattributes: 'Standard'
-outSAMattrIHstart: 1
-outSAMunmapped: 'None'
-outSAMprimaryFlag: 'OneBestScore'
-outSAMreadID: 'Standard'
-outSAMmapqUnique: 255
-outSAMflagOR: 0
-outSAMflagAND: 65535
-outSAMmultNmax: -1
-outSAMtlen: 1
-outBAMcompression: 1
+outSAMmode: null
+outSAMstrandField: null
+outSAMattributes: null
+outSAMattrIHstart: null
+outSAMunmapped: null
+outSAMprimaryFlag: null
+outSAMreadID: null
+outSAMmapqUnique: null
+outSAMflagOR: null
+outSAMflagAND: null
+outSAMmultNmax: null
+outSAMtlen: null
+outBAMcompression: null
 # Output Filtering
-outFilterType: 'Normal'
-outFilterMultimapScoreRange: 1
-outFilterMultimapNmax: 10
-outFilterMismatchNmax: 10
-outFilterMismatchNoverLmax: 0.3
-outFilterMismatchNoverReadLmax: 1.0
-outFilterScoreMin: 0
-outFilterScoreMinOverLread: 0.66
-outFilterMatchNmin: 0
-outFilterMatchNminOverLread: 0.66
-outFilterIntronMotifs: 'None'
-outFilterIntronStrands: 'RemoveInconsistentStrands'
+outFilterType: null
+outFilterMultimapScoreRange: null
+outFilterMultimapNmax: null
+outFilterMismatchNmax: null
+outFilterMismatchNoverLmax: null
+outFilterMismatchNoverReadLmax: null
+outFilterScoreMin: null
+outFilterScoreMinOverLread: null
+outFilterMatchNmin: null
+outFilterMatchNminOverLread: null
+outFilterIntronMotifs: null
+outFilterIntronStrands: null
 # Output Filtering: Splice Junctions
-outSJfilterReads: 'All'
-outSJfilterOverhangMin: '30 12 12 12'
-outSJfilterCountUniqueMin: '3 1 1 1'
-outSJfilterCountTotalMin: '3 1 1 1'
-outSJfilterDistToOtherSJmin: '10 0 5 10'
-outSJfilterIntronMaxVsReadN: '50000 100000 200000'
+outSJfilterReads: null
+outSJfilterOverhangMin: null
+outSJfilterCountUniqueMin: null
+outSJfilterCountTotalMin: null
+outSJfilterDistToOtherSJmin: null
+outSJfilterIntronMaxVsReadN: null
 # Scoring
-scoreGap: 0
-scoreGapNoncan: -8
-scoreGapGCAG: -4
-scoreGapATAC: -8
-scoreGenomicLengthLog2scale: -0.25
-scoreDelOpen: -2
-scoreDelBase: -2
-scoreInsOpen: -2
-scoreInsBase: -2
-scoreStitchSJshift: 1
+scoreGap: null
+scoreGapNoncan: null
+scoreGapGCAG: null
+scoreGapATAC: null
+scoreGenomicLengthLog2scale: null
+scoreDelOpen: null
+scoreDelBase: null
+scoreInsOpen: null
+scoreInsBase: null
+scoreStitchSJshift: null
 # Alignments and Seeding
-seedSearchStartLmax: 50
-seedSearchStartLmaxOverLread: 1.0
-seedSearchLmax: 0
-seedMultimapNmax: 10000
-seedPerReadNmax: 1000
-seedPerWindowNmax: 50
-seedNoneLociPerWindow: 10
-seedSplitMin: 12
-seedMapMin: 5
-alignIntronMin: 21
-alignIntronMax: 0
-alignMatesGapMax: 0
-alignSJoverhangMin: 5
-alignSJstitchMismatchNmax: '0 -1 0 0'
-alignSJDBoverhangMin: 3
-alignSplicedMateMapLmin: 0
-alignSplicedMateMapLminOverLmate: 0.66
-alignWindowsPerReadNmax: 10000
-alignTranscriptsPerWindowNmax: 100
-alignTranscriptsPerReadNmax: 10000
-alignEndsType: 'Local'
-alignEndsProtrude: '0 ConcordantPair'
-alignSoftClipAtReferenceEnds: 'Yes'
-alignInsertionFlush: 'None'
+seedSearchStartLmax: null
+seedSearchStartLmaxOverLread: null
+seedSearchLmax: null
+seedMultimapNmax: null
+seedPerReadNmax: null
+seedPerWindowNmax: null
+seedNoneLociPerWindow: null
+seedSplitMin: null
+seedMapMin: null
+alignIntronMin: null
+alignIntronMax: null
+alignMatesGapMax: null
+alignSJoverhangMin: null
+alignSJstitchMismatchNmax: null
+alignSJDBoverhangMin: null
+alignSplicedMateMapLmin: null
+alignSplicedMateMapLminOverLmate: null
+alignWindowsPerReadNmax: null
+alignTranscriptsPerWindowNmax: null
+alignTranscriptsPerReadNmax: null
+alignEndsType: null
+alignEndsProtrude: null
+alignSoftClipAtReferenceEnds: null
+alignInsertionFlush: null
 # Paired-End reads
-peOverlapNbasesMin: 0
-peOverlapMMp: 0.01
+peOverlapNbasesMin: null
+peOverlapMMp: null
 # Windows, Anchors, Binning
-winAnchorMultimapNmax: 50
-winBinNbits: 16
-winAnchorDistNbins: 9
-winFlankNbins: 4
-winReadCoverageRelativeMin: 0.5
-winReadCoverageBasesMin: 0
+winAnchorMultimapNmax: null
+winBinNbits: null
+winAnchorDistNbins: null
+winFlankNbins: null
+winReadCoverageRelativeMin: null
+winReadCoverageBasesMin: null
 quantMode: null
-quantTranscriptomeBAMcompression: 1
-quantTranscriptomeSAMoutput: 'BanSingleEnd_BanIndels_ExtendSoftclip'
+quantTranscriptomeBAMcompression: null
+quantTranscriptomeSAMoutput: null
 
 
 #--------------------------- HTSEQ-COUNT parameters ---------------------------#
-max_reads_in_buffer: 30000000
+max_reads_in_buffer: null
 stranded: 'no'
-minaqual: 10
+minaqual: null
 feature_type: 'exon'
-id_attribute: 'gene_id'
+id_attribute: 'gene_name'
 additional_attributes: null  # specify the additional attributes as a list of strings, e.g. ['gene_name', 'exon_number']
 mode: 'union'
-nonunique_mode: 'none'
-secondary_alignments: 'score'
-supplementary_alignments: 'score'
+nonunique_mode: null
+secondary_alignments: null
+supplementary_alignments: null
 add_chromosome_info: false
 
 
 #--------------------------- featureCounts parameters ---------------------------#
 requireBothEndsMapped: false  # paired-end
 countChimericFragments: false  # paired-end
-minFragLength: 50
-maxfragLength: 600
+minFragLength: null
+maxfragLength: null
 useMetaFeatures: false
-isGTFAnnotationFile: true
-attrType_GTF: 'gene_id'
+attrType_GTF: null
 juncCounts: false
 isLongRead: false
 countMultiMappingReads: false
 allowMultiOverlap: false
 checkFragLength: false  # only specify if <minFragLength> and <maxFragLength> are specified, paired-end
-minMQS: 0
-isStrandSpecific: 0
-featureType_GTF: 'exon'  # If more than one feature type is provided, they should be separated by ',' (no space)
+minMQS: null
+isStrandSpecific: null
+featureType_GTF: null  # If more than one feature type is provided, they should be separated by ',' (no space)
 byReadGroup: false
 countReadPairs: false  # paired-end
 autosort: false  # paired-end
 attrType_GTF_extra: null  # If more than one feature type is provided, they should be separated by ',' (no space)
 fraction: false  # must be specified with <countMultiMappingReads> or <alloqMultiOverlap> or both
-fracOverlap: 0
-fracOverlapFeature: 0
+fracOverlap: null
+fracOverlapFeature: null
 ignoreDup: false
 largestOverlap: false
-minOverlap: 1
+minOverlap: null
 nonOverlap: null
 nonOverlapFeature: null
 nonSplitOnly: false
 primaryOnly: false
 read2pos: null
-readExtension3: 0
-readExtension5: 0
-readShiftSize: 0
-readShiftType: 'upstream'
+readExtension3: null
+readExtension5: null
+readShiftSize: null
+readShiftType: null
 splitOnly: false
 
 
@@ -314,7 +312,7 @@ skip: null
 upto: null
 trim5: null
 trim3: null
-phred_quality: 'phred33'  # options are: phred33 or phred64. If not specified, default is phred33
+phred_quality: null  # options are: 'phred33' or 'phred64'. If not specified, default is 'phred33'
 solexa_quals: false
 int_quals: false
 # Alignment options
@@ -353,7 +351,7 @@ report_secondary_alignments: false
 # Paired-end options
 min_fragment_length: null
 max_fragment_length: null
-mate_orientations: null  # options are: fr, rf, or ff
+mate_orientations: null  # options are: 'fr', 'rf', or 'ff'
 no_mixed: false
 no_discordant: false
 # Performance options
@@ -449,8 +447,8 @@ plaintext: false
 single_overhang: false
 fr_stranded: false
 rf_stranded: false
-mean_fragment_length: 200  # estimated for paired-end reads, must be used for single-end reads (200)
-sd_fragment_length: 70  # estimated for paired-end reads, must be used for single-end reads (70)
+mean_fragment_length: null  # estimated for paired-end reads, must be used for single-end reads (200)
+sd_fragment_length: null  # estimated for paired-end reads, must be used for single-end reads (70)
 
 
 # General Splicing parameters
@@ -553,7 +551,7 @@ probability_non_changing_threshold: null
 
 #--------------------------- rMats parameters ---------------------------#
 libType: null
-readLength: 100  # required parameter
+readLength: 150  # required parameter
 #--------------------------- rMats individual parameters ---------------------------#
 ind_variable_read_length: true
 ind_anchorLength: null
@@ -624,7 +622,7 @@ use_median: false
 tpm_threshold: null
 
 
-# RSEM parameters
+# RSEM parameters [ALL PARAMETERS ARE REQUIRED FOR SINGLE-END READS. FOR PAIRED-END READS, ONLY rsem_index_prefix is required]
 rsem_index_prefix: 'rsem_reference'
 strandedness: 'none'
 fragment_length_mean: -1  # used only for single-end reads, change the value if you know it
