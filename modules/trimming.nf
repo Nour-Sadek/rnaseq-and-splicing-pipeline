@@ -77,14 +77,14 @@ process TRIM_GALORE {
         val trimGaloreArgs
 
 	output:
-        tuple val(sample_id), val(sample_group), path("*.fq", arity: '1..*'), emit: trimmed_samples
-        tuple path("${sample_id}_unpaired_1.fq"), path("${sample_id}_unpaired_2.fq"), emit: unpaired_reads, optional: true
-        tuple path("*.fastq_trimming_report.txt"), emit: trimming_reports, optional: true
+        tuple val(sample_id), val(sample_group), path("${sample_id}_*.fq", arity: '1..2'), emit: trimmed_samples
+        // tuple path("${sample_id}_unpaired_1.fq"), path("${sample_id}_unpaired_2.fq"), emit: unpaired_reads, optional: true
+        path "*.fastq_trimming_report.txt", emit: trimming_reports, optional: true
 
     script:
     if (params.paired_end) {
         """
-        trim_galore --paired ${reads[0]} ${reads[1]} --cores $task.cpus --retain_unpaired ${trimGaloreArgs} --basename $sample_id
+        trim_galore --paired ${reads[0]} ${reads[1]} --cores $task.cpus ${trimGaloreArgs} --basename $sample_id
         """
     } else {
         """

@@ -18,7 +18,8 @@ process STAR {
         val starArgs
 
 	output:
-        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.bam"), emit: alignment_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out.sam"), emit: alignment_output
+        path "${sample_id}_Aligned.out.sam", emit: sam_output
         path "${sample_id}_Log.final.out", emit: log_final
         path "${sample_id}_Log.out", emit: log
         path "${sample_id}_Log.progress.out", emit: log_progress
@@ -27,11 +28,11 @@ process STAR {
     script:
     if (params.paired_end) {
         """
-        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} ${reads[1]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted $starArgs
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} ${reads[1]} --outFileNamePrefix ${sample_id}_ $starArgs
         """
     } else {
         """
-        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} --outFileNamePrefix ${sample_id}_ --outSAMtype BAM Unsorted $starArgs
+        STAR --runThreadN $task.cpus --genomeDir $reference_genome_index --readFilesIn ${reads[0]} --outFileNamePrefix ${sample_id}_ $starArgs
         """
     }
 }

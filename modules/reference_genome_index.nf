@@ -2,6 +2,9 @@
 
 /* Outlining the STAR process of creating a reference genome index */
 process STAR_REFERENCE_INDEX {
+    memory '12 GB'
+    cpus 2
+    
     label 'star_reference_index'
     publishDir "${outputDir}/star", mode: "copy"
 

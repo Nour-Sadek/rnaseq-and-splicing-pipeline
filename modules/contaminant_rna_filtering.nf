@@ -45,8 +45,8 @@ process BOWTIE2_REMOVE_CONTAMINANTS {
         """
         bowtie2 -x contaminants_index -1 ${reads[0]} -2 ${reads[1]} --very-sensitive -p $task.cpus --un-conc ${sample_id}_clean.fastq -S /dev/null
 
-        mv ${sample_id}_clean.fastq.1 ${sample_id}_clean_1.fastq
-        mv ${sample_id}_clean.fastq.2 ${sample_id}_clean_2.fastq
+        mv ${sample_id}_clean.1.fastq ${sample_id}_clean_1.fastq
+        mv ${sample_id}_clean.2.fastq ${sample_id}_clean_2.fastq
         """
     } else {
         """

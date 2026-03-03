@@ -34,12 +34,13 @@ process SORT_AND_INDEX_BAM {
         val outputDir
 
 	output:
-        tuple val(sample_id), val(sample_group), path("${sample_id}_sorted.bam"), emit: sorted_bam_output
-        path "${sample_id}_sorted.bam.bai", emit: indexed_bam_output
+        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.out_sorted.bam"), emit: sorted_bam_output
+        path "${sample_id}_Aligned.out_sorted.bam", emit: sorted_bam_file
+        path "${sample_id}_Aligned.out_sorted.bam.bai", emit: indexed_bam_output
 	
     script:
     """
-    samtools sort -@ $task.cpus $bam_file -o ${sample_id}_sorted.bam
-    samtools index -@ $task.cpus ${sample_id}_sorted.bam
+    samtools sort -@ $task.cpus $bam_file -o ${sample_id}_Aligned.out_sorted.bam
+    samtools index -@ $task.cpus ${sample_id}_Aligned.out_sorted.bam
     """
 }
