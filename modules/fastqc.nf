@@ -1,8 +1,7 @@
 #!/usr/bin/env nextflow
 
 process FASTQC {
-    
-    label 'fastqc'
+    label 'process_low'
 	tag "$sample_id"
     publishDir "${outputDir}", mode: "copy"
 
@@ -26,6 +25,4 @@ process FASTQC {
         fastqc ${reads[0]} --threads ${task.cpus}
         """
     }
-
 }
-

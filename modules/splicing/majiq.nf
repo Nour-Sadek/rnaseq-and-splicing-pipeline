@@ -2,7 +2,7 @@
 
 /* Preparing the majiq config file */
 process MAJIQ_CONFIG {
-    label 'majiq_config'
+    label 'process_single'
     publishDir "${outputDir}/majiq/build", mode: "copy"
 
 	input:
@@ -31,8 +31,7 @@ process MAJIQ_CONFIG {
 
 /* Outlining the MAJIQ build process */
 process MAJIQ_BUILD {
-
-    label 'majiq_build'
+    label 'process_high'
     publishDir "${outputDir}/majiq/build", mode: "copy"
 
     container 'mcfonsecalab/majiq:2.5.1'
@@ -57,8 +56,7 @@ process MAJIQ_BUILD {
 
 /* Outlining the MAJIQ psi splicing process */
 process MAJIQ_PSI {
-
-    label 'majiq_psi'
+    label 'process_high'
     tag "${grouped_file_names[0]}"
     publishDir "${outputDir}/majiq/majiq_psi/${grouped_file_names[0]}_psi", mode: "copy"
 
@@ -85,8 +83,7 @@ process MAJIQ_PSI {
 
 /* Outlining the MAJIQ delta-psi splicing process */
 process MAJIQ_DELTA_PSI {
-
-    label 'majiq_delta_psi'
+    label 'process_high'
     tag "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}"
     publishDir "${outputDir}/majiq/majiq_delta_psi/${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", mode: "copy"
 

@@ -2,8 +2,7 @@
 
 /* Outlining the VOILA psi process */
 process VOILA_PSI {
-
-    label 'voila_psi'
+    label 'process_medium'
     tag "${sample_group}"
     publishDir "${outputDir}/voila/voila_psi/${sample_group}_psi", mode: "copy"
 
@@ -27,8 +26,7 @@ process VOILA_PSI {
 
 /* Outlining the VOILA delta psi process */
 process VOILA_DELTA_PSI {
-
-    label 'voila_delta_psi'
+    label 'process_medium'
     tag "${paired_samples_name}"
     publishDir "${outputDir}/voila/voila_delta_psi/${paired_samples_name}", mode: "copy"
 

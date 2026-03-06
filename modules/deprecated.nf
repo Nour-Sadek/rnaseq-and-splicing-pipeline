@@ -1,3 +1,5 @@
+#!/usr/bin/env nextflow
+
 /* Outlining the MINIMAP2 process of creating a reference genome index 
 - previously in reference_genome_index.nf */
 process MINIMAP2_REFERENCE_INDEX {
@@ -140,4 +142,26 @@ process RSEM {
         rsem-calculate-expression --star --strandedness $params.strandedness --fragment-length-mean $params.fragment_length_mean --fragment-length-sd $params.fragment_length_sd -p $task.cpus ${reads[0]} reference_index/$rsem_index_prefix $sample_id
         """
     }
+}
+
+/* Outlining the GFFREAD transcriptome fasta generation utility process
+- previously in gff_utilities.nf */
+process GFFREAD {
+    label 'gff_read'
+    publishDir "${outputDir}/gffread", mode: "copy"
+
+    container 'quay.io/biocontainers/gffread:0.12.7--h9a82719_0'
+
+	input:
+        val outputDir
+        path genome_fasta_files
+        path gtf_file
+
+	output:
+		path "transcripts.fa", emit: transcripts_fasta_file
+	
+    script:
+    """
+    gffread -w transcripts.fa -g $genome_fasta_files $gtf_file
+    """
 }

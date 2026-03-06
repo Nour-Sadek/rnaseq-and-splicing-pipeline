@@ -2,7 +2,7 @@
 
 /* Outlining bowtie2's creating contaminant index process */
 process BOWTIE2_CONTAMINANT_INDEX {
-    label 'bowtie2_contaminant_index'
+    label 'process_medium'
     publishDir "${outputDir}/bowtie2/contaminants_index", mode: "copy"
 
     container 'biocontainers/bowtie2:v2.4.1_cv1'
@@ -25,7 +25,7 @@ process BOWTIE2_CONTAMINANT_INDEX {
 
 /* Outlining bowtie2's remove contaminants process */
 process BOWTIE2_REMOVE_CONTAMINANTS {
-    label 'bowtie2_remove_contaminants'
+    label 'process_medium'
     tag "${sample_id}"
     publishDir "${outputDir}/bowtie2/filtered_samples", mode: "copy"
 

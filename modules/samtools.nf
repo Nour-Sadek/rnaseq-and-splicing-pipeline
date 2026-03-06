@@ -2,7 +2,7 @@
 
 /* Outlining the SAM_TO_BAM process for converting sam output files from alignment to bam files */
 process SAM_TO_BAM {
-    label 'convert_sam_to_bam'
+    label 'process_low'
     tag "$sample_id"
     publishDir "${outputDir}/samtools/converted_to_bam_files", mode: "copy"
 
@@ -23,7 +23,7 @@ process SAM_TO_BAM {
 
 /* Outlining the SORT_AND_INDEX_BAM process for sorting then indexing bam files before counting reads */
 process SORT_AND_INDEX_BAM {
-    label 'sort_and_index_bam_files'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/samtools/sorted_and_indexed_bam_files", mode: "copy"
 

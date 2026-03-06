@@ -2,10 +2,7 @@
 
 /* Outlining the SUPPA2 generate event annotations process */
 process SUPPA2_GENERATE_EVENT_ANNOTATIONS {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'suppa2_generate_event_annotations'
+    label 'process_high'
     publishDir "${outputDir}/suppa2/event_annotations", mode: "copy"
 
     container 'naotokubota/suppa:2.3'
@@ -33,10 +30,7 @@ process SUPPA2_GENERATE_EVENT_ANNOTATIONS {
 
 /* Outlining the SUPPA2 calculate psi for events process */
 process SUPPA2_CALCULATE_EVENTS_PSI {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'suppa2_calculate_events_psi'
+    label 'process_high'
     publishDir "${outputDir}/suppa2/suppa2_psi", mode: "copy"
 
     container 'naotokubota/suppa:2.3'
@@ -66,8 +60,7 @@ process SUPPA2_CALCULATE_EVENTS_PSI {
 
 /* Outlining the SUPPA2 splitting files before doing differential splicing analysis process */
 process SUPPA2_SPLIT_FILES {
-
-    label 'suppa2_split_files'
+    label 'process_single'
     tag "${grouped_files[0]}"
     publishDir "${outputDir}/suppa2/suppa2_psi/${grouped_files[0]}", mode: "copy"
 
@@ -93,10 +86,7 @@ process SUPPA2_SPLIT_FILES {
 
 /* Outlining the SUPPA2 calculate delta psi for events process */
 process SUPPA2_CALCULATE_EVENTS_DELTA_PSI {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'suppa2_calculate_events_delta_psi'
+    label 'process_high'
     tag "${paired_files[0]}_v_${paired_files[3]}"
     publishDir "${outputDir}/suppa2/suppa2_delta_psi/${paired_files[0]}_v_${paired_files[3]}", mode: "copy"
 

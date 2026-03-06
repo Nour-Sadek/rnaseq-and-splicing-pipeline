@@ -2,10 +2,7 @@
 
 /* Outlining the WHIPPET creating index process */
 process WHIPPET_INDEX {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'whippet_index'
+    label 'process_high'
     publishDir "${outputDir}/whippet/index", mode: "copy"
 
     container 'naotokubota/whippet:1.6.1'
@@ -28,10 +25,7 @@ process WHIPPET_INDEX {
 
 /* Outlining the WHIPPET quantifying FASTQ file process */
 process WHIPPET_QUANT {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'whippet_quant'
+    label 'process_high'
     tag "${sample_id}"
     publishDir "${outputDir}/whippet/quant/${sample_id}", mode: "copy"
 
@@ -71,10 +65,7 @@ process WHIPPET_QUANT {
 
 /* Outlining the WHIPPET delta psi process */
 process WHIPPET_DELTA {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'whippet_delta'
+    label 'process_high'
     tag "${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}"
     publishDir "${outputDir}/whippet/delta_psi/${grouped_files_pairs[0]}_v_${grouped_files_pairs[2]}", mode: "copy"
 

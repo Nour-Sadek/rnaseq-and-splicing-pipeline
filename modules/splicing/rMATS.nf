@@ -2,10 +2,7 @@
 
 /* Outlining the rMATS individual splciing process */
 process rMATS_INDIVIDUAL {
-    memory '7.6 GB'
-    cpus 2
-
-    label 'rMats_individual'
+    label 'process_high'
     tag "${sample_bams[0]}"
     publishDir "${outputDir}/rMats/individual_analysis", mode: "copy"
 
@@ -29,11 +26,8 @@ process rMATS_INDIVIDUAL {
 }
 
 /* Outlining the rMATS differential splciing process */
-process rMATS_DIFFERENTIAL {
-    memory '7.6 GB'
-    cpus 2
-    
-    label 'rMats_differential'
+process rMATS_DIFFERENTIAL { 
+    label 'process_high'
     tag "${sample_group_1}_v_${sample_group_2}"
     publishDir "${outputDir}/rMats/differential_analysis", mode: "copy"
 

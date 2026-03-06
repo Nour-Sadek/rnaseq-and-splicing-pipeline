@@ -1,11 +1,8 @@
 #!/usr/bin/env nextflow
 
 /* Outlining the STAR process of creating a reference genome index */
-process STAR_REFERENCE_INDEX {
-    memory '12 GB'
-    cpus 2
-    
-    label 'star_reference_index'
+process STAR_REFERENCE_INDEX { 
+    label 'process_high'
     publishDir "${outputDir}/star", mode: "copy"
 
     container 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
@@ -28,7 +25,7 @@ process STAR_REFERENCE_INDEX {
 
 /* Outlining the HISAT2 process of creating a reference genome index */
 process HISAT2_REFERENCE_INDEX {
-    label 'hisat2_reference_index'
+    label 'process_high'
     publishDir "${outputDir}/hisat2/reference_index", mode: "copy"
 
     container 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
@@ -50,7 +47,7 @@ process HISAT2_REFERENCE_INDEX {
 
 /* Outlining the SALMON_QUASI_MAPPING process of creating a reference genome index */
 process SALMON_REFERENCE_INDEX {
-    label 'salmon_reference_index'
+    label 'process_high'
     publishDir "${outputDir}/salmon", mode: "copy"
 
     container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
@@ -72,7 +69,7 @@ process SALMON_REFERENCE_INDEX {
 
 /* Outlining the KALLISTO process of creating a reference genome index */
 process KALLISTO_REFERENCE_INDEX {
-    label 'kallisto_reference_index'
+    label 'process_high'
     publishDir "${outputDir}/kallisto/reference_index", mode: "copy"
 
     container 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'

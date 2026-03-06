@@ -2,7 +2,7 @@
 
 /* Outlining the Trimmomatic trimming process */
 process TRIMMOMATIC {
-    label 'trimmomatic'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/trimmomatic/${sample_id}", mode: "copy"
 
@@ -34,7 +34,7 @@ process TRIMMOMATIC {
 
 /* Outlining the bbduk trimming process */
 process BBDUK {
-    label 'bbduk'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/bbduk/${sample_id}", mode: "copy"
 
@@ -65,7 +65,7 @@ process BBDUK {
 
 /* Outlining the trim_galore trimming process */
 process TRIM_GALORE {
-    label 'trim_galore'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/trim_galore/${sample_id}", mode: "copy"
 

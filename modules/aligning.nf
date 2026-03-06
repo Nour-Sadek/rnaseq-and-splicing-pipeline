@@ -2,10 +2,7 @@
 
 /* Outlining the STAR alignment process */
 process STAR {
-    memory '12 GB'
-    cpus 2
-
-    label 'star'
+    label 'process_high'
     tag "$sample_id"
     publishDir "${outputDir}/star/${sample_id}", mode: "copy"
 
@@ -39,10 +36,7 @@ process STAR {
 
 /* Outlining the HISAT2 alignment process */
 process HISAT2 {
-    memory '7 GB'
-    cpus 2
-
-    label 'hisat2'
+    label 'process_high'
     tag "$sample_id"
     publishDir "${outputDir}/hisat2/${sample_id}", mode: "copy"
 

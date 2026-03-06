@@ -2,7 +2,7 @@
 
 /* Outlining the HTSEQ_COUNT reads quantification process */
 process HTSEQ_COUNT {
-    label 'htseq_count'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/htseq_count", mode: "copy"
 
@@ -26,7 +26,7 @@ process HTSEQ_COUNT {
 
 /* Outlining the FEATURE_COUNTS reads quantification process */
 process FEATURE_COUNTS {
-    label 'feature_counts'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/feature_counts", mode: "copy"
 
@@ -55,7 +55,7 @@ process FEATURE_COUNTS {
 
 /* Outlining the SALMON_QUASI_MAPPING_MODE reads quantification process */
 process SALMON_QUASI_MAPPING_MODE {
-    label 'salmon_quasi_mapping_mode_counts'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/salmon/salmon_quasi_mapping_mode_counts", mode: "copy"
 
@@ -93,7 +93,7 @@ process SALMON_QUASI_MAPPING_MODE {
 
 /* Outlining the KALLISTO reads quantification process */
 process KALLISTO {
-    label 'kallisto'
+    label 'process_medium'
     tag "$sample_id"
     publishDir "${outputDir}/kallisto/counts", mode: "copy"
 
