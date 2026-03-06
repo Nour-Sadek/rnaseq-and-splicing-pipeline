@@ -53,28 +53,6 @@ process FEATURE_COUNTS {
     }
 }
 
-/* Outlining the SALMON_ALIGNMENT_MODE reads quantification process (requires previous alignment to transcripts rather than genome) */
-process SALMON_ALIGNMENT_MODE {
-    label 'salmon_alignment_mode_counts'
-    tag "$sample_id"
-    publishDir "${outputDir}/salmon/salmon_alignment_mode_counts/${sample_id}", mode: "copy"
-
-    container 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
-
-	input:
-        tuple val(sample_id), val(sample_group), path(sorted_bam_file)
-        val outputDir
-        path transcripts_file
-
-	output:
-		path "*"
-	
-    script:
-    """
-    salmon quant -t $transcripts_file -l A -a $sorted_bam_file -p $task.cpus -o .
-    """
-}
-
 /* Outlining the SALMON_QUASI_MAPPING_MODE reads quantification process */
 process SALMON_QUASI_MAPPING_MODE {
     label 'salmon_quasi_mapping_mode_counts'
@@ -144,38 +122,3 @@ process KALLISTO {
     }
 }
 
-/* Outlining the RSEM alignment and reads quantification process */
-process RSEM {
-    memory '12 GB'
-    cpus 2
-
-    label 'rsem'
-    tag "$sample_id"
-    publishDir "${outputDir}/rsem/counts/${sample_id}", mode: "copy"
-
-    container 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
-
-	input:
-        tuple val(sample_id), val(sample_group), path(reads)
-        val outputDir
-        val rsem_index_prefix
-        path rsem_index_files
-
-	output:
-		path "${sample_id}.stat", emit: stats_file
-        path "${sample_id}.genes.results", emit: genes_results
-        path "${sample_id}.isoforms.results", emit: isoforms_results
-        path "${sample_id}.log", emit: log_file
-        path "${sample_id}.transcript.bam", emit: transcript_bam_file
-	
-    script:
-    if (params.paired_end) {
-        """
-        rsem-calculate-expression --paired-end --star -p $task.cpus ${reads[0]} ${reads[1]} reference_index/$rsem_index_prefix $sample_id
-        """
-    } else {
-        """
-        rsem-calculate-expression --star --strandedness $params.strandedness --fragment-length-mean $params.fragment_length_mean --fragment-length-sd $params.fragment_length_sd -p $task.cpus ${reads[0]} reference_index/$rsem_index_prefix $sample_id
-        """
-    }
-}

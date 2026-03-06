@@ -70,34 +70,3 @@ process HISAT2 {
     }
 }
 
-/* Outlining the MINIMAP2 alignment process */
-process MINIMAP2 {
-    memory '7 GB'
-    cpus 2
-
-    label 'minimap2'
-    tag "$sample_id"
-    publishDir "${outputDir}/minimap2/${sample_id}", mode: "copy"
-
-    container 'community.wave.seqera.io/library/minimap2:2.30--dde6b0c5fbc82ebd'
-
-	input:
-        tuple val(sample_id), val(sample_group), path(reads)
-        path reference_genome_index
-        val outputDir
-        val preset
-
-	output:
-        tuple val(sample_id), val(sample_group), path("${sample_id}_Aligned.sam"), emit: alignment_output
-	
-    script:
-    if (params.paired_end) {
-        """
-        minimap2 -t $task.cpus -ax $preset $reference_genome_index ${reads[0]} ${reads[1]} > ${sample_id}_Aligned.sam
-        """
-    } else {
-        """
-        minimap2 -t $task.cpus -ax $preset $reference_genome_index ${reads[0]} > ${sample_id}_Aligned.sam
-        """
-    }
-}
