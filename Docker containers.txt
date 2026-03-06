@@ -1,0 +1,31 @@
+Change to Apptainer containers by using the following command: 
+apptainer pull --name <name.img> docker://<docker container name> > /dev/null
+
+Use export NXF_APPTAINER_CACHEDIR=$HOME/rnaseq-and-splicing-pipeline/apptainer_cache before running nextflow to 
+specify to nextflow to not pull containers but rather to look for them in this directory
+Also need to set-up NXF_HOME=$HOME/rnaseq-and-splicing-pipeline/apptainer_cache/home
+
+FastQC: 'community.wave.seqera.io/library/fastqc:0.12.1--af7a5314d5015c29'
+Bowtie2: 'biocontainers/bowtie2:v2.4.1_cv1'
+
+Trimmomatic: 'community.wave.seqera.io/library/trimmomatic:0.40--0c25090769939729'
+Trim Galore: 'community.wave.seqera.io/library/trim-galore:0.6.10--1bf8ca4e1967cd18'
+Bbduk: 'community.wave.seqera.io/library/bbmap:39.33--60639c9e1473b7a8'
+
+STAR: 'community.wave.seqera.io/library/star:2.7.11b--822039d47adf19a7'
+HISAT2: 'community.wave.seqera.io/library/hisat2:2.2.1--df34d2bb25ac6de5'
+
+samtools: 'community.wave.seqera.io/library/samtools:1.22.1--eccb42ff8fb55509'
+
+Htseq: 'community.wave.seqera.io/library/htseq:2.0.9--4a65a9021e1142a5'
+featureCounts: 'community.wave.seqera.io/library/subread:2.1.1--0ac4d7e46cd0c5d7'
+Salmon: 'community.wave.seqera.io/library/salmon:1.10.3--fcd0755dd8abb423'
+Kallisto: 'community.wave.seqera.io/library/kallisto:0.51.1--b63691b6841c7a52'
+Rsem + STAR: 'community.wave.seqera.io/library/rsem_star:f47af67e18e2d94b'
+
+Majiq: 'mcfonsecalab/majiq:2.5.1'
+rMATS: 'mcfonsecalab/rmats'
+Suppa2: 'naotokubota/suppa:2.3'
+Whippet: 'naotokubota/whippet:1.6.1'
+
+r-base: 'rocker/r-base:4.3.2'
