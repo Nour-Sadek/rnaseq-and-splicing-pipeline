@@ -1,16 +1,20 @@
 # files parameters
 csv_reads: './test_data/test_csv.txt'  # './test_data/test_csv.txt' './test_data_single/test_csv_single.txt'
 outputDir: './results'
-genomeFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
-transcriptFastaFile: './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
-annotationsGTFFile: './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
-annotationsGFF3File: './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
+genomeFastaFile: './test_data/genome_files/genome.fasta' # './genome_files/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa'
+transcriptFastaFile: './test_data/genome_files/transcriptome.fasta' # './genome_files/Caenorhabditis_elegans.WBcel235.cdna.all.fa'
+annotationsGTFFile: './test_data/genome_files/genes_with_empty_tid.gtf' # './genome_files/Caenorhabditis_elegans.WBcel235.115.gtf'
+annotationsGFF3File: './test_data/genome_files/genes.gff' # './genome_files/Caenorhabditis_elegans.WBcel235.115.gff3'
 
 # which tools to use for each process
-trimming: 'trim_galore'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
-aligner: 'star'  # available options are: 'star', 'hisat2', 'none'
-quantifier: 'htseq-count'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto', 'rsem'
-splicingAnalyzer: null  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet', 'jum'
+trimming: 'bbduk'  # available options are: 'trimmomatic', 'bbduk', 'trim_galore'
+aligner: null  # available options are: 'star', 'hisat2', 'none'
+quantifier: 'kallisto'  # available options are: 'htseq-count', 'featureCounts', 'salmon-quasi-mapping-mode', 'kallisto'
+splicingAnalyzer: 'whippet'  # available options are: 'majiq', 'rMats', 'suppa2', 'whippet', 'jum'
+
+# Specify whether individual and/or differential splicing analysis is desired
+individualSplicingAnalysis: true
+differentialSplicingAnalysis: false
 
 # Specify whether reads are paired or single end
 paired_end: true
@@ -20,13 +24,14 @@ run_fastqc_before_trimming: true
 run_fastqc_after_trimming: false
 
 # Bowtie2 filtering parameters
-filter_contaminants: true
+filter_contaminants: false
 contaminants: ['./genome_files/Caenorhabditis_elegans.WBcel235.ncrna.fa.gz']  # provide as a list of paths for the contaminant files
 
 #--------------------------- Trimmomatic parameters ---------------------------#
 # Change the value for any trimming step (from none) for it to be included. Make sure to have at least one trimming option active, otherwise there will be an error.
 # If you want to use ILLUMINACLIP command, then at least these four parameters need to have values: <adapters_file>, <seed_mismatches>, <palindrome_clip_threshold>, <simple_clip_threshold>
 # If you want to use SLIDINGWINDOW command, then both <window_size> and <required_quality> need to have values.
+trimmomaticArgs: null
 base_quality_encoding: null
 adapters_file: 'TruSeq3-SE.fa'
 seed_mismatches: 2
@@ -52,6 +57,7 @@ max_count: null
 
 
 #--------------------------- Bbduk parameters ---------------------------#
+bbdukArgs: null
 # Input parameters
 qin: null
 reads: null
@@ -101,6 +107,7 @@ tossjunk: null
 
 
 #--------------------------- Trim-Galore parameters ---------------------------#
+trimGaloreArgs: null
 quality: null
 quality_encoding: null  # options: phred33 or phred64
 adapter_sequence_1: null  # Or specify the sequence, for example 'GATCGTCGGACT'
@@ -122,11 +129,13 @@ hardtrim3: null
 
 
 #--------------------------- STAR parameters ---------------------------#
+starReferenceIndexArgs: null
+starArgs: null
 # Run parameters
 runRNGseed: null
 # Genome Indexing Parameters - only used with –runMode genomeGenerate
 genomeChrBinNbits: null
-genomeSAindexNbases: null
+genomeSAindexNbases: 7
 genomeSAsparseD: null
 genomeSuffixLengthMax: null
 # Splice Junctions Database
@@ -238,6 +247,7 @@ quantTranscriptomeSAMoutput: null
 
 
 #--------------------------- HTSEQ-COUNT parameters ---------------------------#
+htseqCountArgs: null
 max_reads_in_buffer: null
 stranded: 'no'
 minaqual: null
@@ -252,6 +262,7 @@ add_chromosome_info: false
 
 
 #--------------------------- featureCounts parameters ---------------------------#
+featureCountsArgs: null
 requireBothEndsMapped: false  # paired-end
 countChimericFragments: false  # paired-end
 minFragLength: null
@@ -289,6 +300,7 @@ splitOnly: false
 
 
 #--------------------------- HISAT2-build parameters ---------------------------#
+hisat2ReferenceIndexArgs: null
 hisat2_index_prefix: 'genome'  # if not specified, the default 'genome' will be used
 large_index: false
 noauto: false  # If specified as true, must specify values for <bmax>/<bamxdivn> and <dcv> parameters
@@ -307,6 +319,7 @@ cutoff: null
 
 
 #--------------------------- HISAT2 parameters ---------------------------#
+hisat2Args: null
 # Input options
 skip: null
 upto: null
@@ -363,8 +376,9 @@ non_deterministic: false
 
 
 #--------------------------- SALMON QUASI MAPPING MODE parameters ---------------------------#
+salmonMappingArgs: null
 # Used with making the reference index
-kmer_size: 31
+kmer_size: 31  # Required
 # Basic options
 seqBias: false
 gcBias: false
@@ -432,6 +446,7 @@ vbPrior: null
 
 
 #--------------------------- KALLISTO index parameters ---------------------------#
+kallistoIndexArgs: null
 kmer_length: null
 make_unique: false
 fasta_contains_aa: false
@@ -441,6 +456,7 @@ ec_max_size: null
 
 
 #--------------------------- KALLISTO quant parameters ---------------------------#
+kallistoQuantArgs: null
 num_bootstrap_samples: null
 bootstrap_seed: null
 plaintext: false
@@ -451,12 +467,8 @@ mean_fragment_length: null  # estimated for paired-end reads, must be used for s
 sd_fragment_length: null  # estimated for paired-end reads, must be used for single-end reads (70)
 
 
-# General Splicing parameters
-individualSplicingAnalysis: true
-differentialSplicingAnalysis: true
-
-
 #--------------------------- MAJIQ build parameters ---------------------------#
+majiqBuildArgs: null
 min_experiments: null
 # Junction filters options
 junction_minreads: null
@@ -488,10 +500,12 @@ dump_coverage: false
 
 #--------------------------- MAJIQ parameters ---------------------------#
 #--------------------------- MAJIQ psi parameters ---------------------------#
+majiqPsiArgs: null
 minreads_psi: null
 minpos_psi: null
 min_experiments_psi: null
 #--------------------------- MAJIQ deltapsi parameters ---------------------------#
+majiqDeltaPsiArgs: null
 minreads_deltapsi: null
 minpos_deltapsi: null
 min_experiments_deltapsi: null
@@ -504,6 +518,7 @@ prior_iter: null
 
 #--------------------------- Voila modulize parameters ---------------------------#
 #--------------------------- Voila modulize parameters for majiq psi files ---------------------------#
+voilaModulizePsiArgs: null
 psi_ignore_inconsistent_group_errors: false
 psi_only_binary: false
 psi_untrimmed_exons: false
@@ -522,6 +537,7 @@ psi_keep_no_lsvs_junctions: false
 decomplexify_psi_threshold: null
 psi_decomplexify_reads_threshold: null
 #--------------------------- Voila modulize parameters for majiq deltapsi files ---------------------------#
+voilaModulizeDeltaPsiArgs: null
 deltapsi_ignore_inconsistent_group_errors: false
 deltapsi_only_binary: false
 deltapsi_untrimmed_exons: false
@@ -550,9 +566,11 @@ probability_non_changing_threshold: null
 
 
 #--------------------------- rMats parameters ---------------------------#
+#--------------------------- rMats parameters for both individual and differential ---------------------------#
 libType: null
 readLength: 150  # required parameter
 #--------------------------- rMats individual parameters ---------------------------#
+rmatsIndividualArgs: null
 ind_variable_read_length: true
 ind_anchorLength: null
 ind_tophatAnchor: null
@@ -564,6 +582,7 @@ ind_novelSS: false
 ind_mil: null
 ind_mel: null
 #--------------------------- rMats differential parameters ---------------------------#
+rmatsDifferentialArgs: null
 diff_variable_read_length: false
 diff_anchorLength: null
 diff_tophatAnchor: null
@@ -578,9 +597,11 @@ diff_mel: null
 
 #--------------------------- whippet parameters ---------------------------#
 #--------------------------- whippet-index parameters ---------------------------#
+whipperIndexArgs: null
 kmer_size_ee_junc: null
 suppress_low_tsl: false
 #--------------------------- whippet-quant parameters ---------------------------#
+whippetQuantArgs: null
 seed_len: null
 seed_try: null
 seed_tol: null
@@ -595,6 +616,7 @@ pair_same_strand: false  # only for paired end
 qual_string_encoded: null  # "phred-33" or "phred-64"
 circ: false
 #--------------------------- whippet-delta parameters ---------------------------#
+whippetDeltaArgs: null
 min_reads: null
 min_samples: null
 empirical_size: null
@@ -603,14 +625,17 @@ seed_rng: null
 
 #--------------------------- suppa2 parameters ---------------------------#
 #--------------------------- suppa2 generateEvents parameters ---------------------------#
+suppa2GenerateEventsArgs: null
 boundary: null
 variability_threshold: null
 pool_genes: false
 exon_length: null
 #--------------------------- suppa2 psiPerEvent parameters ---------------------------#
+suppa2PsiPerEventArgs: null
 total_filter:  null
 save_tpm_events_psi: false
 #--------------------------- suppa2 diffSplice parameters ---------------------------#
+suppa2DiffSPliceArgs: null
 method: 'empirical'  # required. Options are: 'empirical' or 'classical'
 area: null
 lower_bound: null
@@ -620,10 +645,3 @@ alpha: null
 save_tpm_events_diff: false
 use_median: false
 tpm_threshold: null
-
-
-# RSEM parameters [ALL PARAMETERS ARE REQUIRED FOR SINGLE-END READS. FOR PAIRED-END READS, ONLY rsem_index_prefix is required]
-rsem_index_prefix: 'rsem_reference'
-strandedness: 'none'
-fragment_length_mean: -1  # used only for single-end reads, change the value if you know it
-fragment_length_sd: 0  # used only for single-end reads, change the value if you know it

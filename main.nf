@@ -10,9 +10,9 @@ def outputDir = params.outputDir ?: './results'
 include { FASTQC; FASTQC as FASTQCAFTERTRIMMING } from './modules/fastqc.nf'
 include { BOWTIE2_CONTAMINANT_INDEX; BOWTIE2_REMOVE_CONTAMINANTS } from './modules/contaminant_rna_filtering.nf'
 include { TRIMMOMATIC; BBDUK; TRIM_GALORE } from './modules/trimming.nf'
-include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX; RSEM_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
+include { STAR_REFERENCE_INDEX; HISAT2_REFERENCE_INDEX; SALMON_REFERENCE_INDEX; KALLISTO_REFERENCE_INDEX } from './modules/reference_genome_index.nf'
 include { STAR; HISAT2 } from './modules/aligning.nf'
-include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_QUASI_MAPPING_MODE; KALLISTO; RSEM } from './modules/counting_reads.nf'
+include { HTSEQ_COUNT; FEATURE_COUNTS; SALMON_QUASI_MAPPING_MODE; KALLISTO } from './modules/counting_reads.nf'
 include { SAM_TO_BAM; SORT_AND_INDEX_BAM } from './modules/samtools.nf'
 include { MAJIQ_CONFIG; MAJIQ_BUILD; MAJIQ_PSI; MAJIQ_DELTA_PSI } from './modules/splicing/majiq.nf'
 include { VOILA_PSI; VOILA_DELTA_PSI } from './modules/splicing/voila.nf'
@@ -55,9 +55,12 @@ workflow {
     if (params.trimming && params.trimming == 'trimmomatic') {
 
         // Run the TRIMMOMATIC process
-        trimmomaticArgs = OrganizeArguments.makeTrimmomaticArgs(params.base_quality_encoding, params.adapters_file, params.seed_mismatches, params.palindrome_clip_threshold, params.simple_clip_threshold, 
-                    params.min_adapter_length_palindrome, params.keepbothreads, params.window_size, params.required_quality, params.target_length, params.strictness, params.bases, 
-                    params.min_count, params.max_count, params.leading, params.trailing, params.headcrop, params.tailcrop, params.crop, params.minlen, params.maxlen, params.avgqual)
+        if (params.trimmomaticArgs) trimmomaticArgs = params.trimmomaticArgs
+        else {
+            trimmomaticArgs = OrganizeArguments.makeTrimmomaticArgs(params.base_quality_encoding, params.adapters_file, params.seed_mismatches, params.palindrome_clip_threshold, params.simple_clip_threshold, 
+                params.min_adapter_length_palindrome, params.keepbothreads, params.window_size, params.required_quality, params.target_length, params.strictness, params.bases, 
+                params.min_count, params.max_count, params.leading, params.trailing, params.headcrop, params.tailcrop, params.crop, params.minlen, params.maxlen, params.avgqual)
+        }
         TRIMMOMATIC(reads_channel, outputDir, trimmomaticArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
@@ -66,11 +69,14 @@ workflow {
     } else if (params.trimming && params.trimming == 'bbduk') {
 
         // Run the BBDUK process
-        bbdukArgs = OrganizeArguments.makeBbdukArgs(params.qin, params.reads, params.samplerate, params.k, params.rcomp, params.maskmiddle, params.minkmerhits, params.minkmerfraction, params.mincovfraction, 
+        if (params.bbdukArgs) bbdukArgs = params.bbdukArgs
+        else {
+            bbdukArgs = OrganizeArguments.makeBbdukArgs(params.qin, params.reads, params.samplerate, params.k, params.rcomp, params.maskmiddle, params.minkmerhits, params.minkmerfraction, params.mincovfraction, 
                 params.hammingdistance, params.qhdist, params.editdistance, params.hammingdistance2, params.qhdist2, params.editdistance2, params.forbidn, params.ktrim, params.ktrimtips, params.maskfullycovered, 
                 params.mink, params.qtrim, params.trimq, params.minlength, params.minlengthfraction, params.minavgquality, params.minbasequality, params.maxns, params.minconsecutivebases, params.trimpad, 
                 params.trimbyoverlap, params.strictoverlap, params.minoverlap, params.mininsert, params.trimpairsevenly, params.forcetrimleft, params.forcetrimright, params.forcetrimright2, params.forcetrimmod, 
                 params.restrictleft, params.restrictright, params.mingc, params.maxgc, params.tossjunk)
+        }
         BBDUK(reads_channel, outputDir, bbdukArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
@@ -79,13 +85,17 @@ workflow {
     } else if (params.trimming && params.trimming == 'trim_galore') {
         
         // Run the TRIM_GALORE process
-        trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
+        if (params.trimGaloreArgs) trimGaloreArgs = params.trimGaloreArgs
+        else {
+            trimGaloreArgs = OrganizeArguments.makeTrimGaloreArgs(params.paired_end, params.quality, params.quality_encoding, params.adapter_sequence_1, params.adapter_sequence_2, params.specific_adapters, 
                 params.max_length, params.stringency, params.error_rate, params.length, params.maxn, params.trim_n, params.clip_R1, params.clip_R2, params.three_prime_clip_R1, params.three_prime_clip_R2, 
                 params.nextseq_quality, params.hardtrim5, params.hardtrim3)
+        }
         TRIM_GALORE(reads_channel, outputDir, trimGaloreArgs)
 
         // Extract the sample_id, fwd_trimmed, and rev_trimmed outputs
         trimming_output_channel = TRIM_GALORE.out.trimmed_samples
+
     } else {  // No trimming is done
         trimming_output_channel = reads_channel
     }
@@ -100,24 +110,30 @@ workflow {
     if (params.aligner && params.aligner == "star") {
 
         // Create the reference genome index
-        starReferenceIndexArgs = OrganizeArguments.makeStarReferenceIndexArgs(params.runRNGseed, params.genomeChrBinNbits, params.genomeSAindexNbases, params.genomeSAsparseD, params.genomeSuffixLengthMax, 
-            params.sjdbGTFfeatureExon, params.sjdbGTFtagExonParentTranscript, params.sjdbGTFtagExonParentGene, params.sjdbGTFtagExonParentGeneName, params.sjdbGTFtagExonParentGeneType, params.sjdbOverhang, 
-            params.sjdbScore, params.sjdbInsertSave)
+        if (params.starReferenceIndexArgs) starReferenceIndexArgs = params.starReferenceIndexArgs
+        else {
+           starReferenceIndexArgs = OrganizeArguments.makeStarReferenceIndexArgs(params.runRNGseed, params.genomeChrBinNbits, params.genomeSAindexNbases, params.genomeSAsparseD, params.genomeSuffixLengthMax, 
+                params.sjdbGTFfeatureExon, params.sjdbGTFtagExonParentTranscript, params.sjdbGTFtagExonParentGene, params.sjdbGTFtagExonParentGeneName, params.sjdbGTFtagExonParentGeneType, params.sjdbOverhang, 
+                params.sjdbScore, params.sjdbInsertSave) 
+        }
         STAR_REFERENCE_INDEX(outputDir, file(params.genomeFastaFile), file(params.annotationsGTFFile), starReferenceIndexArgs)
 
         // Run the STAR alignment process
-        starArgs = OrganizeArguments.makeStarArgs(params.paired_end, params.runRNGseed, params.readMapNumber, params.readMatesLengthsIn, params.readQualityScoreBase, params.clipAdapterType, params.clip3pNbases, 
-            params.clip3pAdapterSeq, params.clip3pAdapterMMp, params.clip3pAfterAdapterNbases, params.clip5pNbases, params.outReadsUnmapped, params.outQSconversionAdd, params.outMultimapperOrder, params.outSAMmode, 
-            params.outSAMstrandField, params.outSAMattributes, params.outSAMattrIHstart, params.outSAMunmapped, params.outSAMprimaryFlag, params.outSAMreadID, params.outSAMmapqUnique, params.outSAMflagOR, params.outSAMflagAND, 
-            params.outSAMmultNmax, params.outSAMtlen, params.outBAMcompression, params.outFilterType, params.outFilterMultimapScoreRange, params.outFilterMultimapNmax, params.outFilterMismatchNmax, params.outFilterMismatchNoverLmax, 
-            params.outFilterMismatchNoverReadLmax, params.outFilterScoreMin, params.outFilterScoreMinOverLread, params.outFilterMatchNmin, params.outFilterMatchNminOverLread, params.outFilterIntronMotifs, params.outFilterIntronStrands, 
-            params.outSJfilterReads, params.outSJfilterOverhangMin, params.outSJfilterCountUniqueMin, params.outSJfilterCountTotalMin, params.outSJfilterDistToOtherSJmin, params.outSJfilterIntronMaxVsReadN, params.scoreGap, 
-            params.scoreGapNoncan, params.scoreGapGCAG, params.scoreGapATAC, params.scoreGenomicLengthLog2scale, params.scoreDelOpen, params.scoreDelBase, params.scoreInsOpen, params.scoreInsBase, params.scoreStitchSJshift, 
-            params.seedSearchStartLmax, params.seedSearchStartLmaxOverLread, params.seedSearchLmax, params.seedMultimapNmax, params.seedPerReadNmax, params.seedPerWindowNmax, params.seedNoneLociPerWindow, params.seedSplitMin, 
-            params.seedMapMin, params.alignIntronMin, params.alignIntronMax, params.alignMatesGapMax, params.alignSJoverhangMin, params.alignSJstitchMismatchNmax, params.alignSJDBoverhangMin, params.alignSplicedMateMapLmin, 
-            params.alignSplicedMateMapLminOverLmate, params.alignWindowsPerReadNmax, params.alignTranscriptsPerWindowNmax, params.alignTranscriptsPerReadNmax, params.alignEndsType, params.alignEndsProtrude, params.alignSoftClipAtReferenceEnds, 
-            params.alignInsertionFlush, params.peOverlapNbasesMin, params.peOverlapMMp, params.winAnchorMultimapNmax, params.winBinNbits, params.winAnchorDistNbins, params.winFlankNbins, params.winReadCoverageRelativeMin, 
-            params.winReadCoverageBasesMin, params.quantMode, params.quantTranscriptomeBAMcompression, params.quantTranscriptomeSAMoutput)
+        if (params.starArgs) starArgs = params.starArgs
+        else {
+            starArgs = OrganizeArguments.makeStarArgs(params.paired_end, params.runRNGseed, params.readMapNumber, params.readMatesLengthsIn, params.readQualityScoreBase, params.clipAdapterType, params.clip3pNbases, 
+                params.clip3pAdapterSeq, params.clip3pAdapterMMp, params.clip3pAfterAdapterNbases, params.clip5pNbases, params.outReadsUnmapped, params.outQSconversionAdd, params.outMultimapperOrder, params.outSAMmode, 
+                params.outSAMstrandField, params.outSAMattributes, params.outSAMattrIHstart, params.outSAMunmapped, params.outSAMprimaryFlag, params.outSAMreadID, params.outSAMmapqUnique, params.outSAMflagOR, params.outSAMflagAND, 
+                params.outSAMmultNmax, params.outSAMtlen, params.outBAMcompression, params.outFilterType, params.outFilterMultimapScoreRange, params.outFilterMultimapNmax, params.outFilterMismatchNmax, params.outFilterMismatchNoverLmax, 
+                params.outFilterMismatchNoverReadLmax, params.outFilterScoreMin, params.outFilterScoreMinOverLread, params.outFilterMatchNmin, params.outFilterMatchNminOverLread, params.outFilterIntronMotifs, params.outFilterIntronStrands, 
+                params.outSJfilterReads, params.outSJfilterOverhangMin, params.outSJfilterCountUniqueMin, params.outSJfilterCountTotalMin, params.outSJfilterDistToOtherSJmin, params.outSJfilterIntronMaxVsReadN, params.scoreGap, 
+                params.scoreGapNoncan, params.scoreGapGCAG, params.scoreGapATAC, params.scoreGenomicLengthLog2scale, params.scoreDelOpen, params.scoreDelBase, params.scoreInsOpen, params.scoreInsBase, params.scoreStitchSJshift, 
+                params.seedSearchStartLmax, params.seedSearchStartLmaxOverLread, params.seedSearchLmax, params.seedMultimapNmax, params.seedPerReadNmax, params.seedPerWindowNmax, params.seedNoneLociPerWindow, params.seedSplitMin, 
+                params.seedMapMin, params.alignIntronMin, params.alignIntronMax, params.alignMatesGapMax, params.alignSJoverhangMin, params.alignSJstitchMismatchNmax, params.alignSJDBoverhangMin, params.alignSplicedMateMapLmin, 
+                params.alignSplicedMateMapLminOverLmate, params.alignWindowsPerReadNmax, params.alignTranscriptsPerWindowNmax, params.alignTranscriptsPerReadNmax, params.alignEndsType, params.alignEndsProtrude, params.alignSoftClipAtReferenceEnds, 
+                params.alignInsertionFlush, params.peOverlapNbasesMin, params.peOverlapMMp, params.winAnchorMultimapNmax, params.winBinNbits, params.winAnchorDistNbins, params.winFlankNbins, params.winReadCoverageRelativeMin, 
+                params.winReadCoverageBasesMin, params.quantMode, params.quantTranscriptomeBAMcompression, params.quantTranscriptomeSAMoutput)
+        }
         STAR(trimming_output_channel, outputDir, STAR_REFERENCE_INDEX.out.reference_index, starArgs)
 
         // Extract the sample_id and sam_file outputs
@@ -129,17 +145,23 @@ workflow {
         def hisat2_index_prefix = params.hisat2_index_prefix ?: 'genome'
 
         // Create the reference genome index
-        hisat2ReferenceIndexArgs = OrganizeArguments.makeHisat2ReferenceIndexArgs(params.large_index, params.noauto, params.bmax, params.bmaxdivn, params.dcv, params.nodc, params.noref, params.justref, params.offrate, 
-            params.ftabchars, params.localoffrate, params.localftabchars, params.seed, params.cutoff)
+        if (params.hisat2ReferenceIndexArgs) hisat2ReferenceIndexArgs = params.hisat2ReferenceIndexArgs
+        else {
+            hisat2ReferenceIndexArgs = OrganizeArguments.makeHisat2ReferenceIndexArgs(params.large_index, params.noauto, params.bmax, params.bmaxdivn, params.dcv, params.nodc, params.noref, params.justref, params.offrate, 
+                params.ftabchars, params.localoffrate, params.localftabchars, params.seed, params.cutoff)
+        }
         HISAT2_REFERENCE_INDEX(outputDir, hisat2_index_prefix, file(params.genomeFastaFile), hisat2ReferenceIndexArgs)
 
         // Run the HISAT2 alignment process
-        hisat2Args = OrganizeArguments.makeHisat2Args(params.paired_end, params.skip, params.upto, params.trim5, params.trim3, params.phred_quality, params.solexa_quals, params.int_quals, params.n_ceil_func, 
-            params.ignore_quals, params.norc, params.nofw, params.mismatch_penalties, params.soft_clipping, params.no_softclip, params.n_penalty, params.read_gap_penalty, params.reference_gap_penalty, 
-            params.score_min_func, params.pen_cansplice, params.pen_noncansplice, params.pen_canintronlen, params.pen_noncanintronlen, params.min_intronlen, params.max_intronlen, params.no_temp_splicesite, 
-            params.no_spliced_alignment, params.rna_strandness, params.transcriptome_mapping_only, params.downstream_transcriptome_assembly, params.dta_cufflinks, params.avoid_pseudogene, params.no_templatelen_adjustment, 
-            params.num_alignments_per_read, params.max_seeds, params.report_all_alignments, params.report_secondary_alignments, params.min_fragment_length, params.max_fragment_length, params.mate_orientations, 
-            params.no_mixed, params.no_discordant, params.index_offrate, params.reorder, params.rng_seed, params.non_deterministic)
+        if (params.hisat2Args) hisat2Args = params.hisat2Args
+        else {
+            hisat2Args = OrganizeArguments.makeHisat2Args(params.paired_end, params.skip, params.upto, params.trim5, params.trim3, params.phred_quality, params.solexa_quals, params.int_quals, params.n_ceil_func, 
+                params.ignore_quals, params.norc, params.nofw, params.mismatch_penalties, params.soft_clipping, params.no_softclip, params.n_penalty, params.read_gap_penalty, params.reference_gap_penalty, 
+                params.score_min_func, params.pen_cansplice, params.pen_noncansplice, params.pen_canintronlen, params.pen_noncanintronlen, params.min_intronlen, params.max_intronlen, params.no_temp_splicesite, 
+                params.no_spliced_alignment, params.rna_strandness, params.transcriptome_mapping_only, params.downstream_transcriptome_assembly, params.dta_cufflinks, params.avoid_pseudogene, params.no_templatelen_adjustment, 
+                params.num_alignments_per_read, params.max_seeds, params.report_all_alignments, params.report_secondary_alignments, params.min_fragment_length, params.max_fragment_length, params.mate_orientations, 
+                params.no_mixed, params.no_discordant, params.index_offrate, params.reorder, params.rng_seed, params.non_deterministic)
+        }
         HISAT2(trimming_output_channel, outputDir, hisat2_index_prefix, HISAT2_REFERENCE_INDEX.out.hisat2_index_files, hisat2Args)
 
         // Extract the sample_id and sam_file outputs
@@ -162,17 +184,23 @@ workflow {
         if (params.quantifier && params.quantifier == 'htseq-count') {
             
             // Run the HTSEQ_COUNT reads quantification process
-            htseqCountArgs = OrganizeArguments.makeHtseqCountArgs(params.max_reads_in_buffer, params.stranded, params.minaqual, params.feature_type, params.id_attribute, params.additional_attributes, params.mode, params.nonunique_mode, 
-                params.secondary_alignments, params.supplementary_alignments, params.add_chromosome_info)
+            if (params.htseqCountArgs) htseqCountArgs = params.htseqCountArgs
+            else {
+                htseqCountArgs = OrganizeArguments.makeHtseqCountArgs(params.max_reads_in_buffer, params.stranded, params.minaqual, params.feature_type, params.id_attribute, params.additional_attributes, params.mode, params.nonunique_mode, 
+                    params.secondary_alignments, params.supplementary_alignments, params.add_chromosome_info)
+            }
             HTSEQ_COUNT(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), htseqCountArgs)
 
         } else if (params.quantifier && params.quantifier == 'featureCounts') {
             
             // Run the FEATURE_COUNTS reads quantification process
-            featureCountsArgs = OrganizeArguments.makeFeatureCountsArgs(params.paired_end, params.requireBothEndsMapped, params.countChimericFragments, params.checkFragLength, params.countReadPairs, params.autosort, params.minFragLength, 
-                params.maxfragLength, params.useMetaFeatures, params.attrType_GTF, params.juncCounts, params.isLongRead, params.countMultiMappingReads, params.allowMultiOverlap, params.minMQS, params.isStrandSpecific, 
-                params.featureType_GTF, params.byReadGroup, params.attrType_GTF_extra, params.fraction, params.fracOverlap, params.fracOverlapFeature, params.ignoreDup, params.largestOverlap, params.minOverlap, params.nonOverlap, 
-                params.nonOverlapFeature, params.nonSplitOnly, params.primaryOnly, params.read2pos, params.readExtension3, params.readExtension5, params.readShiftSize, params.readShiftType, params.splitOnly)
+            if (params.featureCountsArgs) featureCountsArgs = params.featureCountsArgs
+            else {
+                featureCountsArgs = OrganizeArguments.makeFeatureCountsArgs(params.paired_end, params.requireBothEndsMapped, params.countChimericFragments, params.checkFragLength, params.countReadPairs, params.autosort, params.minFragLength, 
+                    params.maxfragLength, params.useMetaFeatures, params.attrType_GTF, params.juncCounts, params.isLongRead, params.countMultiMappingReads, params.allowMultiOverlap, params.minMQS, params.isStrandSpecific, 
+                    params.featureType_GTF, params.byReadGroup, params.attrType_GTF_extra, params.fraction, params.fracOverlap, params.fracOverlapFeature, params.ignoreDup, params.largestOverlap, params.minOverlap, params.nonOverlap, 
+                    params.nonOverlapFeature, params.nonSplitOnly, params.primaryOnly, params.read2pos, params.readExtension3, params.readExtension5, params.readShiftSize, params.readShiftType, params.splitOnly)
+            }
             FEATURE_COUNTS(sorted_bam_output_channel, outputDir, file(params.annotationsGTFFile), featureCountsArgs)
         }
 
@@ -182,7 +210,7 @@ workflow {
             // Build the config file
             all_sample_bams = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1)  
-                    .map { samples, group, reads -> [group, reads.simpleName] }.collect(flat: false, sort: true)
+                    .map { samples, group, reads -> [group, reads.baseName] }.collect(flat: false, sort: true)
             
             bam_dirs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                 .groupTuple(by: 1)  
@@ -194,28 +222,37 @@ workflow {
             MAJIQ_CONFIG(all_sample_bams, bam_dirs, outputDir)
 
             // Run majiq build
-            majiqBuildArgs = OrganizeArguments.makeMajiqBuildArgs(params.min_experiments, params.junction_minreads, params.junction_minpos, params.min_denovo_reads, params.disable_denovo, params.intron_read_pos_bins, params.min_intronic_cov, 
-                params.disable_ir, params.disable_denovo_ir, params.annotated_ir_always, params.enable_simplifier, params.simplify_psi, params.simplify_min_experiments, params.simplify_annotated, params.simplify_denovo, params.simplify_ir, 
-                params.markstacks, params.num_bootstrap_read_coverage, params.permissive, params.dump_constitutive, params.dump_coverage)
+            if (params.majiqBuildArgs) majiqBuildArgs = params.majiqBuildArgs
+            else {
+                majiqBuildArgs = OrganizeArguments.makeMajiqBuildArgs(params.min_experiments, params.junction_minreads, params.junction_minpos, params.min_denovo_reads, params.disable_denovo, params.intron_read_pos_bins, params.min_intronic_cov, 
+                    params.disable_ir, params.disable_denovo_ir, params.annotated_ir_always, params.enable_simplifier, params.simplify_psi, params.simplify_min_experiments, params.simplify_annotated, params.simplify_denovo, params.simplify_ir, 
+                    params.markstacks, params.num_bootstrap_read_coverage, params.permissive, params.dump_constitutive, params.dump_coverage)
+            }
             MAJIQ_BUILD(MAJIQ_CONFIG.out.config, file(params.annotationsGFF3File), outputDir, majiqBuildArgs)
 
             if (params.individualSplicingAnalysis) {
                 // Create a channel that would return values such as [sample_group, [files names of replicates]]
                 groups_file_names = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1)  
-                    .map { samples, group, reads -> tuple(group, reads.simpleName) }
+                    .map { samples, group, reads -> tuple(group, reads.baseName) }
                 
                 // Run majiq psi
-                majiqPsiArgs = OrganizeArguments.makeMajiqPsiArgs(params.minreads_psi, params.minpos_psi, params.min_experiments_psi)
+                if (params.majiqPsiArgs) majiqPsiArgs = params.majiqPsiArgs
+                else {
+                    majiqPsiArgs = OrganizeArguments.makeMajiqPsiArgs(params.minreads_psi, params.minpos_psi, params.min_experiments_psi)
+                }
                 MAJIQ_PSI(groups_file_names, MAJIQ_BUILD.out.samples_splice_graphs, outputDir, majiqPsiArgs)
 
                 // Get the work folder for the psi files
                 majiq_psi_parent_folder = MAJIQ_PSI.out.majiq_tsv_file.map { it.parent }
 
                 // Run voila modulize psi
-                voilaModulizePsiArgs = OrganizeArguments.makeVoilaModulizePsiArgs(params.psi_ignore_inconsistent_group_errors, params.psi_only_binary, params.psi_untrimmed_exons, params.psi_show_all, params.psi_gene_ids_to_process_only, 
-                    params.psi_debug_num_genes, params.psi_output_mpe, params.psi_putative_multi_gene_regions, params.psi_keep_constitutive, params.psi_keep_no_lsvs_modules, params.psi_keep_no_lsvs_junctions, params.decomplexify_psi_threshold, 
-                    params.psi_decomplexify_reads_threshold)
+                if (params.voilaModulizePsiArgs) voilaModulizePsiArgs = params.voilaModulizePsiArgs
+                else {
+                    voilaModulizePsiArgs = OrganizeArguments.makeVoilaModulizePsiArgs(params.psi_ignore_inconsistent_group_errors, params.psi_only_binary, params.psi_untrimmed_exons, params.psi_show_all, params.psi_gene_ids_to_process_only, 
+                        params.psi_debug_num_genes, params.psi_output_mpe, params.psi_putative_multi_gene_regions, params.psi_keep_constitutive, params.psi_keep_no_lsvs_modules, params.psi_keep_no_lsvs_junctions, params.decomplexify_psi_threshold, 
+                        params.psi_decomplexify_reads_threshold)
+                }
                 VOILA_PSI(MAJIQ_PSI.out.sample_group, majiq_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir, voilaModulizePsiArgs)
             }
 
@@ -224,7 +261,7 @@ workflow {
                 // [sample_group_1, [sample_group_1's replicates file names], sample_group_2, [sample_group_2's replicates file names]]
                 grouped_files_pairs = SORT_AND_INDEX_BAM.out.sorted_bam_output
                     .groupTuple(by: 1, sort: true)  
-                    .map { samples, group, reads -> [group, reads.simpleName] }
+                    .map { samples, group, reads -> [group, reads.baseName] }
                     .toList()
                     .flatMap { grouped_list ->
                         def pairs = []
@@ -237,18 +274,24 @@ workflow {
                     }
                 
                 // Run differential splicing analysis on each possible pair of samples
-                majiqDeltaPsiArgs = OrganizeArguments.makeMajiqDeltaPsiArgs(params.minreads_deltapsi, params.minpos_deltapsi, params.min_experiments_deltapsi, params.psi_binsize, params.default_prior, params.prior_minreads, 
-                    params.prior_minnonzero, params.prior_iter)
+                if (params.majiqDeltaPsiArgs) majiqDeltaPsiArgs = params.majiqDeltaPsiArgs
+                else {
+                    majiqDeltaPsiArgs = OrganizeArguments.makeMajiqDeltaPsiArgs(params.minreads_deltapsi, params.minpos_deltapsi, params.min_experiments_deltapsi, params.psi_binsize, params.default_prior, params.prior_minreads, 
+                        params.prior_minnonzero, params.prior_iter)
+                }
                 MAJIQ_DELTA_PSI(grouped_files_pairs, MAJIQ_BUILD.out.samples_splice_graphs, outputDir, majiqDeltaPsiArgs)
 
                 // Get the work folder for the delta psi files
                 majiq_delta_psi_parent_folder = MAJIQ_DELTA_PSI.out.majiq_tsv_file.map { it.parent }
 
                 // Run voila modulize delta psi
-                voilaModulizeDeltaPsiArgs = OrganizeArguments.makeVoilaModulizeDeltaPsi(params.deltapsi_ignore_inconsistent_group_errors, params.deltapsi_only_binary, params.deltapsi_untrimmed_exons, params.deltapsi_show_all, 
-                    params.heatmap_selection, params.deltapsi_gene_ids_to_process_only, params.deltapsi_debug_num_genes, params.deltapsi_output_mpe, params.deltapsi_putative_multi_gene_regions, params.deltapsi_keep_constitutive, 
-                    params.deltapsi_keep_no_lsvs_modules, params.deltapsi_keep_no_lsvs_junctions, params.decomplexify_deltapsi_threshold, params.deltapsi_decomplexify_reads_threshold, params.changing_between_group_dpsi, 
-                    params.non_changing_between_group_dpsi, params.changing_between_group_dpsi_secondary, params.probability_changing_threshold, params.probability_non_changing_threshold)
+                if (params.voilaModulizeDeltaPsiArgs) voilaModulizeDeltaPsiArgs = params.voilaModulizeDeltaPsiArgs
+                else {
+                    voilaModulizeDeltaPsiArgs = OrganizeArguments.makeVoilaModulizeDeltaPsi(params.deltapsi_ignore_inconsistent_group_errors, params.deltapsi_only_binary, params.deltapsi_untrimmed_exons, params.deltapsi_show_all, 
+                        params.heatmap_selection, params.deltapsi_gene_ids_to_process_only, params.deltapsi_debug_num_genes, params.deltapsi_output_mpe, params.deltapsi_putative_multi_gene_regions, params.deltapsi_keep_constitutive, 
+                        params.deltapsi_keep_no_lsvs_modules, params.deltapsi_keep_no_lsvs_junctions, params.decomplexify_deltapsi_threshold, params.deltapsi_decomplexify_reads_threshold, params.changing_between_group_dpsi, 
+                        params.non_changing_between_group_dpsi, params.changing_between_group_dpsi_secondary, params.probability_changing_threshold, params.probability_non_changing_threshold)
+                }
                 VOILA_DELTA_PSI(MAJIQ_DELTA_PSI.out.paired_samples_name, majiq_delta_psi_parent_folder, MAJIQ_BUILD.out.splicegraph_file, outputDir, voilaModulizeDeltaPsiArgs)
             }
 
@@ -262,8 +305,11 @@ workflow {
                     .map { samples, group, reads -> [group, reads] }
                 
                 // Run splicing analysis on each sample group
-                rmatsIndividualArgs = OrganizeArguments.makeRmatsIndividualArgs(params.paired_end, params.libType, params.readLength, params.ind_variable_read_length, params.ind_anchorLength, params.ind_tophatAnchor, params.ind_cstat, 
-                    params.ind_task, params.ind_statoff, params.ind_paired_stats, params.ind_novelSS, params.ind_mil, params.ind_mel)
+                if (params.rmatsIndividualArgs) rmatsIndividualArgs = params.rmatsIndividualArgs
+                else {
+                    rmatsIndividualArgs = OrganizeArguments.makeRmatsIndividualArgs(params.paired_end, params.libType, params.readLength, params.ind_variable_read_length, params.ind_anchorLength, params.ind_tophatAnchor, params.ind_cstat, 
+                        params.ind_task, params.ind_statoff, params.ind_paired_stats, params.ind_novelSS, params.ind_mil, params.ind_mel)
+                }
                 rMATS_INDIVIDUAL(sample_bams, file(params.annotationsGTFFile), outputDir, rmatsIndividualArgs)
             }
 
@@ -285,8 +331,11 @@ workflow {
                     }
             
                 // Run differential splicing analysis on each possible pair of samples
-                rmatsDifferentialArgs = OrganizeArguments.makeRmatsDifferentialArgs(params.paired_end, params.libType, params.readLength, params.diff_variable_read_length, params.diff_anchorLength, params.diff_tophatAnchor, params.diff_cstat, 
-                    params.diff_task, params.diff_statoff, params.diff_paired_stats, params.diff_novelSS, params.diff_mil, params.diff_mel)
+                if (params.rmatsDifferentialArgs) rmatsDifferentialArgs = params.rmatsDifferentialArgs
+                else {
+                   rmatsDifferentialArgs = OrganizeArguments.makeRmatsDifferentialArgs(params.paired_end, params.libType, params.readLength, params.diff_variable_read_length, params.diff_anchorLength, params.diff_tophatAnchor, params.diff_cstat, 
+                        params.diff_task, params.diff_statoff, params.diff_paired_stats, params.diff_novelSS, params.diff_mil, params.diff_mel) 
+                }
                 rMATS_DIFFERENTIAL(grouped_bams_pairs, file(params.annotationsGTFFile), outputDir, rmatsDifferentialArgs)
             }
 
@@ -322,13 +371,16 @@ workflow {
             SALMON_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), params.kmer_size)
 
             // Run the SALMON_QUASSI_MAPPING_MODE reads quantification process
-            salmonMappingArgs = OrganizeArguments.makeSalmonMappingArgs(params.seqBias, params.gcBias, params.posBias, params.incompatPrior, params.meta, params.discardOrphansQuasi, params.consensusSlack, params.preMergeChainSubThresh, 
-                params.postMergeChainSubThresh, params.orphanChainSubThresh, params.scoreExp, params.minScoreFraction, params.mismatchSeedSkip, params.disableChainingHeuristic, params.match_score, params.mismatch_score, params.gap_open_score, 
-                params.gap_extension_score, params.bandwidth, params.allowDovetail, params.recoverOrphans, params.miminBT2, params.mimicStrictBT2, params.softclip, params.softclipOverhangs, params.fullLengthAlignment, params.hardFilter, 
-                params.minAlnProb, params.writeQualities, params.hitFilterPolicy, params.alternativeInitMode, params.skipQuant, params.dumpEq, params.dumpEqWeights, params.minAssignedFrags, params.reduceGCMemory, params.biasSpeedSamp, 
-                params.fldMax, params.fldMean, params.fldSD, params.maxOccsPerHit, params.maxReadOcc, params.noLengthCorrection, params.noEffectiveLengthCorrection, params.noSingleFragProb, params.noFragLengthDist, params.noBiasLengthThreshold, 
-                params.numBiasSamples, params.numAuxModelSamples, params.numPreAuxModelSamples, params.useEM, params.useVBOpt, params.rangeFactorizationBins, params.numGibbsSamples, params.noGammaDraw, params.numBootstraps, params.bootstrapReproject, 
-                params.thinningFactor, params.perTranscriptPrior, params.perNucleotidePrior, params.sigDigits, params.vbPrior)
+            if (params.salmonMappingArgs) salmonMappingArgs = params.salmonMappingArgs
+            else {
+                salmonMappingArgs = OrganizeArguments.makeSalmonMappingArgs(params.seqBias, params.gcBias, params.posBias, params.incompatPrior, params.meta, params.discardOrphansQuasi, params.consensusSlack, params.preMergeChainSubThresh, 
+                    params.postMergeChainSubThresh, params.orphanChainSubThresh, params.scoreExp, params.minScoreFraction, params.mismatchSeedSkip, params.disableChainingHeuristic, params.match_score, params.mismatch_score, params.gap_open_score, 
+                    params.gap_extension_score, params.bandwidth, params.allowDovetail, params.recoverOrphans, params.miminBT2, params.mimicStrictBT2, params.softclip, params.softclipOverhangs, params.fullLengthAlignment, params.hardFilter, 
+                    params.minAlnProb, params.writeQualities, params.hitFilterPolicy, params.alternativeInitMode, params.skipQuant, params.dumpEq, params.dumpEqWeights, params.minAssignedFrags, params.reduceGCMemory, params.biasSpeedSamp, 
+                    params.fldMax, params.fldMean, params.fldSD, params.maxOccsPerHit, params.maxReadOcc, params.noLengthCorrection, params.noEffectiveLengthCorrection, params.noSingleFragProb, params.noFragLengthDist, params.noBiasLengthThreshold, 
+                    params.numBiasSamples, params.numAuxModelSamples, params.numPreAuxModelSamples, params.useEM, params.useVBOpt, params.rangeFactorizationBins, params.numGibbsSamples, params.noGammaDraw, params.numBootstraps, params.bootstrapReproject, 
+                    params.thinningFactor, params.perTranscriptPrior, params.perNucleotidePrior, params.sigDigits, params.vbPrior)
+            }
             SALMON_QUASI_MAPPING_MODE(trimming_output_channel, outputDir, SALMON_REFERENCE_INDEX.out.reference_index, salmonMappingArgs)
             tpm_column = 4
             
@@ -337,31 +389,32 @@ workflow {
         } else if (params.quantifier && params.quantifier == 'kallisto') {
             
             // Create the reference genome index
-            kallistoIndexArgs = OrganizeArguments.makeKallistoIndexArgs(params.kmer_length, params.make_unique, params.fasta_contains_aa, params.distinguish, params.minimizers_length, params.ec_max_size)
+            if (params.kallistoIndexArgs) kallistoIndexArgs = params.kallistoIndexArgs
+            else {
+                kallistoIndexArgs = OrganizeArguments.makeKallistoIndexArgs(params.kmer_length, params.make_unique, params.fasta_contains_aa, params.distinguish, params.minimizers_length, params.ec_max_size)
+            }
             KALLISTO_REFERENCE_INDEX(outputDir, file(params.transcriptFastaFile), kallistoIndexArgs)
 
             // Run the KALLISTO reads quantification process
-            kallistoQuantArgs = OrganizeArguments.makeKallistoQuantArgs(params.paired_end, params.num_bootstrap_samples, params.bootstrap_seed, params.plaintext, params.single_overhang, params.fr_stranded, params.rf_stranded, 
-                params.mean_fragment_length, params.sd_fragment_length)
+            if (params.kallistoQuantArgs) kallistoQuantArgs = params.kallistoQuantArgs
+            else {
+                kallistoQuantArgs = OrganizeArguments.makeKallistoQuantArgs(params.paired_end, params.num_bootstrap_samples, params.bootstrap_seed, params.plaintext, params.single_overhang, params.fr_stranded, params.rf_stranded, 
+                    params.mean_fragment_length, params.sd_fragment_length)
+            }
             KALLISTO(trimming_output_channel, outputDir, KALLISTO_REFERENCE_INDEX.out.kallisto_reference_index, kallistoQuantArgs)
             tpm_column = 5
 
             quantifier_output_channel = KALLISTO.out.quants_file
-
-        } else if (params.quantifier && params.quantifier == 'rsem') {
-            
-            // Create the reference genome index
-            RSEM_REFERENCE_INDEX(outputDir, params.rsem_index_prefix, file(params.genomeFastaFile), file(params.annotationsGTFFile), params.overhang, params.genomeSAindexNbases)
-
-            // Run the RSEM alignment and quantification process
-            RSEM(trimming_output_channel, outputDir, params.rsem_index_prefix, RSEM_REFERENCE_INDEX.out.rsem_index_files)
 
         }
 
         if (params.splicingAnalyzer && params.splicingAnalyzer == 'suppa2') {
             
             // Generate the event annotations (ioe) file
-            suppa2GenerateEventsArgs = OrganizeArguments.makeSuppa2GenerateEventsArgs(params.boundary, params.variability_threshold, params.pool_genes, params.exon_length)
+            if (params.suppa2GenerateEventsArgs) suppa2GenerateEventsArgs = params.suppa2GenerateEventsArgs
+            else {
+                suppa2GenerateEventsArgs = OrganizeArguments.makeSuppa2GenerateEventsArgs(params.boundary, params.variability_threshold, params.pool_genes, params.exon_length)
+            }
             SUPPA2_GENERATE_EVENT_ANNOTATIONS(file(params.annotationsGTFFile), outputDir, suppa2GenerateEventsArgs)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
@@ -369,7 +422,10 @@ workflow {
                 all_sample_ids = all_samples.map { it*.get(0) }
                 all_sample_quants = all_samples.map { it*.get(2) }
 
-                suppa2PsiPerEventArgs = OrganizeArguments.makeSuppa2PsiPerEventArgs(params.total_filter, params.save_tpm_events_psi)
+                if (params.suppa2PsiPerEventArgs) suppa2PsiPerEventArgs = params.suppa2PsiPerEventArgs
+                else {
+                    suppa2PsiPerEventArgs = OrganizeArguments.makeSuppa2PsiPerEventArgs(params.total_filter, params.save_tpm_events_psi)
+                }
                 SUPPA2_CALCULATE_EVENTS_PSI(all_sample_ids, all_sample_quants, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, tpm_column, outputDir, suppa2PsiPerEventArgs)
             }
 
@@ -399,8 +455,11 @@ workflow {
                     }
                 
                 // Perform differential splicing analysis
-                suppa2DiffSPliceArgs = OrganizeArguments.makeSuppa2DiffSPliceArgs(params.method, params.area, params.lower_bound, params.paired_replicates, params.gene_correction, params.alpha, params.save_tpm_events_diff, 
-                    params.use_median, params.tpm_threshold)
+                if (params.suppa2DiffSPliceArgs) suppa2DiffSPliceArgs = params.suppa2DiffSPliceArgs
+                else {
+                    suppa2DiffSPliceArgs = OrganizeArguments.makeSuppa2DiffSPliceArgs(params.method, params.area, params.lower_bound, params.paired_replicates, params.gene_correction, params.alpha, params.save_tpm_events_diff, 
+                        params.use_median, params.tpm_threshold)
+                }
                 SUPPA2_CALCULATE_EVENTS_DELTA_PSI(paired_suppa2, SUPPA2_GENERATE_EVENT_ANNOTATIONS.out.ioe_file, outputDir, suppa2DiffSPliceArgs)
                 
             }
@@ -408,12 +467,18 @@ workflow {
         } else if (params.splicingAnalyzer && params.splicingAnalyzer == 'whippet') {
             
             // Build the index for Whippet
-            whipperIndexArgs = OrganizeArguments.makeWhippetIndexArgs(params.kmer_size_ee_junc, params.suppress_low_tsl)
+            if (params.whipperIndexArgs) whipperIndexArgs = params.whipperIndexArgs
+            else {
+                whipperIndexArgs = OrganizeArguments.makeWhippetIndexArgs(params.kmer_size_ee_junc, params.suppress_low_tsl)
+            }
             WHIPPET_INDEX(file(params.genomeFastaFile), file(params.annotationsGTFFile), outputDir, whipperIndexArgs)
 
             if (params.individualSplicingAnalysis || params.differentialSplicingAnalysis) {
-                whippetQuantArgs = OrganizeArguments.makeWhippetQuantArgs(params.paired_end, params.seed_len, params.seed_try, params.seed_tol, params.seed_buf, params.seed_inc, params.pair_range, params.mismatches_aln, 
-                    params.score_min, params.biascorrect, params.strand_specific, params.pair_same_strand, params.qual_string_encoded, params.circ)
+                if (params.whippetQuantArgs) whippetQuantArgs = params.whippetQuantArgs
+                else {
+                    whippetQuantArgs = OrganizeArguments.makeWhippetQuantArgs(params.paired_end, params.seed_len, params.seed_try, params.seed_tol, params.seed_buf, params.seed_inc, params.pair_range, params.mismatches_aln, 
+                        params.score_min, params.biascorrect, params.strand_specific, params.pair_same_strand, params.qual_string_encoded, params.circ)
+                }
                 WHIPPET_QUANT(trimming_output_channel, WHIPPET_INDEX.out.whippet_index, outputDir, whippetQuantArgs)
             }
 
@@ -438,7 +503,11 @@ workflow {
                 // Run the delta psi process
                 all_samples_psi_files = WHIPPET_QUANT.out.sample_psi_file 
                     .map { sample_id, group, psi_file -> psi_file }.collect()
-                whippetDeltaArgs = OrganizeArguments.makeWhippetDeltaArgs(params.min_reads, params.min_samples, params.empirical_size, params.seed_rng)
+                
+                if (params.whippetDeltaArgs) whippetDeltaArgs = params.whippetDeltaArgs
+                else {
+                    whippetDeltaArgs = OrganizeArguments.makeWhippetDeltaArgs(params.min_reads, params.min_samples, params.empirical_size, params.seed_rng)
+                }
                 WHIPPET_DELTA(grouped_files_pairs, all_samples_psi_files, outputDir, whippetDeltaArgs)
             }
 
